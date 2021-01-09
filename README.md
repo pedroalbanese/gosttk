@@ -1,4 +1,4 @@
-# GOST Tookit
+# GOST Toolkit
 
 <h3>GOST Cipher Suite written in Go</h3>
 
