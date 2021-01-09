@@ -3,7 +3,7 @@
 <h3>GOST Cipher Suite written in Go</h3>
 
 <h5>Usage:</h5>
-<pre>-bits int
+<pre>  -bits int
         Bit length: 256 or 512. (digest|generate|sign|VKO) (default 256)
   -crypt
         Encrypt/Decrypt with Kuznyechik (GOST R 34.12-2015) symmetric cipher.
