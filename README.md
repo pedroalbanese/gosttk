@@ -3,6 +3,7 @@
 GOST cipher suite written in Go
 
 <pre>Usage of gosttk:
+
   -bits int
         Bit length: 256 or 512. (digest|generate|sign|VKO) (default 256)
   -crypt
