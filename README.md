@@ -1,6 +1,6 @@
 # GOST Tookit
 
-<h3>GOST cipher suite written in Go</h3>
+<h3>GOST Cipher Suite written in Go</h3>
 
 <h5>Usage:</h5>
 <pre>-bits int
