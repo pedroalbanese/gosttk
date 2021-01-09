@@ -1,10 +1,9 @@
 # GOST Tookit
 
-GOST cipher suite written in Go
+<h3>GOST cipher suite written in Go</h3>
 
-<pre>Usage of gosttk:
-
-  -bits int
+<h5>Usage:</h5>
+<pre>-bits int
         Bit length: 256 or 512. (digest|generate|sign|VKO) (default 256)
   -crypt
         Encrypt/Decrypt with Kuznyechik (GOST R 34.12-2015) symmetric cipher.
