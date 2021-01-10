@@ -1,23 +1,23 @@
 package main
 
 import (
-	"os"
-	"io"
-	"log"
-	"fmt"
-	"flag"
 	"bufio"
-	"math/big"
+	"crypto/cipher"
 	"crypto/hmac"
 	"crypto/rand"
 	"encoding/hex"
-	"crypto/cipher"
+	"flag"
+	"fmt"
 	"go.cypherpunks.ru/gogost/v5/gost28147"
-	"go.cypherpunks.ru/gogost/v5/gost341194"
-	"go.cypherpunks.ru/gogost/v5/gost3412128"
-	"go.cypherpunks.ru/gogost/v5/gost34112012512"
 	"go.cypherpunks.ru/gogost/v5/gost3410"
 	"go.cypherpunks.ru/gogost/v5/gost34112012256"
+	"go.cypherpunks.ru/gogost/v5/gost34112012512"
+	"go.cypherpunks.ru/gogost/v5/gost341194"
+	"go.cypherpunks.ru/gogost/v5/gost3412128"
+	"io"
+	"log"
+	"math/big"
+	"os"
 )
 
 	var pubHex = flag.String("pub", "", "Remote's side public key. (for shared key derivation only)")
