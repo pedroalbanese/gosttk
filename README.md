@@ -1,5 +1,5 @@
 # GOST Toolkit
-GOST Cipher Suite written in Go
+<h3>GOST Cipher Suite written in Go</h3>
 
 <h5>Usage:</h5>
 <pre>  -bits int
