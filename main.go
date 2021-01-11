@@ -24,7 +24,7 @@ import (
 )
 
 	var pubHex = flag.String("pub", "", "Remote's side public key. (for shared key derivation only)")
-	var del = flag.String("shred", "", "File/Path/Wildicard to apply GOST R 50739-95 Data Sanitization Method.")
+	var del = flag.String("shred", "", "File/Path/Wildcard to apply GOST R 50739-95 Data Sanitization Method.")
 	var crypt = flag.Bool("crypt", false, "Encrypt/Decrypt with Kuznyechik/Magma/28147-89 symmetric ciphers.")
 	var derive = flag.Bool("derive", false, "Derive shared key negociation (VKO).")
 	var mac = flag.Bool("hmac", false, "Compute HMAC-Streebog256/512 or HMAC-GOST94-CryptoPro.")
