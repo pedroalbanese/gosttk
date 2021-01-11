@@ -27,7 +27,7 @@
   -verify
         Verify with public key.</pre>
 <h4>Example:</h4>
-<h5>Asymmetric GOST R 34.10-2012 512-bit keypair generation:</h5>
+<h5>Asymmetric GOST R 34.10-2012 512-bit keypair generation (INI format):</h5>
 <pre>./gosttk -generate -bits 512
 </pre>
 <h5>Signature:</h5>
