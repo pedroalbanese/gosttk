@@ -36,7 +36,7 @@ sign=$(cat sign.txt)
 <pre>./gosttk -digest94 < file.ext
 </pre>
 <h5>Streebog512 hashsum:</h5>
-<pre>./gosttk -digest -bist512 < file.ext
+<pre>./gosttk -digest -bits 512 < file.ext
 </pre>
 <h5>HMAC-Streebog512:</h5>
 <pre>./gosttk -hmac -bits 512 -key $key < file.ext
