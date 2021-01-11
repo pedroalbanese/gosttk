@@ -31,7 +31,7 @@
   -key string
         Private/Public key, password or HMAC key, depending on operation.
   -mode int
-        Mode: 2001 or 2012. (generate|sign|VKO) (default 2012)
+        Mode: 2001 or 2012. (digest|generate|sign|VKO) (default 2012)
   -pub string
         Remote's side public key. (for shared key derivation only)
   -sign
