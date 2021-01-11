@@ -31,7 +31,7 @@ import (
 	var key = flag.String("key", "", "Private/Public key, password or HMAC key, depending on operation.")
 	var sig = flag.String("signature", "", "Input signature. (verification only)")
 	var bit = flag.Int("bits", 256, "Bit length: 256 or 512. (digest|generate|sign|VKO)")
-	var block = flag.Int("block", 128, "Block size: 64 or 128. (for symmetric encryption only)")
+	var block = flag.Int("block", 64, "Block size: 64 or 128. (for symmetric encryption only)")
 	var mode = flag.Int("mode", 2012, "Mode: 2001 or 2012. (digest|generate|sign|VKO)")
 	var sign = flag.Bool("sign", false, "Sign with private key.")
 	var verify = flag.Bool("verify", false, "Verify with public key.")
@@ -43,7 +43,7 @@ func main() {
     flag.Parse()
 
         if (len(os.Args) < 2) {
-	fmt.Println("Select: -digest|hmac, -sign|verify, -generate, -derive or -crypt. (type -h)")
+	fmt.Println("Set: -digest|hmac, -sign|verify, -generate|derive, -shred or -crypt. (type -h)")
         os.Exit(1)
         }
 
@@ -266,7 +266,7 @@ func main() {
         os.Exit(0)
         }
 
-
+	
 	var err error
         if *derive == true && *mode == 2012 {
 
@@ -566,7 +566,7 @@ func main() {
         fmt.Println("Verify correct.")
 	} 
 
-
+		
 	if *sign == true && *mode == 2001 {
 	var curve *gost3410.Curve
 	curve = gost3410.CurveIdGostR34102001CryptoProAParamSet()
