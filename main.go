@@ -1,5 +1,5 @@
+//go:generate goversioninfo -manifest=testdata/resource/goversioninfo.exe.manifest
 package main
-
 import (
 	"bufio"
 	"crypto/cipher"
@@ -8,12 +8,12 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
-	"go.cypherpunks.ru/gogost/v5/gost28147"
-	"go.cypherpunks.ru/gogost/v5/gost3410"
-	"go.cypherpunks.ru/gogost/v5/gost34112012256"
-	"go.cypherpunks.ru/gogost/v5/gost34112012512"
-	"go.cypherpunks.ru/gogost/v5/gost341194"
-	"go.cypherpunks.ru/gogost/v5/gost3412128"
+	"github.com/pedroalbanese/gogost/gost28147"
+	"github.com/pedroalbanese/gogost/gost3410"
+	"github.com/pedroalbanese/gogost/gost34112012256"
+	"github.com/pedroalbanese/gogost/gost34112012512"
+	"github.com/pedroalbanese/gogost/gost341194"
+	"github.com/pedroalbanese/gogost/gost3412128"
 	"io"
 	"log"
 	"math/big"
@@ -46,6 +46,7 @@ func main() {
         os.Exit(1)
         }
 
+//--------------------------------------------------------------ENCRYPTION
 
         if *crypt == true {
 	keyHex := key
@@ -87,6 +88,9 @@ func main() {
 	}
         os.Exit(0)
         }
+
+
+//--------------------------------------------------------------HASHES
 
 
         if *mac == true && *bit == 256 {
@@ -141,6 +145,8 @@ func main() {
         }
 
 
+//--------------------------------------------------------------DERIVATION
+
 	var err error
         if *derive == true {
 
@@ -187,6 +193,7 @@ func main() {
 	os.Exit(0)
 	}
 
+//--------------------------------------------------------------GENERATE
 
 	if *generate {
 	var curve *gost3410.Curve
@@ -248,6 +255,8 @@ func main() {
 		}
 	}
 
+//--------------------------------------------------------------SIGN
+
 
         if *sign == true || *verify == true {
 
@@ -259,7 +268,7 @@ func main() {
         hash := scannerWrite.Bytes()
 	data := []byte(hash)
 
-	hasher := gost34112012256.New()
+	hasher := gost34112012512.New()
 	_, err := hasher.Write(data)
 		if err != nil {
                         log.Fatal(err)
