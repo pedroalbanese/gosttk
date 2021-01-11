@@ -1,5 +1,4 @@
-# GOST Toolkit
-## GOST Cipher Suite written in Go
+# GOST Toolkit: GOST Cipher Suite written in Go
 
 ### GOST is GOvernment STandard of Russian Federation (and Soviet Union).
 
@@ -34,30 +33,30 @@
         Input signature. (verification only)
   -verify
         Verify with public key.</pre>
-###Example:
-<h5>Asymmetric GOST R 34.10-2012 512-bit keypair generation (INI format):</h5>
+## Example:
+### Asymmetric GOST R 34.10-2012 512-bit keypair generation (INI format):
 <pre>./gosttk -generate -bits 512
 </pre>
-<h5>Signature:</h5>
+### Signature:
 <pre>./gosttk -sign -bits 512 -key $prvkey < file.ext > sign.txt
 sign=$(cat sign.txt)
 ./gosttk -verify -bits 512 -key $pubkey -signature $sign < file.ext
 </pre>
-<h5>Shared key negociation (VKO):</h5>
+### Shared key negociation (VKO):
 <pre>./gosttk -derive -key $prvkey -pub $pubkey
 </pre>
-<h5>Encryption/decryption with Kuznyechik (GOST2015) symmetric cipher:</h5>
+### Encryption/decryption with Kuznyechik (GOST2015) symmetric cipher:
 <pre>./gosttk -crypt -key $shared < plaintext.ext > ciphertext.ext
 ./gosttk -crypt -key $shared < ciphertext.ext > plaintext.ext
 </pre>
-<h5>GOST94-CryptoPro hashsum:</h5>
+### GOST94-CryptoPro hashsum:
 <pre>./gosttk -digest94 < file.ext
 </pre>
-<h5>Streebog512 hashsum:</h5>
+### Streebog512 hashsum:
 <pre>./gosttk -digest -bits 512 < file.ext
 </pre>
-<h5>HMAC-Streebog512 (hash-based message authentication code):</h5>
+### HMAC-Streebog512 (hash-based message authentication code):
 <pre>./gosttk -hmac -bits 512 -key $key < file.ext
 </pre>
 
-Military Grade Reliability. Copyright (c) 2020-2021 Pedro Albanese - ALBANESE Lab.
+*Military Grade Reliability. Copyright (c) 2020-2021 Pedro Albanese - ALBANESE Lab.*
