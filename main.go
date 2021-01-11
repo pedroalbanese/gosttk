@@ -24,7 +24,7 @@ import (
 	var pubHex = flag.String("pub", "", "Remote's side public key. (for shared key derivation only)")
 	var crypt = flag.Bool("crypt", false, "Encrypt/Decrypt with Kuznyechik (GOST R 34.12-2015) symmetric cipher.")
 	var derive = flag.Bool("derive", false, "Derive shared key negociation (VKO).")
-	var mac = flag.Bool("hmac", false, "Compute HMAC-Streebog256/512 (GOST R 34.11-2012).")
+	var mac = flag.Bool("hmac", false, "Compute HMAC-Streebog256/512 or HMAC-GOST94-CryptPro.")
 	var key = flag.String("key", "", "Private/Public key, password or HMAC key, depending on operation.")
 	var sig = flag.String("signature", "", "Input signature. (verification only)")
 	var bit = flag.Int("bits", 256, "Bit length: 256 or 512. (digest|generate|sign|VKO)")
@@ -91,7 +91,7 @@ func main() {
         os.Exit(0)
         }
 
-	
+
         if *crypt == true && *block == 64 && *mode == 2012 {
 	keyHex := key
 	var key []byte
@@ -133,7 +133,7 @@ func main() {
         os.Exit(0)
         }
 
-
+	
         if *crypt == true && *block == 64 && *mode == 2001 {
 	keyHex := key
 	var key []byte
@@ -154,7 +154,7 @@ func main() {
                         log.Fatal(err)
 		}
 	}
-	ciph := gost341264.NewCipher(key)
+	ciph := gost28147.NewCipher(key, &gost28147.SboxIdGostR341194CryptoProParamSet)
 	iv := make([]byte, gost28147.BlockSize)
 	stream := cipher.NewCTR(ciph, iv)
 	buf := make([]byte, 128*1<<10)
@@ -176,7 +176,7 @@ func main() {
         }
 
 
-        if *mac == true && *bit == 256 {
+        if *mac == true && *bit == 256 && *mode == 2012 {
 	keyHex := key
 	flag.Parse()
 	key, err := hex.DecodeString(*keyHex)
@@ -191,7 +191,7 @@ func main() {
         os.Exit(0)
         }
 
-        if *mac == true && *bit == 512 {
+        if *mac == true && *bit == 512 && *mode == 2012 {
 	keyHex := key
 	flag.Parse()
 	key, err := hex.DecodeString(*keyHex)
@@ -206,7 +206,7 @@ func main() {
         os.Exit(0)
         }
 
-        if *mac == true && *mode == 2001 {
+        if *mac == true && *bit == 256 && *mode == 2001 {
 	keyHex := key
 	flag.Parse()
 	key, err := hex.DecodeString(*keyHex)
@@ -225,21 +225,21 @@ func main() {
         os.Exit(0)
         }
 
-        if *digest == true && *mode == 2001 {
+        if *digest == true && *bit == 256 && *mode == 2001 {
 	h := gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
 	io.Copy(h, os.Stdin)
 	fmt.Print(hex.EncodeToString(h.Sum(nil)))
         os.Exit(0)
         }
 
-        if *digest == true && *bit == 256 {
+        if *digest == true && *bit == 256 && *mode == 2012 {
 	h := gost34112012256.New()
 	io.Copy(h, os.Stdin)
 	fmt.Print(hex.EncodeToString(h.Sum(nil)))
         os.Exit(0)
         }
 
-        if *digest == true && *bit == 512 {
+        if *digest == true && *bit == 512 && *mode == 2012 {
 	h := gost34112012512.New()
 	io.Copy(h, os.Stdin)
 	fmt.Print(hex.EncodeToString(h.Sum(nil)))
