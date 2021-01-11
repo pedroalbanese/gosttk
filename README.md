@@ -9,9 +9,9 @@
 * GOST R 34.12-2015 128-bit block cipher Кузнечик (Kuznechik) (RFC 7801)
 
 #### TODO:
-- [ ] GOST 28147-89 symmetric cipher
-- [ ] GOST R 34.10-2001 public key signature function
-- [ ] VKO GOST R 34.10-2001 key agreement function
+ - [ ] GOST 28147-89 symmetric cipher
+ - [ ] GOST R 34.10-2001 public key signature function
+ - [ ] VKO GOST R 34.10-2001 key agreement function
 
 #### Usage:
 <pre>  -bits int
