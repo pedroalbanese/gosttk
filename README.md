@@ -27,10 +27,13 @@
   -verify
         Verify with public key.</pre>
 <h4>Example:</h4>
+<h5>Asymmetric GOST R 34.10-2012 512-bit keypair generation:</h5>
+<pre>./gosttk -generate -bits 512
+</pre>
 <h5>Signature:</h5>
-<pre>./gosttk -sign -key $prvkey < file.ext > sign.txt
+<pre>./gosttk -sign -bits 512 -key $prvkey < file.ext > sign.txt
 sign=$(cat sign.txt)
-./gosttk -verify -key $pubkey -signature $sign < file.ext
+./gosttk -verify -bits 512 -key $pubkey -signature $sign < file.ext
 </pre>
 <h5>GOST94-CrytoPro hashsum:</h5>
 <pre>./gosttk -digest94 < file.ext
