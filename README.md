@@ -55,5 +55,8 @@ sign=$(cat sign.txt)
 <h5>HMAC-Streebog512 (hash-based message authentication code):</h5>
 <pre>./gosttk -hmac -bits 512 -key $key < file.ext
 </pre>
-
+<h5>Encryptio/decryption with Kuznyechi (GOST2015) symmetric cipher:</h5>
+<pre>./gosttk -crypt < paintext.ext > ciphertext.ext
+./gosttk -crypt -key $key < ciphertext.ext > paintext.ext
+</pre>
 
