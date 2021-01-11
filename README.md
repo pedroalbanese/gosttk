@@ -8,12 +8,12 @@
 * VKO (выработка ключа общего) GOST R 34.10-2012 key agreement function (RFC 7836)
 * GOST R 34.12-2015 128-bit block cipher Кузнечик (Kuznechik) (RFC 7801)
 
-### TODO:
+#### TODO:
 - [ ] GOST 28147-89
 - [ ] GOST R 34.10-2001
 - [ ] VKO GOST R 34.10-2001
 
-### Usage:
+#### Usage:
 <pre>  -bits int
         Bit length: 256 or 512. (digest|generate|sign|VKO) (default 256)
   -crypt
@@ -38,7 +38,7 @@
         Input signature. (verification only)
   -verify
         Verify with public key.</pre>
-## Example:
+### Example:
 #### Asymmetric GOST R 34.10-2012 512-bit keypair generation (INI format):
 <pre>./gosttk -generate -bits 512
 </pre>
