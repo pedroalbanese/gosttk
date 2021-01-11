@@ -26,8 +26,8 @@
         Input signature. (verification only)
   -verify
         Verify with public key.
-  <pre>
-  
+  </pre>
+ 
 <h5>Example:</h5>
 <pre>./gosttk -sign -key $prvkey < file.ext > sign.txt
 sign=$(cat sign.txt)
