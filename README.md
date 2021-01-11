@@ -2,6 +2,7 @@
 
 ### GOST is GOvernment STandard of Russian Federation (and Soviet Union).
 
+* GOST 28147-89 (RFC 5830) block cipher
 * GOST R 34.11-94 hash function (RFC 5831)
 * GOST R 34.10-2001 (RFC 5832) public key signature function
 * GOST R 34.11-2012 Стрибог (Streebog) hash function (RFC 6986)
