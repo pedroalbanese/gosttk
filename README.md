@@ -3,7 +3,7 @@ Multi purpose cryptography tool for encryption / decryption, hash digest, hash-b
 
 #### GOST is GOvernment STandard of Russian Federation (and Soviet Union):
 
-* GOST 28147-89 (RFC 5830) block cipher
+* GOST 28147-89 (RFC 5830) 64-bit block cipher designed by KGB, 8th Department (RFC 5830)
 * GOST R 34.11-94 hash function (RFC 5831)
 * GOST R 50739-95 Data Sanitization Method (non-cryptographic)
 * GOST R 34.10-2001 (RFC 5832) public key signature function
