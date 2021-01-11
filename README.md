@@ -12,7 +12,7 @@
 
 #### TODO:
   - [ ] GOST 28147-89 symmetric cipher
-  - [ ] GOST R 34.11-94 HMAC-CryptoPro based
+  - [ ] GOST R 34.11-94 HMAC-CryptoPro
   - [x] GOST R 34.10-2001 public key signature function
   - [x] VKO GOST R 34.10-2001 key agreement function
 
