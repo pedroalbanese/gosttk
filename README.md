@@ -25,7 +25,7 @@
   -block int
         Block size: 64 or 128. (for symmetric encryption only) (default 128)
   -crypt
-        Encrypt/Decrypt with Kuznyechik (GOST R 34.12-2015) symmetric cipher.
+        Encrypt/Decrypt with Kuznyechik/Magma/28147-89 symmetric ciphers.
   -derive
         Derive shared key negociation (VKO).
   -digest
@@ -33,7 +33,7 @@
   -generate
         Generate GOST R 34.10-2012 or 34.10-2001 asymmetric keypair.
   -hmac
-        Compute HMAC-Streebog256/512 or HMAC-GOST94-CryptoPro.
+        Compute HMAC-Streebog256/512 or HMAC-GOST94-CryptPro.
   -key string
         Private/Public key, password or HMAC key, depending on operation.
   -mode int
