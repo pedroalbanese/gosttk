@@ -35,7 +35,7 @@
   -generate
         Generate GOST R 34.10-2012 or 34.10-2001 asymmetric keypair.
   -hmac
-        Compute HMAC-Streebog256/512 or HMAC-GOST94-CryptPro.
+        Compute HMAC-Streebog256/512 or HMAC-GOST94-CryptoPro.
   -key string
         Private/Public key, password or HMAC key, depending on operation.
   -mode int
@@ -43,7 +43,7 @@
   -pub string
         Remote's side public key. (for shared key derivation only)
   -shred string
-        File/Path/Wildicard do apply GOST R 50739-95 Data Sanitization Method.
+        File/Path/Wildicard to apply GOST R 50739-95 Data Sanitization Method.
   -sign
         Sign with private key.
   -signature string
