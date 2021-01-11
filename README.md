@@ -12,8 +12,8 @@
 * GOST R 34.12-2015 64-bit block cipher Магма (Magma)
 
 #### TODO:
-  - [ ] GOST 28147-89 symmetric cipher
-  - [ ] GOST R 34.11-94 HMAC-CryptoPro
+  - [x] GOST 28147-89 symmetric cipher
+  - [x] GOST R 34.11-94 HMAC-CryptoPro
   - [x] GOST R 34.12-2015 Magma symmetric cipher
   - [x] GOST R 34.10-2001 public key signature function
   - [x] VKO GOST R 34.10-2001 key agreement function
