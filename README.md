@@ -32,7 +32,7 @@
   -generate
         Generate GOST R 34.10-2012 or 34.10-2001 asymmetric keypair.
   -hmac
-        Compute HMAC-Streebog256/512 or HMAC-GOST94-CryptPro.
+        Compute HMAC-Streebog256/512 or HMAC-GOST94-CryptoPro.
   -key string
         Private/Public key, password or HMAC key, depending on operation.
   -mode int
