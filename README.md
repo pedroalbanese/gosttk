@@ -6,8 +6,8 @@
 * GOST R 34.10-2001 (RFC 5832) public key signature function
 * GOST R 34.11-2012 Стрибог (Streebog) hash function (RFC 6986)
 * GOST R 34.10-2012 (RFC 7091) public key signature function
-* VKO GOST R 34.10-2001 key agreement function (RFC 4357)
-* VKO (выработка ключа общего) GOST R 34.10-2012 key agreement function (RFC 7836)
+* VKO (выработка ключа общего) GOST R 34.10-2001 key agreement function (RFC 4357)
+* VKO GOST R 34.10-2012 key agreement function (RFC 7836)
 * GOST R 34.12-2015 128-bit block cipher Кузнечик (Kuznechik) (RFC 7801)
 
 #### TODO:
