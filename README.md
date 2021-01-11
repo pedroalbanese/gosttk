@@ -51,7 +51,7 @@ Multi purpose cryptography tool for encryption / decryption, hash digest, hash-b
        Input signature. (verification only)
  -verify
        Verify with public key.</pre>
-### Example:
+### Examples:
 #### Asymmetric GOST R 34.10-2012 512-bit keypair generation (INI format):
 <pre>./gosttk -generate -bits 512
 </pre>
