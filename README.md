@@ -1,5 +1,10 @@
 ## GOST Toolkit: GOST Cipher Suite written in Go
 
+### TODO:
+- [ ] GOST 28147-89
+- [ ] GOST R 34.10-2001
+- [ ] VKO GOST R 34.10-2001
+
 ### GOST is GOvernment STandard of Russian Federation (and Soviet Union).
 
 * GOST R 34.11-94 hash function (RFC 5831)
@@ -60,8 +65,3 @@ sign=$(cat sign.txt)
 </pre>
 
 ##### Military Grade Reliability. Copyright (c) 2020-2021 Pedro Albanese - ALBANESE Lab.
-
-### TODO:
-- [ ] GOST 28147-89
-- [ ] GOST R 34.10-2001
-- [ ] VKO GOST R 34.10-2001
