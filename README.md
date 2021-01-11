@@ -50,7 +50,7 @@ sign=$(cat sign.txt)
 <pre>./gosttk -crypt -key $shared < plaintext.ext > ciphertext.ext
 ./gosttk -crypt -key $shared < ciphertext.ext > plaintext.ext
 </pre>
-<h5>GOST94-CrytoPro hashsum:</h5>
+<h5>GOST94-CryptoPro hashsum:</h5>
 <pre>./gosttk -digest94 < file.ext
 </pre>
 <h5>Streebog512 hashsum:</h5>
