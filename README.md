@@ -20,6 +20,8 @@
 ### Usage:
 <pre>  -bits int
         Bit length: 256 or 512. (digest|generate|sign|VKO) (default 256)
+  -block int
+        Block size: 64 or 128. (for symmetric encryption only) (default 128)
   -crypt
         Encrypt/Decrypt with Kuznyechik (GOST R 34.12-2015) symmetric cipher.
   -derive
