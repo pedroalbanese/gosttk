@@ -22,34 +22,34 @@
   - [x] VKO GOST R 34.10-2001 key agreement function
 
 ### Usage:
-<pre>  -bits int
-        Bit length: 256 or 512. (digest|generate|sign|VKO) (default 256)
-  -block int
-        Block size: 64 or 128. (for symmetric encryption only) (default 128)
-  -crypt
-        Encrypt/Decrypt with Kuznyechik/Magma/28147-89 symmetric ciphers.
-  -derive
-        Derive shared key negociation (VKO).
-  -digest
-        Compute Streebog256/512 or GOST94-CryptoPro hashsum.
-  -generate
-        Generate GOST R 34.10-2012 or 34.10-2001 asymmetric keypair.
-  -hmac
-        Compute HMAC-Streebog256/512 or HMAC-GOST94-CryptoPro.
-  -key string
-        Private/Public key, password or HMAC key, depending on operation.
-  -mode int
-        Mode: 2001 or 2012. (digest|generate|sign|VKO) (default 2012)
-  -pub string
-        Remote's side public key. (for shared key derivation only)
-  -shred string
-        File/Path/Wildicard to apply GOST R 50739-95 Data Sanitization Method.
-  -sign
-        Sign with private key.
-  -signature string
-        Input signature. (verification only)
-  -verify
-        Verify with public key.</pre>
+<pre> -bits int
+       Bit length: 256 or 512. (digest|generate|sign|VKO) (default 256)
+ -block int
+       Block size: 64 or 128. (for symmetric encryption only) (default 128)
+ -crypt
+       Encrypt/Decrypt with Kuznyechik/Magma/28147-89 symmetric ciphers.
+ -derive
+       Derive shared key negociation (VKO).
+ -digest
+       Compute Streebog256/512 or GOST94-CryptoPro hashsum.
+ -generate
+       Generate GOST R 34.10-2012 or 34.10-2001 asymmetric keypair.
+ -hmac
+       Compute HMAC-Streebog256/512 or HMAC-GOST94-CryptoPro.
+ -key string
+       Private/Public key, password or HMAC key, depending on operation.
+ -mode int
+       Mode: 2001 or 2012. (digest|generate|sign|VKO) (default 2012)
+ -pub string
+       Remote's side public key. (for shared key derivation only)
+ -shred string
+       File/Path/Wildicard to apply GOST R 50739-95 Data Sanitization Method.
+ -sign
+       Sign with private key.
+ -signature string
+       Input signature. (verification only)
+ -verify
+       Verify with public key.</pre>
 ### Example:
 #### Asymmetric GOST R 34.10-2012 512-bit keypair generation (INI format):
 <pre>./gosttk -generate -bits 512
