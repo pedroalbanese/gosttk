@@ -27,3 +27,9 @@
   -verify
         Verify with public key.
   <pre>
+  
+<h5>Example:</h5>
+<pre>./gosttk -sign -key $prvkey < file.ext > sign.txt
+sign=$(cat sign.txt)
+./gosttk -verify -key $pubkey -signature $sign < file.ext
+</pre>
