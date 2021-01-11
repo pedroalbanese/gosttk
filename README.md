@@ -43,6 +43,9 @@
 sign=$(cat sign.txt)
 ./gosttk -verify -bits 512 -key $pubkey -signature $sign < file.ext
 </pre>
+<h5>Shared key derivation (VKO):</h5>
+<pre>./gosttk -derive -key $prvkey -pub $pubkey
+</pre>
 <h5>GOST94-CrytoPro hashsum:</h5>
 <pre>./gosttk -digest94 < file.ext
 </pre>
@@ -51,9 +54,6 @@ sign=$(cat sign.txt)
 </pre>
 <h5>HMAC-Streebog512 (hash-based message authentication code):</h5>
 <pre>./gosttk -hmac -bits 512 -key $key < file.ext
-</pre>
-<h5>Shared key derivation (VKO):</h5>
-<pre>./gosttk -derive -key $prvkey -pub $pubkey
 </pre>
 
 
