@@ -23,9 +23,7 @@
   -derive
         Derive shared key negociation (VKO).
   -digest
-        Compute Streebog256/512 (GOST R 34.11-2012) hashsum.
-  -digest94
-        Compute GOST94-CryptoPro (GOST R 34.11-94) hashsum.
+        Compute Streebog256/512 or GOST94-CryptoPro hashsum.
   -generate
         Generate GOST R 34.10-2012 or 34.10-2001 asymmetric keypair.
   -hmac
