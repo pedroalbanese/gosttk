@@ -1,6 +1,12 @@
 # GOST Toolkit
 <h3>GOST Cipher Suite written in Go</h3>
 
+* GOST R 34.11-94 hash function (RFC 5831)
+* GOST R 34.11-2012 Стрибог (Streebog) hash function (RFC 6986)
+* GOST R 34.10-2012 (RFC 7091) public key signature function
+* VKO ("выработка ключа общего") GOST R 34.10-2012 key agreement function (RFC 7836)
+* GOST R 34.12-2015 128-bit block cipher Кузнечик (Kuznechik) (RFC 7801)
+
 <h5>Usage:</h5>
 <pre>  -bits int
         Bit length: 256 or 512. (digest|generate|sign|VKO) (default 256)
@@ -41,9 +47,11 @@ sign=$(cat sign.txt)
 <h5>Streebog512 hashsum:</h5>
 <pre>./gosttk -digest -bits 512 < file.ext
 </pre>
-<h5>HMAC-Streebog512:</h5>
+<h5>HMAC-Streebog512 (hash-based message authentication code):</h5>
 <pre>./gosttk -hmac -bits 512 -key $key < file.ext
 </pre>
-<h5>Shared key negociation:</h5>
-<pre>./gosttk -key $prvkey -pub $pubkey
+<h5>Shared key derivation (VKO):</h5>
+<pre>./gosttk -derive -key $prvkey -pub $pubkey
 </pre>
+
+
