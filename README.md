@@ -4,6 +4,7 @@
 
 * GOST 28147-89 (RFC 5830) block cipher
 * GOST R 34.11-94 hash function (RFC 5831)
+* GOST R 50739-95 Data Sanitization Method
 * GOST R 34.10-2001 (RFC 5832) public key signature function
 * GOST R 34.11-2012 Стрибог (Streebog) hash function (RFC 6986)
 * GOST R 34.10-2012 (RFC 7091) public key signature function
@@ -13,6 +14,7 @@
 * GOST R 34.12-2015 64-bit block cipher Магма (Magma)
 
 #### TODO:
+  - [x] GOST R 50739-95 Data Sanitization Method
   - [x] GOST 28147-89 symmetric cipher
   - [x] GOST R 34.11-94 HMAC-CryptoPro
   - [x] GOST R 34.12-2015 Magma symmetric cipher
@@ -40,6 +42,8 @@
         Mode: 2001 or 2012. (digest|generate|sign|VKO) (default 2012)
   -pub string
         Remote's side public key. (for shared key derivation only)
+  -shred string
+        File/Path/Wildicard do apply GOST R 50739-95 Data Sanitization Method.
   -sign
         Sign with private key.
   -signature string
