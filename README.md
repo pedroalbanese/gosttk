@@ -26,7 +26,7 @@ Multi purpose cryptography tool for encryption / decryption, hash digest, hash-b
 <pre> -bits int
        Bit length: 256 or 512. (digest|generate|sign|VKO) (default 256)
  -block int
-       Block size: 64 or 128. (for symmetric encryption only) (default 128)
+       Block size: 64 or 128. (for symmetric encryption only) (default 64)
  -crypt
        Encrypt/Decrypt with Kuznyechik/Magma/28147-89 symmetric ciphers.
  -derive
