@@ -60,3 +60,8 @@ sign=$(cat sign.txt)
 </pre>
 
 ##### Military Grade Reliability. Copyright (c) 2020-2021 Pedro Albanese - ALBANESE Lab.
+
+### TODO:
+- [ ] GOST 28147-89
+- [ ] GOST R 34.10-2001
+- [ ] VKO GOST R 34.10-2001
