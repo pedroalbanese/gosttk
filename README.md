@@ -64,12 +64,16 @@ sign=$(cat sign.txt)
 <pre>./gosttk -derive -key $prvkey -pub $pubkey
 </pre>
 #### Encryption/decryption with Kuznyechik (GOST R 34.12-2015) symmetric cipher:
+<pre>./gosttk -crypt -block 128 -key $shared < plaintext.ext > ciphertext.ext
+./gosttk -crypt -block 128 -key $shared < ciphertext.ext > plaintext.ext
+</pre>
+#### Encryption/decryption with Magma (GOST R 34.13-2015) symmetric cipher (default):
 <pre>./gosttk -crypt -key $shared < plaintext.ext > ciphertext.ext
 ./gosttk -crypt -key $shared < ciphertext.ext > plaintext.ext
 </pre>
-#### Encryption/decryption with Magma (GOST R 34.13-2015) symmetric cipher:
-<pre>./gosttk -crypt -block 64 -key $shared < plaintext.ext > ciphertext.ext
-./gosttk -crypt -block 64 -key $shared < ciphertext.ext > plaintext.ext
+#### Encryption/decryption with GOST 28147-89 symmetric cipher:
+<pre>./gosttk -crypt -mode 2001 -key $shared < plaintext.ext > ciphertext.ext
+./gosttk -crypt -mode 2001 -key $shared < ciphertext.ext > plaintext.ext
 </pre>
 #### GOST94-CryptoPro hashsum:
 <pre>./gosttk -digest -mode 2001 < file.ext
