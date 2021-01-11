@@ -115,7 +115,7 @@ func main() {
 	ciph := gost341264.NewCipher(key)
 	iv := make([]byte, gost341264.BlockSize)
 	stream := cipher.NewCTR(ciph, iv)
-	buf := make([]byte, 128*1<<10)
+	buf := make([]byte, 64*1<<10)
 	var n int
 	for {
 		n, err = os.Stdin.Read(buf)
@@ -157,7 +157,7 @@ func main() {
 	ciph := gost28147.NewCipher(key, &gost28147.SboxIdGostR341194CryptoProParamSet)
 	iv := make([]byte, gost28147.BlockSize)
 	stream := cipher.NewCTR(ciph, iv)
-	buf := make([]byte, 128*1<<10)
+	buf := make([]byte, 64*1<<10)
 	var n int
 	for {
 		n, err = os.Stdin.Read(buf)
