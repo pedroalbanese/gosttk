@@ -5,7 +5,7 @@ Multi purpose cryptography tool for encryption / decryption, hash digest, hash-b
 
 * GOST 28147-89 (RFC 5830) 64-bit block cipher (KGB)
 * GOST R 34.11-94 hash function (RFC 5831)
-* GOST R 50739-95 Data Sanitization Method (non-cryptographic)
+* GOST R 50739-95 data sanitization method (non-cryptographic)
 * GOST R 34.10-2001 (RFC 5832) public key signature function
 * VKO (выработка ключа общего) GOST R 34.10-2001 key agreement function (RFC 4357)
 * GOST R 34.10-2012 (RFC 7091) public key signature function
@@ -17,7 +17,7 @@ Multi purpose cryptography tool for encryption / decryption, hash digest, hash-b
 #### TODO:
   - [x] GOST 28147-89 symmetric cipher
   - [x] GOST R 34.11-94 HMAC-CryptoPro
-  - [x] GOST R 50739-95 Data Sanitization Method
+  - [x] GOST R 50739-95 data sanitization method (WriteZeros/Pseudo-RandomData)
   - [x] GOST R 34.12-2015 Magma symmetric cipher
   - [x] GOST R 34.10-2001 public key signature function
   - [x] VKO GOST R 34.10-2001 key agreement function
