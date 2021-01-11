@@ -57,9 +57,13 @@ sign=$(cat sign.txt)
 #### Shared key negociation (VKO):
 <pre>./gosttk -derive -key $prvkey -pub $pubkey
 </pre>
-#### Encryption/decryption with Kuznyechik (GOST2015) symmetric cipher:
+#### Encryption/decryption with Kuznyechik (GOST R 34.12-2015) symmetric cipher:
 <pre>./gosttk -crypt -key $shared < plaintext.ext > ciphertext.ext
 ./gosttk -crypt -key $shared < ciphertext.ext > plaintext.ext
+</pre>
+#### Encryption/decryption with Magma (GOST R 34.13-2015) symmetric cipher:
+<pre>./gosttk -crypt -block 64 -key $shared < plaintext.ext > ciphertext.ext
+./gosttk -crypt -block 64 -key $shared < ciphertext.ext > plaintext.ext
 </pre>
 #### GOST94-CryptoPro hashsum:
 <pre>./gosttk -digest -mode 2001 < file.ext
