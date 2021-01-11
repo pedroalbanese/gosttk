@@ -7,11 +7,13 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
+	"hash"
 	"github.com/pedroalbanese/gogost/gost28147"
 	"github.com/pedroalbanese/gogost/gost3410"
 	"github.com/pedroalbanese/gogost/gost34112012256"
 	"github.com/pedroalbanese/gogost/gost34112012512"
 	"github.com/pedroalbanese/gogost/gost341194"
+	"github.com/pedroalbanese/gogost/gost341264"
 	"github.com/pedroalbanese/gogost/gost3412128"
 	"io"
 	"log"
@@ -26,6 +28,7 @@ import (
 	var key = flag.String("key", "", "Private/Public key, password or HMAC key, depending on operation.")
 	var sig = flag.String("signature", "", "Input signature. (verification only)")
 	var bit = flag.Int("bits", 256, "Bit length: 256 or 512. (digest|generate|sign|VKO)")
+	var block = flag.Int("block", 128, "Block size: 64 or 128. (for symmetric encryption only)")
 	var mode = flag.Int("mode", 2012, "Mode: 2001 or 2012. (digest|generate|sign|VKO)")
 	var sign = flag.Bool("sign", false, "Sign with private key.")
 	var verify = flag.Bool("verify", false, "Verify with public key.")
@@ -47,7 +50,7 @@ func main() {
         }
 
 	
-        if *crypt == true {
+        if *crypt == true && *block == 128 {
 	keyHex := key
 	var key []byte
 	var err error
@@ -69,6 +72,90 @@ func main() {
 	}
 	ciph := gost3412128.NewCipher(key)
 	iv := make([]byte, gost3412128.BlockSize)
+	stream := cipher.NewCTR(ciph, iv)
+	buf := make([]byte, 128*1<<10)
+	var n int
+	for {
+		n, err = os.Stdin.Read(buf)
+		if err != nil && err != io.EOF {
+                        log.Fatal(err)
+		}
+		stream.XORKeyStream(buf[:n], buf[:n])
+		if _, err := os.Stdout.Write(buf[:n]); err != nil {
+                        log.Fatal(err)
+		}
+		if err == io.EOF {
+			break
+		}
+	}
+        os.Exit(0)
+        }
+
+	
+        if *crypt == true && *block == 64 && *mode == 2012 {
+	keyHex := key
+	var key []byte
+	var err error
+	if *keyHex == "" {
+		key = make([]byte, gost341264.KeySize)
+		_, err = io.ReadFull(rand.Reader, key)
+		if err != nil {
+                        log.Fatal(err)
+		}
+		fmt.Fprintln(os.Stderr, "Key=", hex.EncodeToString(key))
+	} else {
+		key, err = hex.DecodeString(*keyHex)
+		if err != nil {
+                        log.Fatal(err)
+		}
+		if len(key) != gost341264.KeySize {
+                        log.Fatal(err)
+		}
+	}
+	ciph := gost341264.NewCipher(key)
+	iv := make([]byte, gost341264.BlockSize)
+	stream := cipher.NewCTR(ciph, iv)
+	buf := make([]byte, 128*1<<10)
+	var n int
+	for {
+		n, err = os.Stdin.Read(buf)
+		if err != nil && err != io.EOF {
+                        log.Fatal(err)
+		}
+		stream.XORKeyStream(buf[:n], buf[:n])
+		if _, err := os.Stdout.Write(buf[:n]); err != nil {
+                        log.Fatal(err)
+		}
+		if err == io.EOF {
+			break
+		}
+	}
+        os.Exit(0)
+        }
+
+
+        if *crypt == true && *block == 64 && *mode == 2001 {
+	keyHex := key
+	var key []byte
+	var err error
+	if *keyHex == "" {
+		key = make([]byte, gost28147.KeySize)
+		_, err = io.ReadFull(rand.Reader, key)
+		if err != nil {
+                        log.Fatal(err)
+		}
+		fmt.Fprintln(os.Stderr, "Key=", hex.EncodeToString(key))
+	} else {
+		key, err = hex.DecodeString(*keyHex)
+		if err != nil {
+                        log.Fatal(err)
+		}
+		if len(key) != gost28147.KeySize {
+                        log.Fatal(err)
+		}
+	}
+	ciph := gost341264.NewCipher(key)
+	iv := make([]byte, gost28147.BlockSize)
 	stream := cipher.NewCTR(ciph, iv)
 	buf := make([]byte, 128*1<<10)
 	var n int
@@ -111,11 +198,30 @@ func main() {
 	if err != nil {
                 log.Fatal(err)
 	}
-	h2 := hmac.New(gost34112012512.New, key)
-	if _, err = io.Copy(h2, os.Stdin); err != nil {
+	h := hmac.New(gost34112012512.New, key)
+	if _, err = io.Copy(h, os.Stdin); err != nil {
                 log.Fatal(err)
 	}
-	fmt.Print(hex.EncodeToString(h2.Sum(nil)))
+	fmt.Print(hex.EncodeToString(h.Sum(nil)))
+        os.Exit(0)
+        }
+
+        if *mac == true && *mode == 2001 {
+	keyHex := key
+	flag.Parse()
+	key, err := hex.DecodeString(*keyHex)
+	if err != nil {
+                log.Fatal(err)
+	}
+        f := func() hash.Hash {
+	return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
+	}
+	hmac.New(f, key)
+	h := hmac.New(gost34112012512.New, key)
+	if _, err = io.Copy(h, os.Stdin); err != nil {
+                log.Fatal(err)
+	}
+	fmt.Print(hex.EncodeToString(h.Sum(nil)))
         os.Exit(0)
         }
 
@@ -290,7 +396,7 @@ func main() {
 		}
 	}
 
-	
+
 	if *generate && *mode == 2001 {
 	var curve *gost3410.Curve
 	curve = gost3410.CurveIdGostR34102001CryptoProAParamSet()
