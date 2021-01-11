@@ -1,18 +1,18 @@
-## ☭ GOST Toolkit: GOST Cipher Suite written in Go ☭
+## GOST Toolkit: GOST Cipher Suite written in Go ☭
 Multi purpose cryptography tool for encryption / decryption, hash digest, digital signature and shared key agreement (VKO).
 
 #### GOST is GOvernment STandard of Russian Federation (and Soviet Union):
 
-☭ GOST 28147-89 (RFC 5830) block cipher
-☭ GOST R 34.11-94 hash function (RFC 5831)
-☭ GOST R 50739-95 Data Sanitization Method (non-cryptographic)
-☭ GOST R 34.10-2001 (RFC 5832) public key signature function
-☭ GOST R 34.10-2012 (RFC 7091) public key signature function
-☭ GOST R 34.11-2012 Стрибог (Streebog) hash function (RFC 6986)
-☭ VKO (выработка ключа общего) GOST R 34.10-2001 key agreement function (RFC 4357)
-☭ VKO GOST R 34.10-2012 key agreement function (RFC 7836)
-☭ GOST R 34.12-2015 128-bit block cipher Кузнечик (Kuznechik) (RFC 7801)
-☭ GOST R 34.12-2015 64-bit block cipher Магма (Magma)
+* GOST 28147-89 (RFC 5830) block cipher
+* GOST R 34.11-94 hash function (RFC 5831)
+* GOST R 50739-95 Data Sanitization Method (non-cryptographic)
+* GOST R 34.10-2001 (RFC 5832) public key signature function
+* GOST R 34.10-2012 (RFC 7091) public key signature function
+* GOST R 34.11-2012 Стрибог (Streebog) hash function (RFC 6986)
+* VKO (выработка ключа общего) GOST R 34.10-2001 key agreement function (RFC 4357)
+* VKO GOST R 34.10-2012 key agreement function (RFC 7836)
+* GOST R 34.12-2015 128-bit block cipher Кузнечик (Kuznechik) (RFC 7801)
+* GOST R 34.12-2015 64-bit block cipher Магма (Magma)
 
 #### TODO:
   - [x] GOST 28147-89 symmetric cipher
