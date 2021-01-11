@@ -1,7 +1,7 @@
 # GOST Toolkit
-##GOST Cipher Suite written in Go
+## GOST Cipher Suite written in Go
 
-###GOST is GOvernment STandard of Russian Federation (and Soviet Union).
+### GOST is GOvernment STandard of Russian Federation (and Soviet Union).
 
 * GOST R 34.11-94 hash function (RFC 5831)
 * GOST R 34.11-2012 Стрибог (Streebog) hash function (RFC 6986)
@@ -9,7 +9,7 @@
 * VKO (выработка ключа общего) GOST R 34.10-2012 key agreement function (RFC 7836)
 * GOST R 34.12-2015 128-bit block cipher Кузнечик (Kuznechik) (RFC 7801)
 
-##Usage:
+## Usage:
 <pre>  -bits int
         Bit length: 256 or 512. (digest|generate|sign|VKO) (default 256)
   -crypt
