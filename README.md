@@ -1,7 +1,7 @@
 ## GOST Toolkit: GOST Cipher Suite written in Go
 Multi purpose cryptography tool for encryption / decryption, hash digest, digital signature and shared key agreement (VKO).
 
-#### GOST is GOvernment STandard of Russian Federation (and Soviet Union).
+#### GOST is GOvernment STandard of Russian Federation (and Soviet Union):
 
 * GOST 28147-89 (RFC 5830) block cipher
 * GOST R 34.11-94 hash function (RFC 5831)
