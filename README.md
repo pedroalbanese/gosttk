@@ -1,5 +1,5 @@
 ## GOST Toolkit: GOST Cipher Suite written in Go
-Multi purpose cryptography tool for encryption / decryption, digital signature and shared key agreement (VKO).
+Multi purpose cryptography tool for encryption / decryption, hash digest, digital signature and shared key agreement (VKO).
 
 ### GOST is GOvernment STandard of Russian Federation (and Soviet Union).
 
