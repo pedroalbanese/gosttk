@@ -1,4 +1,4 @@
-# GOST Toolkit: GOST Cipher Suite written in Go
+## GOST Toolkit: GOST Cipher Suite written in Go
 
 ### GOST is GOvernment STandard of Russian Federation (and Soviet Union).
 
@@ -34,7 +34,7 @@
   -verify
         Verify with public key.</pre>
 ## Example:
-### Asymmetric GOST R 34.10-2012 512-bit keypair generation (INI format):
+#### Asymmetric GOST R 34.10-2012 512-bit keypair generation (INI format):
 <pre>./gosttk -generate -bits 512
 </pre>
 ### Signature:
