@@ -47,6 +47,3 @@ sign=$(cat sign.txt)
 <h5>Shared key negociation:</h5>
 <pre>./gosttk -key $prvkey -pub $pubkey
 </pre>
-<h5>GOST94-CrytoPro hashsum:</h5>
-<pre>./gosttk -disget94 < file.ext
-</pre>
