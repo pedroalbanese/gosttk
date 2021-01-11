@@ -26,12 +26,12 @@ import (
 	var key = flag.String("key", "", "Private/Public key, password or HMAC key, depending on operation.")
 	var sig = flag.String("signature", "", "Input signature. (verification only)")
 	var bit = flag.Int("bits", 256, "Bit length: 256 or 512. (digest|generate|sign|VKO)")
-	var mode = flag.Int("mode", 2012, "Mode: 2001 or 2012. (generate|sign|VKO)")
+	var mode = flag.Int("mode", 2012, "Mode: 2001 or 2012. (digest|generate|sign|VKO)")
 	var sign = flag.Bool("sign", false, "Sign with private key.")
 	var verify = flag.Bool("verify", false, "Verify with public key.")
 	var generate = flag.Bool("generate", false, "Generate GOST R 34.10-2012 or 34.10-2001 asymmetric keypair.")
-	var digest = flag.Bool("digest", false, "Compute Streebog256/512 (GOST R 34.11-2012) hashsum.")
-	var digest94 = flag.Bool("digest94", false, "Compute GOST94-CryptoPro (GOST R 34.11-94) hashsum.")
+	var digest = flag.Bool("digest", false, "Compute Streebog256/512 or GOST94-CryptoPro hashsum.")
+
 
 func main() {
     flag.Parse()
@@ -41,7 +41,7 @@ func main() {
         os.Exit(1)
         }
 
-        if *sign == false && *verify == false && *generate == false && *digest == false && *derive == false && *digest94 == false && *crypt == false && *mac == false {
+        if *sign == false && *verify == false && *generate == false && *digest == false && *derive == false && *crypt == false && *mac == false {
 	fmt.Println("Select: -digest|hmac, -sign|verify, -generate, -derive or -crypt. (type -h)")
         os.Exit(1)
         }
@@ -88,7 +88,7 @@ func main() {
         os.Exit(0)
         }
 
-	
+
         if *mac == true && *bit == 256 {
 	keyHex := key
 	flag.Parse()
@@ -119,7 +119,7 @@ func main() {
         os.Exit(0)
         }
 
-        if *digest94 == true {
+        if *digest == true && *mode == 2001 {
 	h := gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
 	io.Copy(h, os.Stdin)
 	fmt.Print(hex.EncodeToString(h.Sum(nil)))
@@ -140,7 +140,7 @@ func main() {
         os.Exit(0)
         }
 
-	
+
 	var err error
         if *derive == true && *mode == 2012 {
 
@@ -187,7 +187,7 @@ func main() {
 	os.Exit(0)
 	}
 
-	
+
         if *derive == true && *mode == 2001 {
 
 	var curve *gost3410.Curve
