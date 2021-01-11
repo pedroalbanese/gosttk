@@ -26,8 +26,24 @@
         Input signature. (verification only)
   -verify
         Verify with public key.</pre>
-<h5>Example:</h5>
+<h4>Example:</h4>
+<h5>Signature:</h5>
 <pre>./gosttk -sign -key $prvkey < file.ext > sign.txt
 sign=$(cat sign.txt)
 ./gosttk -verify -key $pubkey -signature $sign < file.ext
+</pre>
+<h5>GOST94-CrytoPro hashsum:</h5>
+<pre>./gosttk -digest94 < file.ext
+</pre>
+<h5>Streebog512 hashsum:</h5>
+<pre>./gosttk -digest -bist512 < file.ext
+</pre>
+<h5>HMAC-Streebog512:</h5>
+<pre>./gosttk -hmac -bits 512 -key $key < file.ext
+</pre>
+<h5>Shared key negociation:</h5>
+<pre>./gosttk -key $prvkey -pub $pubkey
+</pre>
+<h5>GOST94-CrytoPro hashsum:</h5>
+<pre>./gosttk -disget94 < file.ext
 </pre>
