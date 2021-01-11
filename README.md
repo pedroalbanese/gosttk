@@ -16,7 +16,7 @@
  - [x] VKO GOST R 34.10-2001 key agreement function
 
 #### Usage:
-<pre>    -bits int
+<pre>   -bits int
         Bit length: 256 or 512. (digest|generate|sign|VKO) (default 256)
   -crypt
         Encrypt/Decrypt with Kuznyechik (GOST R 34.12-2015) symmetric cipher.
