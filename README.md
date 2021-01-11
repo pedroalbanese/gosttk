@@ -60,4 +60,4 @@ sign=$(cat sign.txt)
 <pre>./gosttk -hmac -bits 512 -key $key < file.ext
 </pre>
 
-Military Grade Reliability.
+Military Grade Reliability. Copyright (c) 2020-2021 Pedro Albanese - ALBANESE Lab.
