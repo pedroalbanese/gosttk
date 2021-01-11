@@ -46,7 +46,7 @@ sign=$(cat sign.txt)
 <h5>Shared key negociation (VKO):</h5>
 <pre>./gosttk -derive -key $prvkey -pub $pubkey
 </pre>
-<h5>Encryptio/decryption with Kuznyechi (GOST2015) symmetric cipher:</h5>
+<h5>Encryption/decryption with Kuznyechi (GOST2015) symmetric cipher:</h5>
 <pre>./gosttk -crypt -key $shared < paintext.ext > ciphertext.ext
 ./gosttk -crypt -key $shared < ciphertext.ext > paintext.ext
 </pre>
