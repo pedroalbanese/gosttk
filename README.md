@@ -57,7 +57,7 @@ sign=$(cat sign.txt)
 ./gosttk -crypt -key $shared < ciphertext.ext > plaintext.ext
 </pre>
 #### GOST94-CryptoPro hashsum:
-<pre>./gosttk -digest94 < file.ext
+<pre>./gosttk -digest -mode 2001 < file.ext
 </pre>
 #### Streebog512 hashsum:
 <pre>./gosttk -digest -bits 512 < file.ext
