@@ -44,7 +44,7 @@ Multi purpose cryptography tool for encryption / decryption, hash digest, digita
  -pub string
        Remote's side public key. (for shared key derivation only)
  -shred string
-       File/Path/Wildicard to apply GOST R 50739-95 Data Sanitization Method.
+       File/Path/Wildcard to apply GOST R 50739-95 Data Sanitization Method.
  -sign
        Sign with private key.
  -signature string
