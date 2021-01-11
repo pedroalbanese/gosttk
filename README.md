@@ -37,26 +37,26 @@
 #### Asymmetric GOST R 34.10-2012 512-bit keypair generation (INI format):
 <pre>./gosttk -generate -bits 512
 </pre>
-### Signature:
+#### Signature:
 <pre>./gosttk -sign -bits 512 -key $prvkey < file.ext > sign.txt
 sign=$(cat sign.txt)
 ./gosttk -verify -bits 512 -key $pubkey -signature $sign < file.ext
 </pre>
-### Shared key negociation (VKO):
+#### Shared key negociation (VKO):
 <pre>./gosttk -derive -key $prvkey -pub $pubkey
 </pre>
-### Encryption/decryption with Kuznyechik (GOST2015) symmetric cipher:
+#### Encryption/decryption with Kuznyechik (GOST2015) symmetric cipher:
 <pre>./gosttk -crypt -key $shared < plaintext.ext > ciphertext.ext
 ./gosttk -crypt -key $shared < ciphertext.ext > plaintext.ext
 </pre>
-### GOST94-CryptoPro hashsum:
+#### GOST94-CryptoPro hashsum:
 <pre>./gosttk -digest94 < file.ext
 </pre>
-### Streebog512 hashsum:
+#### Streebog512 hashsum:
 <pre>./gosttk -digest -bits 512 < file.ext
 </pre>
-### HMAC-Streebog512 (hash-based message authentication code):
+#### HMAC-Streebog512 (hash-based message authentication code):
 <pre>./gosttk -hmac -bits 512 -key $key < file.ext
 </pre>
 
-*Military Grade Reliability. Copyright (c) 2020-2021 Pedro Albanese - ALBANESE Lab.*
+##### Military Grade Reliability. Copyright (c) 2020-2021 Pedro Albanese - ALBANESE Lab.
