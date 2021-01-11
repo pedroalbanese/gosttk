@@ -16,7 +16,7 @@
   - [x] GOST R 34.10-2001 public key signature function
   - [x] VKO GOST R 34.10-2001 key agreement function
 
-#### Usage:
+### Usage:
 <pre>  -bits int
         Bit length: 256 or 512. (digest|generate|sign|VKO) (default 256)
   -crypt
