@@ -9,6 +9,7 @@
 * VKO (выработка ключа общего) GOST R 34.10-2001 key agreement function (RFC 4357)
 * VKO GOST R 34.10-2012 key agreement function (RFC 7836)
 * GOST R 34.12-2015 128-bit block cipher Кузнечик (Kuznechik) (RFC 7801)
+* GOST R 34.12-2015 64-bit block cipher Магма (Magma)
 
 #### TODO:
   - [ ] GOST 28147-89 symmetric cipher
