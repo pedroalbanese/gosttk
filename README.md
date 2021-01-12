@@ -55,7 +55,7 @@ Multi purpose cryptography tool for encryption / decryption, hash digest, hash-b
 #### Asymmetric GOST R 34.10-2001 256-bit keypair generation (INI format):
 <pre>./gosttk -generate -mode 2001
 </pre>
-#### Asymmetric GOST R 34.10-2012 256/512-bit keypair generation:
+#### Asymmetric GOST R 34.10-2012 256/512-bit keypair generation (default):
 <pre>./gosttk -generate [-bits 512]
 </pre>
 #### Signature:
