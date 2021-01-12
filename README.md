@@ -55,13 +55,16 @@ Multi purpose cryptography tool for encryption / decryption, hash digest, hash-b
 #### Asymmetric GOST R 34.10-2001 256-bit keypair generation (INI format):
 <pre>./gosttk -generate -mode 2001
 </pre>
+#### Asymmetric GOST R 34.10-2012 256-bit keypair generation (INI format):
+<pre>./gosttk -generate
+</pre>
 #### Asymmetric GOST R 34.10-2012 512-bit keypair generation (INI format):
 <pre>./gosttk -generate -bits 512
 </pre>
 #### Signature:
-<pre>./gosttk -sign -bits 512 -key $prvkey < file.ext > sign.txt
+<pre>./gosttk -sign [-bits 512] -key $prvkey < file.ext > sign.txt
 sign=$(cat sign.txt)
-./gosttk -verify -bits 512 -key $pubkey -signature $sign < file.ext
+./gosttk -verify [-bits 512] -key $pubkey -signature $sign < file.ext
 </pre>
 #### Shared key negociation (VKO):
 <pre>./gosttk -derive [-bits 512] -key $prvkey -pub $pubkey
