@@ -48,7 +48,7 @@ func main() {
         }
 
         if *sign == false && *verify == false && *generate == false && *digest == false && *derive == false && *crypt == false && *mac == false && *del == "" {
-	fmt.Println("Select: -digest|hmac, -sign|verify, -generate, -derive or -crypt. (type -h)")
+	fmt.Println("Set: -digest|hmac, -sign|verify, -generate|derive, -shred or -crypt. (type -h)")
         os.Exit(1)
         }
 
