@@ -64,7 +64,7 @@ sign=$(cat sign.txt)
 ./gosttk -verify [-bits 512] -key $pubkey -signature $sign < file.ext
 </pre>
 #### Shared key negociation (VKO):
-<pre>./gosttk -derive [-bits 512] -key $prvkey -pub $pubkey
+<pre>./gosttk -derive [-bits 512|-mode 2001] -key $prvkey -pub $pubkey
 </pre>
 #### Encryption/decryption with Magma (GOST R 34.12-2015) symmetric cipher (default):
 <pre>./gosttk -crypt -key $shared < plaintext.ext > ciphertext.ext
