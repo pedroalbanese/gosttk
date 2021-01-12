@@ -28,7 +28,7 @@ Multi purpose cryptography tool for encryption / decryption, hash digest, hash-b
  -block int
        Block size: 64 or 128. (for symmetric encryption only) (default 64)
  -crypt
-       Encrypt/Decrypt with Kuznyechik/Magma/28147-89 symmetric ciphers.
+       Encrypt/Decrypt with Magma/28147-89/Kuznyechik symmetric ciphers.
  -derive
        Derive shared key negociation (VKO).
  -digest
