@@ -84,11 +84,11 @@ sign=$(cat sign.txt)
 #### HMAC-GOST94-CryptoPro based (hash-based message authentication code):
 <pre>./gosttk -hmac -mode 2001 -key $256bitkey < file.ext
 </pre>
-#### Streebog512 hashsum:
-<pre>./gosttk -digest -bits 512 < file.ext
+#### Streebog256/512 hashsum:
+<pre>./gosttk -digest [-bits 512] < file.ext
 </pre>
-#### HMAC-Streebog512:
-<pre>./gosttk -hmac -bits 512 -key $256bitkey < file.ext
+#### HMAC-Streebog256/512:
+<pre>./gosttk -hmac [-bits 512] -key $256bitkey < file.ext
 </pre>
 
 ##### Military Grade Reliability. Copyright (c) 2020-2021 Pedro Albanese - ALBANESE Lab.
