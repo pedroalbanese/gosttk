@@ -1,5 +1,5 @@
 ## GOST Toolkit: GOST Cipher Suite written in Go ☭
-Multi purpose cryptography tool for encryption / decryption, hash digest, hash-based message authentication code (HMAC), digital signature, shared key agreement (VKO) and PBKDF2 function.
+Multi purpose cross-platform cryptography tool for encryption / decryption, hash digest, hash-based message authentication code (HMAC), digital signature, shared key agreement (VKO) and PBKDF2 function.
 
 #### GOST is GOvernment STandard of Russian Federation (and Soviet Union):
 
