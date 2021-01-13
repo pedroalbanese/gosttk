@@ -39,7 +39,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
  -hmac
        Compute HMAC.
  -iter int
-       Iterations. (for shred and PBKDF2 only) (default 25)
+       Iterations. (for shred and PBKDF2 only) (default 1)
  -key string
        Private/Public key, password or HMAC key, depending on operation.
  -mode int
