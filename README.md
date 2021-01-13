@@ -31,6 +31,9 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 * VKO
 * PBKDF2
 
+#### Non-Cryptographic Functions
+* GOST R 50739-95 data sanitization method
+
 #### TODO:
   - [x] PBKDF2 Function
   - [x] GOST 28147-89 symmetric cipher
