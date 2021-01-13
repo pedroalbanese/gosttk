@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
+	"golang.org/x/crypto/pbkdf2"
 	"github.com/pedroalbanese/gogost/gost28147"
 	"github.com/pedroalbanese/gogost/gost3410"
 	"github.com/pedroalbanese/gogost/gost34112012256"
@@ -27,17 +28,19 @@ import (
 	var del = flag.String("shred", "", "File/Path/Wildcard to apply GOST R 50739-95 Data Sanitization Method.")
 	var crypt = flag.Bool("crypt", false, "Encrypt/Decrypt with Kuznyechik/Magma/28147-89 symmetric ciphers.")
 	var derive = flag.Bool("derive", false, "Derive shared key negociation (VKO).")
+	var pbkdf = flag.Bool("pbkdf2", false, "Password based key derivation function.")
 	var mac = flag.Bool("hmac", false, "Compute HMAC-Streebog256/512 or HMAC-GOST94-CryptoPro.")
 	var key = flag.String("key", "", "Private/Public key, password or HMAC key, depending on operation.")
 	var sig = flag.String("signature", "", "Input signature. (verification only)")
-	var bit = flag.Int("bits", 256, "Bit length: 256 or 512. (digest|generate|sign|VKO)")
+	var bit = flag.Int("bits", 256, "Bit length: 256 or 512.")
 	var block = flag.Int("block", 64, "Block size: 64 or 128. (for symmetric encryption only)")
-	var mode = flag.Int("mode", 2012, "Mode: 2001 or 2012. (digest|generate|sign|VKO)")
+	var mode = flag.Int("mode", 2012, "Mode: 2001 or 2012.")
 	var sign = flag.Bool("sign", false, "Sign with private key.")
 	var verify = flag.Bool("verify", false, "Verify with public key.")
 	var generate = flag.Bool("generate", false, "Generate GOST R 34.10-2012 or 34.10-2001 asymmetric keypair.")
 	var digest = flag.Bool("digest", false, "Compute Streebog256/512 or GOST94-CryptoPro hashsum.")
-
+	var salt = flag.String("salt", "Salt_", "Salt. (for PBKDF2 only)")
+	var iter = flag.Int("iter", 24, "Iterations. (for shred and PBKDF2 only)")
 
 func main() {
     flag.Parse()
@@ -47,12 +50,12 @@ func main() {
         os.Exit(1)
         }
 
-        if *sign == false && *verify == false && *generate == false && *digest == false && *derive == false && *crypt == false && *mac == false && *del == "" {
-	fmt.Println("Set: -digest|hmac, -sign|verify, -generate|derive, -shred or -crypt. (type -h)")
+        if *sign == false && *verify == false && *generate == false && *digest == false && *derive == false && *crypt == false && *mac == false && *del == "" && *pbkdf == false {
+	fmt.Println("Select: -digest|hmac, -sign|verify, -generate, -derive or -crypt. (type -h)")
         os.Exit(1)
         }
 
-
+	
         if *crypt == true && *block == 128 && *mode == 2012 {
 	keyHex := key
 	var key []byte
@@ -136,7 +139,7 @@ func main() {
         os.Exit(0)
         }
 
-
+	
         if *crypt == true && *block == 64 && *mode == 2001 {
 	keyHex := key
 	var key []byte
@@ -179,9 +182,34 @@ func main() {
         }
 
 
+        if *pbkdf == true && *mode == 2012 && *bit == 256 {
+	prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012256.New)
+
+	fmt.Print(hex.EncodeToString(prvRaw))
+	os.Exit(1)
+	}
+
+        if *pbkdf == true && *mode == 2012 && *bit == 512 {
+	prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012512.New)
+
+	fmt.Print(hex.EncodeToString(prvRaw))
+	os.Exit(1)
+	}
+
+        if *pbkdf == true && *mode == 2001 && *bit == 256 {
+        f := func() hash.Hash {
+	return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
+	}
+	prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, f)
+
+	fmt.Print(hex.EncodeToString(prvRaw))
+	os.Exit(1)
+	}
+
+	
         if *del != "" {
 	shredder := shred.Shredder{}
-	shredconf := shred.NewShredderConf(&shredder, shred.WriteZeros|shred.WriteRand, 25, true)
+	shredconf := shred.NewShredderConf(&shredder, shred.WriteZeros|shred.WriteRand, *iter, true)
 	matches, err := filepath.Glob(*del)
 	if err != nil {
 		panic(err)
@@ -266,7 +294,7 @@ func main() {
         os.Exit(0)
         }
 
-	
+
 	var err error
         if *derive == true && *mode == 2012 {
 
@@ -355,7 +383,7 @@ func main() {
 	os.Exit(0)
 	}
 
-
+	
 	if *generate && *mode == 2012 {
 	var curve *gost3410.Curve
 
@@ -566,7 +594,7 @@ func main() {
         fmt.Println("Verify correct.")
 	} 
 
-		
+
 	if *sign == true && *mode == 2001 {
 	var curve *gost3410.Curve
 	curve = gost3410.CurveIdGostR34102001CryptoProAParamSet()
