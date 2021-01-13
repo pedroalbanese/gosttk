@@ -29,17 +29,17 @@ Multi purpose cryptography tool for encryption / decryption, hash digest, hash-b
  -block int
        Block size: 64 or 128. (for symmetric encryption only) (default 64)
  -crypt
-       Encrypt/Decrypt with Kuznyechik/Magma/28147-89 symmetric ciphers.
+       Encrypt/Decrypt with symmetric ciphers.
  -derive
        Derive shared key negociation (VKO).
  -digest
-       Compute Streebog256/512 or GOST94-CryptoPro hashsum.
+       Compute hashsum.
  -generate
-       Generate GOST R 34.10-2012 or 34.10-2001 asymmetric keypair.
+       Generate asymmetric keypair.
  -hmac
-       Compute HMAC-Streebog256/512 or HMAC-GOST94-CryptoPro.
+       Compute HMAC.
  -iter int
-       Iterations. (for shred and PBKDF2 only) (default 24)
+       Iterations. (for shred and PBKDF2 only) (default 25)
  -key string
        Private/Public key, password or HMAC key, depending on operation.
  -mode int
@@ -51,7 +51,7 @@ Multi purpose cryptography tool for encryption / decryption, hash digest, hash-b
  -salt string
        Salt. (for PBKDF2 only) (default "Salt_")
  -shred string
-       File/Path/Wildcard to apply GOST R 50739-95 Data Sanitization Method.
+       File/Path/Wildcard to apply data sanitization method.
  -sign
        Sign with private key.
  -signature string
