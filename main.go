@@ -31,7 +31,7 @@ import (
 	var derive = flag.Bool("derive", false, "Derive shared key negociation (VKO).")
 	var digest = flag.Bool("digest", false, "Compute hashsum.")
 	var generate = flag.Bool("generate", false, "Generate asymmetric keypair.")
-	var iter = flag.Int("iter", 25, "Iterations. (for shred and PBKDF2 only)")
+	var iter = flag.Int("iter", 1, "Iterations. (for shred and PBKDF2 only)")
 	var key = flag.String("key", "", "Private/Public key, password or HMAC key, depending on operation.")
 	var mac = flag.Bool("hmac", false, "Compute HMAC.")
 	var mode = flag.Int("mode", 2012, "Mode: 2001 or 2012.")
