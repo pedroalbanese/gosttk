@@ -20,11 +20,11 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 * Kuznechik (Grasshopper)
 
 #### Asymmetric Ciphers:
-* GOST R 34.10-2001 CryptoPro
+* GOST R 34.10-2001 CryptoPro 256-bit
 * GOST R 34.10-2012 256/512-bit (default) 
 
 #### Hash Ciphers:
-* GOST R 34.11-94 CryptoPro
+* GOST R 34.11-94 CryptoPro 256-bit
 * GOST R 34.11-2012 Streebog 256/512-bit (default) 
 
 #### Cryptographic Functions
