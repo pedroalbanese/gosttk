@@ -27,7 +27,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 * GOST R 34.11-94 CryptoPro 256-bit
 * GOST R 34.11-2012 Streebog 256/512-bit (default) 
 
-#### Cryptographic Functions
+#### Cryptographic Functions:
 * Symmetric Encryption/Decryption
 * Digital Signature (Asymmetric Encryption)
 * VKO (Asymmetric Encryption)
@@ -35,7 +35,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 * HMAC
 * PBKDF2
 
-#### Non-Cryptographic Functions
+#### Non-Cryptographic Functions:
 * GOST R 50739-95 data sanitization method
 
 #### TODO:
