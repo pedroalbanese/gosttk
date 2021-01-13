@@ -100,5 +100,8 @@ sign=$(cat sign.txt)
 #### PBKDF2 (password-based key derivation function 2):
 <pre>./gosttk -pbkdf2 [-bits|-mode] -key "pass" -iter 10000 -salt "salt"
 </pre>
+#### Shred (GOST R 50739-95 data sanitization method, 25 iterations):
+<pre>./gosttk -shred keypair.ini -iter 25
+</pre>
 
 ##### Military Grade Reliability. Copyright (c) 2020-2021 Pedro Albanese - ALBANESE Lab.
