@@ -14,6 +14,23 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 * GOST R 34.12-2015 128-bit block cipher Кузнечик (Kuznechik) (RFC 7801)
 * GOST R 34.12-2015 64-bit block cipher Магма (Magma)
 
+#### Symmetric Ciphers:
+* GOST 28147-89 [-mode 2001]
+* Kuznechik (Grasshopper) [-block 128]
+* Magma (default)
+
+#### Asymmetric Ciphers:
+* GOST R 34.10-2001 CryptoPro [-mode 2001]
+* GOST R 34.10-2012 (default) 
+
+#### Cryptographic Functions
+* Encryption/Decryption
+* Hash Digest
+* HMAC
+* Digital Signature
+* VKO
+* PBKDF2
+
 #### TODO:
   - [x] PBKDF2 Function
   - [x] GOST 28147-89 symmetric cipher
