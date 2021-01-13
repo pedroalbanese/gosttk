@@ -25,11 +25,11 @@ Multi purpose cryptography tool for encryption / decryption, hash digest, hash-b
 
 ### Usage:
 <pre> -bits int
-       Bit length: 256 or 512. (digest|generate|sign|VKO) (default 256)
+       Bit length: 256 or 512. (default 256)
  -block int
        Block size: 64 or 128. (for symmetric encryption only) (default 64)
  -crypt
-       Encrypt/Decrypt with Magma/28147-89/Kuznyechik symmetric ciphers.
+       Encrypt/Decrypt with Kuznyechik/Magma/28147-89 symmetric ciphers.
  -derive
        Derive shared key negociation (VKO).
  -digest
@@ -38,12 +38,18 @@ Multi purpose cryptography tool for encryption / decryption, hash digest, hash-b
        Generate GOST R 34.10-2012 or 34.10-2001 asymmetric keypair.
  -hmac
        Compute HMAC-Streebog256/512 or HMAC-GOST94-CryptoPro.
+ -iter int
+       Iterations. (for shred and PBKDF2 only) (default 24)
  -key string
        Private/Public key, password or HMAC key, depending on operation.
  -mode int
-       Mode: 2001 or 2012. (digest|generate|sign|VKO) (default 2012)
+       Mode: 2001 or 2012. (default 2012)
+ -pbkdf2
+       Password based key derivation function.
  -pub string
        Remote's side public key. (for shared key derivation only)
+ -salt string
+       Salt. (for PBKDF2 only) (default "Salt_")
  -shred string
        File/Path/Wildcard to apply GOST R 50739-95 Data Sanitization Method.
  -sign
