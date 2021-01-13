@@ -27,7 +27,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 * Symmetric Encryption/Decryption
 * Digital Signature (Asymmetric Encryption)
 * VKO (Asymmetric Encryption)
-* Hash Digest
+* Hash Digest (Irreversible Encryption)
 * HMAC
 * PBKDF2
 
