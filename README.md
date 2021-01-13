@@ -24,11 +24,11 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 * GOST R 34.10-2012 (default) 
 
 #### Cryptographic Functions
-* Encryption/Decryption
+* Symmetric Encryption/Decryption
+* Digital Signature (Asymmetric Encryption)
+* VKO (Asymmetric Encryption)
 * Hash Digest
 * HMAC
-* Digital Signature
-* VKO
 * PBKDF2
 
 #### Non-Cryptographic Functions
