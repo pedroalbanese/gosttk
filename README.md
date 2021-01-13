@@ -97,7 +97,7 @@ sign=$(cat sign.txt)
 #### HMAC-Streebog256/512:
 <pre>./gosttk -hmac [-bits 512] -key $256bitkey < file.ext
 </pre>
-#### PBKDF2:
+#### PBKDF2 (password-based key derivation function 2):
 <pre>./gosttk -pbkdf2 [-bits|-mode] -key "pass" -iter 10000 -salt "salt"
 </pre>
 
