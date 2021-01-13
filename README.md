@@ -98,7 +98,7 @@ sign=$(cat sign.txt)
 <pre>./gosttk -hmac [-bits 512] -key $256bitkey < file.ext
 </pre>
 #### PBKDF2:
-<pre>./gosttk -hmac [-bits 512|-mode 2001] -key "yourstrongpassword" -iter 10000 -salt "yoursalt"
+<pre>./gosttk -hmac [-bits 512|-mode 2001] -key "password" -iter 10000 -salt "yoursalt"
 </pre>
 
 ##### Military Grade Reliability. Copyright (c) 2020-2021 Pedro Albanese - ALBANESE Lab.
