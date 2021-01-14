@@ -32,8 +32,8 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 * Digital Signature
 * VKO (выработка ключа общего) shared key negociation
 * Hash Digest 
-* HMAC (Hash-based Message Authentication Code)
-* PBKDF2 (Password-based Key Derivation Function 2)
+* HMAC (Hash-based message authentication code)
+* PBKDF2 (Password-based key derivation function 2)
 
 #### Non-Cryptographic Functions:
 * GOST R 50739-95 data sanitization method
