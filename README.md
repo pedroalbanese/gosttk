@@ -7,7 +7,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 * GOST R 34.11-94 hash function 256-bit (RFC 5831)
 * GOST R 50739-95 data sanitization method (non-cryptographic)
 * GOST R 34.10-2001 (RFC 5832) public key signature function
-* VKO (выработка ключа общего) GOST R 34.10-2001 key agreement function (RFC 4357)
+* VKO GOST R 34.10-2001 key agreement function (RFC 4357)
 * GOST R 34.10-2012 (RFC 7091) public key signature function
 * VKO GOST R 34.10-2012 key agreement function (RFC 7836)
 * GOST R 34.11-2012 Стрибог (Streebog) hash function 256/512-bit (RFC 6986)
@@ -29,11 +29,11 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 
 #### Cryptographic Functions:
 * Symmetric Encryption/Decryption
-* Digital Signature (Asymmetric Encryption)
-* VKO (Asymmetric Encryption)
-* Hash Digest (Irreversible Encryption)
-* HMAC
-* PBKDF2
+* Digital Signature [Asymmetric Encryption]
+* VKO (выработка ключа общего) shared key negociation [Asymmetric Encryption]
+* Hash Digest [Irreversible Encryption]
+* HMAC (Password-based key derivation function 2) [Summetric+Irreversioble Encryption]
+* PBKDF2 [Summetric+Irreversioble Encryption]
 
 #### Non-Cryptographic Functions:
 * GOST R 50739-95 data sanitization method
