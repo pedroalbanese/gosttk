@@ -57,9 +57,11 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
  -derive
        Derive shared key negociation (VKO).
  -digest
-       Compute hashsum.
+       Compute a single hashsum.
  -generate
        Generate asymmetric keypair.
+ -hashsum string
+       File/Wildcard to generate hashsum list.
  -hmac
        Compute HMAC.
  -iter int
@@ -68,6 +70,8 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
        Private/Public key, password or HMAC key, depending on operation.
  -mode int
        Mode: 2001 or 2012. (default 2012)
+ -paramset string
+       Curve paramset: A, B, C, D, XA, XB. (default "A")
  -pbkdf2
        Password based key derivation function.
  -pub string
@@ -75,7 +79,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
  -salt string
        Salt. (for PBKDF2 only) (default "Salt_")
  -shred string
-       File/Path/Wildcard to apply data sanitization method.
+       Files/Path/Wildcard to apply data sanitization method.
  -sign
        Sign with private key.
  -signature string
