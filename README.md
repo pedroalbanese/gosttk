@@ -29,11 +29,11 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 
 #### Cryptographic Functions:
 * Symmetric Encryption/Decryption
-* Digital Signature [Asymmetric Encryption]
-* VKO (выработка ключа общего) shared key negociation [Asymmetric Encryption]
-* Hash Digest [Irreversible Encryption]
-* HMAC (Hash-based Message Authentication Code) [Symmetric+Irreversible]
-* PBKDF2 (Password-based Key Derivation Function 2) [Symmetric+Irreversible]
+* Digital Signature
+* VKO (выработка ключа общего) shared key negociation
+* Hash Digest 
+* HMAC (Hash-based Message Authentication Code)
+* PBKDF2 (Password-based Key Derivation Function 2)
 
 #### Non-Cryptographic Functions:
 * GOST R 50739-95 data sanitization method
