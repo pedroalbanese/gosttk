@@ -33,7 +33,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 * VKO (выработка ключа общего) shared key negociation [Asymmetric Encryption]
 * Hash Digest [Irreversible Encryption]
 * HMAC (Hash-based Message Authentication Code) [Symmetric+Irreversible]
-* PBKDF2 (Password-based key derivation function 2) [Symmetric+Irreversible]
+* PBKDF2 (Password-based Key Derivation Function 2) [Symmetric+Irreversible]
 
 #### Non-Cryptographic Functions:
 * GOST R 50739-95 data sanitization method
