@@ -33,29 +33,46 @@ import (
 	var generate = flag.Bool("generate", false, "Generate asymmetric keypair.")
 	var iter = flag.Int("iter", 1, "Iterations. (for shred and PBKDF2 only)")
 	var key = flag.String("key", "", "Private/Public key, password or HMAC key, depending on operation.")
-	var mac = flag.Bool("hmac", false, "Compute HMAC.")
+	var mac = flag.Bool("hmac", false, "Compute 256-bit HMAC.")
 	var mode = flag.Int("mode", 2012, "Mode: 2001 or 2012.")
+	var operation = flag.String("operation", "CTR", "Operation mode: CTR or OFB.")
+	var paramset = flag.String("paramset", "A", "Elliptic curve ParamSet: A, B, C, D, XA, XB.")
 	var pbkdf = flag.Bool("pbkdf2", false, "Password based key derivation function.")
 	var pubHex = flag.String("pub", "", "Remote's side public key. (for shared key derivation only)")
-	var salt = flag.String("salt", "Salt_", "Salt. (for PBKDF2 only)")
+	var random = flag.Bool("rand", false, "Generate random 256-bit cryptographic key.")
+	var salt = flag.String("salt", "", "Salt. (for PBKDF2 only)")
 	var sig = flag.String("signature", "", "Input signature. (verification only)")
 	var sign = flag.Bool("sign", false, "Sign with private key.")
-	var verify = flag.Bool("verify", false, "Verify with public key.")
 	var target = flag.String("hashsum", "", "File/Wildcard to generate hashsum list.")
-	var paramset = flag.String("paramset", "A", "Curve paramset: A, B, C, D, XA, XB.")
+	var verify = flag.Bool("verify", false, "Verify with public key.")
 
 func main() {
     flag.Parse()
 
         if (len(os.Args) < 2) {
-	fmt.Println("Set: -digest|hmac, -sign|verify, -generate|derive, -shred or -crypt. (type -h)")
+	fmt.Println("Usage of",os.Args[0]+":")
+        flag.PrintDefaults()
         os.Exit(1)
         }
 
-        if *sign == false && *verify == false && *generate == false && *digest == false && *derive == false && *crypt == false && *mac == false && *del == "" && *target == "" && *pbkdf == false {
-	fmt.Println("Set: -digest|hmac, -sign|verify, -generate|derive, -shred or -crypt. (type -h)")
+        if *sign == false && *verify == false && *generate == false && *digest == false && *derive == false && *crypt == false && *mac == false && *del == "" && *target == "" && *random == false && *pbkdf == false {
+	fmt.Println("Usage of",os.Args[0]+":")
+        flag.PrintDefaults()
         os.Exit(1)
         }
+
+
+	if *random == true {
+	var key []byte
+	var err error
+		key = make([]byte, gost3412128.KeySize)
+		_, err = io.ReadFull(rand.Reader, key)
+		if err != nil {
+                        log.Fatal(err)
+		}
+		fmt.Print(hex.EncodeToString(key))
+        	os.Exit(0)
+	}
 
 
         if *crypt == true && *block == 128 && *mode == 2012 {
@@ -78,6 +95,7 @@ func main() {
                         log.Fatal(err)
 		}
 	}
+	if *operation == "CTR" {
 	ciph := gost3412128.NewCipher(key)
 	iv := make([]byte, gost3412128.BlockSize)
 	stream := cipher.NewCTR(ciph, iv)
@@ -96,8 +114,28 @@ func main() {
 			break
 		}
 	}
+	} else if *operation == "OFB" {
+	ciph := gost3412128.NewCipher(key)
+	iv := make([]byte, gost3412128.BlockSize)
+	stream := cipher.NewOFB(ciph, iv)
+	buf := make([]byte, 128*1<<10)
+	var n int
+	for {
+		n, err = os.Stdin.Read(buf)
+		if err != nil && err != io.EOF {
+                        log.Fatal(err)
+		}
+		stream.XORKeyStream(buf[:n], buf[:n])
+		if _, err := os.Stdout.Write(buf[:n]); err != nil {
+                        log.Fatal(err)
+		}
+		if err == io.EOF {
+			break
+		}
+	}
         os.Exit(0)
         }
+	}
 
 
         if *crypt == true && *block == 64 && *mode == 2012 {
@@ -120,6 +158,7 @@ func main() {
                         log.Fatal(err)
 		}
 	}
+	if *operation == "CTR" {
 	ciph := gost341264.NewCipher(key)
 	iv := make([]byte, gost341264.BlockSize)
 	stream := cipher.NewCTR(ciph, iv)
@@ -138,11 +177,32 @@ func main() {
 			break
 		}
 	}
+	}
+	if *operation == "OFB" {
+	ciph := gost341264.NewCipher(key)
+	iv := make([]byte, gost341264.BlockSize)
+	stream := cipher.NewOFB(ciph, iv)
+	buf := make([]byte, 64*1<<10)
+	var n int
+	for {
+		n, err = os.Stdin.Read(buf)
+		if err != nil && err != io.EOF {
+                        log.Fatal(err)
+		}
+		stream.XORKeyStream(buf[:n], buf[:n])
+		if _, err := os.Stdout.Write(buf[:n]); err != nil {
+                        log.Fatal(err)
+		}
+		if err == io.EOF {
+			break
+		}
+	}
         os.Exit(0)
         }
+	}
 
 
-        if *crypt == true && *block == 64 && *mode == 2001 {
+ 	if *crypt == true && *block == 64 && *mode == 2001 {
 	keyHex := key
 	var key []byte
 	var err error
@@ -162,6 +222,7 @@ func main() {
                         log.Fatal(err)
 		}
 	}
+	if *operation == "CTR" {
 	ciph := gost28147.NewCipher(key, &gost28147.SboxIdGostR341194CryptoProParamSet)
 	iv := make([]byte, gost28147.BlockSize)
 	stream := cipher.NewCTR(ciph, iv)
@@ -180,7 +241,28 @@ func main() {
 			break
 		}
 	}
+	}
+	if *operation == "OFB" {
+	ciph := gost28147.NewCipher(key, &gost28147.SboxIdGostR341194CryptoProParamSet)
+	iv := make([]byte, gost28147.BlockSize)
+	stream := cipher.NewOFB(ciph, iv)
+	buf := make([]byte, 64*1<<10)
+	var n int
+	for {
+		n, err = os.Stdin.Read(buf)
+		if err != nil && err != io.EOF {
+                        log.Fatal(err)
+		}
+		stream.XORKeyStream(buf[:n], buf[:n])
+		if _, err := os.Stdout.Write(buf[:n]); err != nil {
+                        log.Fatal(err)
+		}
+		if err == io.EOF {
+			break
+		}
+	}
         os.Exit(0)
+        }
         }
 
 
@@ -266,8 +348,7 @@ func main() {
         f := func() hash.Hash {
 	return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
 	}
-	hmac.New(f, key)
-	h := hmac.New(gost34112012512.New, key)
+	h := hmac.New(f, key)
 	if _, err = io.Copy(h, os.Stdin); err != nil {
                 log.Fatal(err)
 	}
@@ -335,7 +416,6 @@ func main() {
 	}
 	}
 
-
         if *target != "" && *bit == 256 && *mode == 2001 {
 	files, err := filepath.Glob(*target)
 	if err != nil {
@@ -374,7 +454,7 @@ func main() {
 	} else if *bit == 512 && (*paramset == "A" || *paramset == "B") {
 	if *paramset == "A" {
  	curve = gost3410.CurveIdtc26gost341012512paramSetA()
-        } else if *bit == 512 && *paramset == "B" {
+        } else if *paramset == "B" {
  	curve = gost3410.CurveIdtc26gost341012512paramSetB()
 	} 
  	}
@@ -472,10 +552,12 @@ func main() {
 
 	if *generate && *mode == 2012 {
 
+
 	var prvRaw []byte
 	var pubRaw []byte
 	var prv *gost3410.PrivateKey
 	var pub *gost3410.PublicKey
+
 
         if *bit == 256 && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "D") {
 		var curve *gost3410.Curve
@@ -729,7 +811,7 @@ func main() {
         fmt.Println("Verify correct.")
 	} 
 
-
+		
 	if *sign == true && *mode == 2001 && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
 	var curve *gost3410.Curve
         if *paramset == "A" {	
@@ -763,7 +845,7 @@ func main() {
 	os.Exit(0)
 	}
 
-	if *verify == true && *mode == 2001 && (*paramset == "A" || *paramset == "B") {
+	if *verify == true && *mode == 2001 && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
 	var curve *gost3410.Curve
         if *paramset == "A" {	
 	curve = gost3410.CurveIdGostR34102001CryptoProAParamSet()
