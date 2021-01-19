@@ -63,21 +63,25 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
  -hashsum string
        File/Wildcard to generate hashsum list.
  -hmac
-       Compute HMAC.
+       Compute 256-bit HMAC.
  -iter int
        Iterations. (for shred and PBKDF2 only) (default 1)
  -key string
        Private/Public key, password or HMAC key, depending on operation.
  -mode int
        Mode: 2001 or 2012. (default 2012)
+ -operation string
+       Operation mode: CTR or OFB. (default "CTR")
  -paramset string
-       Curve paramset: A, B, C, D, XA, XB. (default "A")
+       Elliptic curve ParamSet: A, B, C, D, XA, XB. (default "A")
  -pbkdf2
        Password based key derivation function.
  -pub string
        Remote's side public key. (for shared key derivation only)
+ -rand
+       Generate random 256-bit cryptographic key.
  -salt string
-       Salt. (for PBKDF2 only) (default "Salt_")
+       Salt. (for PBKDF2 only)
  -shred string
        Files/Path/Wildcard to apply data sanitization method.
  -sign
