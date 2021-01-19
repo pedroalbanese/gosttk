@@ -133,8 +133,8 @@ func main() {
 			break
 		}
 	}
-        os.Exit(0)
         }
+        os.Exit(0)
 	}
 
 
@@ -177,8 +177,7 @@ func main() {
 			break
 		}
 	}
-	}
-	if *operation == "OFB" {
+	} else if *operation == "OFB" {
 	ciph := gost341264.NewCipher(key)
 	iv := make([]byte, gost341264.BlockSize)
 	stream := cipher.NewOFB(ciph, iv)
@@ -197,12 +196,12 @@ func main() {
 			break
 		}
 	}
-        os.Exit(0)
         }
+        os.Exit(0)
 	}
 
 
- 	if *crypt == true && *block == 64 && *mode == 2001 {
+        if *crypt == true && *block == 64 && *mode == 2001 {
 	keyHex := key
 	var key []byte
 	var err error
@@ -241,8 +240,7 @@ func main() {
 			break
 		}
 	}
-	}
-	if *operation == "OFB" {
+	} else if *operation == "OFB" {
 	ciph := gost28147.NewCipher(key, &gost28147.SboxIdGostR341194CryptoProParamSet)
 	iv := make([]byte, gost28147.BlockSize)
 	stream := cipher.NewOFB(ciph, iv)
@@ -261,8 +259,8 @@ func main() {
 			break
 		}
 	}
-        os.Exit(0)
         }
+        os.Exit(0)
         }
 
 
@@ -811,7 +809,7 @@ func main() {
         fmt.Println("Verify correct.")
 	} 
 
-		
+
 	if *sign == true && *mode == 2001 && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
 	var curve *gost3410.Curve
         if *paramset == "A" {	
