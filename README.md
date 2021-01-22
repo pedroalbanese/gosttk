@@ -16,8 +16,8 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 
 #### Symmetric Ciphers:
 * GOST 28147-89
-* Magma (default)
-* Kuznechik (Grasshopper)
+* GOST R 34.12-2015 Magma (default)
+* GOST R 34.12-2015 Kuznechik (Grasshopper)
 
 #### Asymmetric Ciphers:
 * GOST R 34.10-2001 CryptoPro 256-bit
