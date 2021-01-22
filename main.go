@@ -76,10 +76,20 @@ func main() {
 
 
         if *crypt == true && *block == 128 && *mode == 2012 {
-	keyHex := key
+	var keyHex string
+	var prvRaw []byte
+	if *pbkdf == true && *bit == 256 {
+	prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012256.New)
+	keyHex = hex.EncodeToString(prvRaw)
+	} else if *pbkdf == true && *bit == 512 {
+	prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012512.New)
+	keyHex = hex.EncodeToString(prvRaw)
+	} else {
+	keyHex = *key
+	}
 	var key []byte
 	var err error
-	if *keyHex == "" {
+	if keyHex == "" {
 		key = make([]byte, gost3412128.KeySize)
 		_, err = io.ReadFull(rand.Reader, key)
 		if err != nil {
@@ -87,7 +97,7 @@ func main() {
 		}
 		fmt.Fprintln(os.Stderr, "Key=", hex.EncodeToString(key))
 	} else {
-		key, err = hex.DecodeString(*keyHex)
+		key, err = hex.DecodeString(keyHex)
 		if err != nil {
                         log.Fatal(err)
 		}
@@ -139,10 +149,20 @@ func main() {
 
 
         if *crypt == true && *block == 64 && *mode == 2012 {
-	keyHex := key
+	var keyHex string
+	var prvRaw []byte
+	if *pbkdf == true && *bit == 256 {
+	prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012256.New)
+	keyHex = hex.EncodeToString(prvRaw)
+	} else if *pbkdf == true && *bit == 512 {
+	prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012512.New)
+	keyHex = hex.EncodeToString(prvRaw)
+	} else {
+	keyHex = *key
+	}
 	var key []byte
 	var err error
-	if *keyHex == "" {
+	if keyHex == "" {
 		key = make([]byte, gost341264.KeySize)
 		_, err = io.ReadFull(rand.Reader, key)
 		if err != nil {
@@ -150,7 +170,7 @@ func main() {
 		}
 		fmt.Fprintln(os.Stderr, "Key=", hex.EncodeToString(key))
 	} else {
-		key, err = hex.DecodeString(*keyHex)
+		key, err = hex.DecodeString(keyHex)
 		if err != nil {
                         log.Fatal(err)
 		}
@@ -202,10 +222,20 @@ func main() {
 
 
         if *crypt == true && *block == 64 && *mode == 2001 {
-	keyHex := key
+	var keyHex string
+	var prvRaw []byte
+	if *pbkdf == true {
+        f := func() hash.Hash {
+	return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
+	}
+	prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, f)
+	keyHex = hex.EncodeToString(prvRaw)
+	} else {
+	keyHex = *key
+	}
 	var key []byte
 	var err error
-	if *keyHex == "" {
+	if keyHex == "" {
 		key = make([]byte, gost28147.KeySize)
 		_, err = io.ReadFull(rand.Reader, key)
 		if err != nil {
@@ -213,7 +243,7 @@ func main() {
 		}
 		fmt.Fprintln(os.Stderr, "Key=", hex.EncodeToString(key))
 	} else {
-		key, err = hex.DecodeString(*keyHex)
+		key, err = hex.DecodeString(keyHex)
 		if err != nil {
                         log.Fatal(err)
 		}
@@ -307,9 +337,16 @@ func main() {
 
 
         if *mac == true && *bit == 256 && *mode == 2012 {
-	keyHex := key
+	var keyHex string
+	var prvRaw []byte
+	if *pbkdf == true {
+	prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012256.New)
+	keyHex = hex.EncodeToString(prvRaw)
+	} else {
+	keyHex = *key
+	}
 	flag.Parse()
-	key, err := hex.DecodeString(*keyHex)
+	key, err := hex.DecodeString(keyHex)
 	if err != nil {
                 log.Fatal(err)
 	}
@@ -322,9 +359,16 @@ func main() {
         }
 
         if *mac == true && *bit == 512 && *mode == 2012 {
-	keyHex := key
+	var keyHex string
+	var prvRaw []byte
+	if *pbkdf == true {
+	prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012512.New)
+	keyHex = hex.EncodeToString(prvRaw)
+	} else {
+	keyHex = *key
+	}
 	flag.Parse()
-	key, err := hex.DecodeString(*keyHex)
+	key, err := hex.DecodeString(keyHex)
 	if err != nil {
                 log.Fatal(err)
 	}
@@ -337,16 +381,26 @@ func main() {
         }
 
         if *mac == true && *bit == 256 && *mode == 2001 {
-	keyHex := key
-	flag.Parse()
-	key, err := hex.DecodeString(*keyHex)
-	if err != nil {
-                log.Fatal(err)
-	}
+	var keyHex string
+	var prvRaw []byte
+	if *pbkdf == true {
         f := func() hash.Hash {
 	return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
 	}
-	h := hmac.New(f, key)
+	prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, f)
+	keyHex = hex.EncodeToString(prvRaw)
+	} else {
+	keyHex = *key
+	}
+	flag.Parse()
+	key, err := hex.DecodeString(keyHex)
+	if err != nil {
+                log.Fatal(err)
+	}
+        g := func() hash.Hash {
+	return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
+	}
+	h := hmac.New(g, key)
 	if _, err = io.Copy(h, os.Stdin); err != nil {
                 log.Fatal(err)
 	}
