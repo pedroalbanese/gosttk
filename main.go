@@ -539,7 +539,7 @@ func main() {
                 log.Fatal(err)
 	}
 
-	shared, err := prv.KEK2012256(pub, big.NewInt(1))
+	shared, err := prv.KEK2001(pub, big.NewInt(1))
 	if err != nil {
                 log.Fatal(err)
 	}
@@ -550,12 +550,10 @@ func main() {
 
 	if *generate && *mode == 2012 {
 
-
 	var prvRaw []byte
 	var pubRaw []byte
 	var prv *gost3410.PrivateKey
 	var pub *gost3410.PublicKey
-
 
         if *bit == 256 && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "D") {
 		var curve *gost3410.Curve
@@ -672,15 +670,6 @@ func main() {
                 log.Printf("Failed to read: %v", scannerWrite.Err())
         return
         }
-        hash := scannerWrite.Bytes()
-	data := []byte(hash)
-
-	hasher := gost34112012512.New()
-	_, err := hasher.Write(data)
-		if err != nil {
-                        log.Fatal(err)
-		}
-	dgst := hasher.Sum(nil)
 
 	var prvRaw []byte
 	var pubRaw []byte
@@ -694,6 +683,14 @@ func main() {
 	}
 
 	if *sign == true && *bit == 256 && *mode == 2012 && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "D") {
+        hash := scannerWrite.Bytes()
+	data := []byte(hash)
+	hasher := gost34112012256.New()
+	_, err := hasher.Write(data)
+		if err != nil {
+                        log.Fatal(err)
+		}
+	dgst := hasher.Sum(nil)
 	var curve *gost3410.Curve
 	if *paramset == "A" {
  	curve = gost3410.CurveIdtc26gost34102012256paramSetA()
@@ -725,6 +722,14 @@ func main() {
 	}
 
 	if *verify == true && *bit == 256 && *mode == 2012 && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "D") {
+        hash := scannerWrite.Bytes()
+	data := []byte(hash)
+	hasher := gost34112012256.New()
+	_, err := hasher.Write(data)
+		if err != nil {
+                        log.Fatal(err)
+		}
+	dgst := hasher.Sum(nil)
 	var curve *gost3410.Curve
 	if *paramset == "A" {
  	curve = gost3410.CurveIdtc26gost34102012256paramSetA()
@@ -757,6 +762,14 @@ func main() {
 
 
 	if *sign == true && *bit == 512 && *mode == 2012 && (*paramset == "A" || *paramset == "B") {
+        hash := scannerWrite.Bytes()
+	data := []byte(hash)
+	hasher := gost34112012512.New()
+	_, err := hasher.Write(data)
+		if err != nil {
+                        log.Fatal(err)
+		}
+	dgst := hasher.Sum(nil)
 	var curve *gost3410.Curve
 	if *paramset == "A" {
  	curve = gost3410.CurveIdtc26gost341012512paramSetA()
@@ -784,6 +797,14 @@ func main() {
 	}
 
 	if *verify == true && *bit == 512 && *mode == 2012 && (*paramset == "A" || *paramset == "B") {
+        hash := scannerWrite.Bytes()
+	data := []byte(hash)
+	hasher := gost34112012512.New()
+	_, err := hasher.Write(data)
+		if err != nil {
+                        log.Fatal(err)
+		}
+	dgst := hasher.Sum(nil)
 	var curve *gost3410.Curve
 	if *paramset == "A" {
  	curve = gost3410.CurveIdtc26gost341012512paramSetA()
@@ -811,6 +832,14 @@ func main() {
 
 
 	if *sign == true && *mode == 2001 && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
+        hash := scannerWrite.Bytes()
+	data := []byte(hash)
+	hasher := gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
+	_, err := hasher.Write(data)
+		if err != nil {
+                        log.Fatal(err)
+		}
+	dgst := hasher.Sum(nil)
 	var curve *gost3410.Curve
         if *paramset == "A" {	
 	curve = gost3410.CurveIdGostR34102001CryptoProAParamSet()
@@ -844,6 +873,14 @@ func main() {
 	}
 
 	if *verify == true && *mode == 2001 && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
+        hash := scannerWrite.Bytes()
+	data := []byte(hash)
+	hasher := gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
+	_, err := hasher.Write(data)
+		if err != nil {
+                        log.Fatal(err)
+		}
+	dgst := hasher.Sum(nil)
 	var curve *gost3410.Curve
         if *paramset == "A" {	
 	curve = gost3410.CurveIdGostR34102001CryptoProAParamSet()
