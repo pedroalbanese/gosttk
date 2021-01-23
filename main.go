@@ -294,48 +294,6 @@ func main() {
         }
 
 
-        if *pbkdf == true && *mode == 2012 && *bit == 256 {
-	prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012256.New)
-
-	fmt.Print(hex.EncodeToString(prvRaw))
-	os.Exit(1)
-	}
-
-        if *pbkdf == true && *mode == 2012 && *bit == 512 {
-	prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012512.New)
-
-	fmt.Print(hex.EncodeToString(prvRaw))
-	os.Exit(1)
-	}
-
-        if *pbkdf == true && *mode == 2001 && *bit == 256 {
-        f := func() hash.Hash {
-	return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
-	}
-	prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, f)
-
-	fmt.Print(hex.EncodeToString(prvRaw))
-	os.Exit(1)
-	}
-
-
-        if *del != "" {
-	shredder := shred.Shredder{}
-	shredconf := shred.NewShredderConf(&shredder, shred.WriteZeros|shred.WriteRand, *iter, true)
-	matches, err := filepath.Glob(*del)
-	if err != nil {
-		panic(err)
-	}
-
-	for _, match := range matches {
-		err := shredconf.ShredDir(match)
-		if err != nil {
-                log.Fatal(err)
-		}
-	}
-	}
-
-
         if *mac == true && *bit == 256 && *mode == 2012 {
 	var keyHex string
 	var prvRaw []byte
@@ -484,6 +442,48 @@ func main() {
             log.Fatal(err)
         }
     	fmt.Println(hex.EncodeToString(h.Sum(nil)), f.Name())
+	}
+	}
+
+
+        if *pbkdf == true && *mode == 2012 && *bit == 256 {
+	prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012256.New)
+
+	fmt.Print(hex.EncodeToString(prvRaw))
+	os.Exit(1)
+	}
+
+        if *pbkdf == true && *mode == 2012 && *bit == 512 {
+	prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012512.New)
+
+	fmt.Print(hex.EncodeToString(prvRaw))
+	os.Exit(1)
+	}
+
+        if *pbkdf == true && *mode == 2001 && *bit == 256 {
+        f := func() hash.Hash {
+	return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
+	}
+	prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, f)
+
+	fmt.Print(hex.EncodeToString(prvRaw))
+	os.Exit(1)
+	}
+
+
+        if *del != "" {
+	shredder := shred.Shredder{}
+	shredconf := shred.NewShredderConf(&shredder, shred.WriteZeros|shred.WriteRand, *iter, true)
+	matches, err := filepath.Glob(*del)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, match := range matches {
+		err := shredconf.ShredDir(match)
+		if err != nil {
+                log.Fatal(err)
+		}
 	}
 	}
 
