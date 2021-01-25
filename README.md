@@ -64,7 +64,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
  -hashsum string
        File/Wildcard to generate hashsum list.
  -hmac
-       Compute 256-bit HMAC.
+       Hash-based message authentication code.
  -iter int
        Iterations. (for shred and PBKDF2 only) (default 1)
  -key string
@@ -76,7 +76,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
  -paramset string
        Elliptic curve ParamSet: A, B, C, D, XA, XB. (default "A")
  -pbkdf2
-       Password based key derivation function.
+       Password-based key derivation function 2.
  -pub string
        Remote's side public key. (for shared key derivation only)
  -rand
