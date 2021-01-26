@@ -64,7 +64,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
  -derive
        Derive shared key negociation (VKO).
  -digest
-       Compute a single hashsum.
+       Compute single hashsum.
  -generate
        Generate asymmetric keypair.
  -hashsum string
@@ -72,7 +72,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
  -hmac
        Hash-based message authentication code.
  -iter int
-       Iterations. (for shred and PBKDF2 only) (default 1)
+       Iterations. (for SHRED and PBKDF2 only) (default 1)
  -key string
        Private/Public key, password or HMAC key, depending on operation.
  -mode int
