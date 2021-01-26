@@ -44,6 +44,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 * GOST R 34.10-2012 512-bit: A, B
 
 #### TODO:
+  - [ ] MGM Mode of operation
   - [x] OFB Mode of operation
   - [x] PBKDF2 Function
   - [x] GOST 28147-89 symmetric cipher
