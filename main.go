@@ -28,14 +28,14 @@ import (
 	var block = flag.Int("block", 64, "Block size: 64 or 128. (for symmetric encryption only)")
 	var crypt = flag.Bool("crypt", false, "Encrypt/Decrypt with symmetric ciphers.")
 	var del = flag.String("shred", "", "Files/Path/Wildcard to apply data sanitization method.")
-	var derive = flag.Bool("derive", false, "Derive shared key negociation (VKO).")
-	var digest = flag.Bool("digest", false, "Compute a single hashsum.")
+	var derive = flag.Bool("derive", false, "Derive secret shared key (VKO).")
+	var digest = flag.Bool("digest", false, "Compute single hashsum.")
 	var generate = flag.Bool("generate", false, "Generate asymmetric keypair.")
-	var iter = flag.Int("iter", 1, "Iterations. (for shred and PBKDF2 only)")
+	var iter = flag.Int("iter", 1, "Iterations. (for SHRED and PBKDF2 only)")
 	var key = flag.String("key", "", "Private/Public key, password or HMAC key, depending on operation.")
 	var mac = flag.Bool("hmac", false, "Hash-based message authentication code.")
 	var mode = flag.Int("mode", 2012, "Mode: 2001 or 2012.")
-	var operation = flag.String("operation", "CTR", "Operation mode: CTR or OFB.")
+	var operation = flag.String("opmode", "CTR", "Mode of operation: CTR or OFB.")
 	var paramset = flag.String("paramset", "A", "Elliptic curve ParamSet: A, B, C, D, XA, XB.")
 	var pbkdf = flag.Bool("pbkdf2", false, "Password-based key derivation function 2.")
 	var pubHex = flag.String("pub", "", "Remote's side public key. (for shared key derivation only)")
@@ -70,7 +70,7 @@ func main() {
 		if err != nil {
                         log.Fatal(err)
 		}
-		fmt.Print(hex.EncodeToString(key))
+		fmt.Println(hex.EncodeToString(key))
         	os.Exit(0)
 	}
 
@@ -303,7 +303,6 @@ func main() {
 	} else {
 	keyHex = *key
 	}
-	flag.Parse()
 	key, err := hex.DecodeString(keyHex)
 	if err != nil {
                 log.Fatal(err)
@@ -312,7 +311,7 @@ func main() {
 	if _, err = io.Copy(h, os.Stdin); err != nil {
                 log.Fatal(err)
 	}
-	fmt.Print(hex.EncodeToString(h.Sum(nil)))
+	fmt.Println(hex.EncodeToString(h.Sum(nil)))
         os.Exit(0)
         }
 
@@ -325,7 +324,6 @@ func main() {
 	} else {
 	keyHex = *key
 	}
-	flag.Parse()
 	key, err := hex.DecodeString(keyHex)
 	if err != nil {
                 log.Fatal(err)
@@ -334,7 +332,7 @@ func main() {
 	if _, err = io.Copy(h, os.Stdin); err != nil {
                 log.Fatal(err)
 	}
-	fmt.Print(hex.EncodeToString(h.Sum(nil)))
+	fmt.Println(hex.EncodeToString(h.Sum(nil)))
         os.Exit(0)
         }
 
@@ -350,7 +348,6 @@ func main() {
 	} else {
 	keyHex = *key
 	}
-	flag.Parse()
 	key, err := hex.DecodeString(keyHex)
 	if err != nil {
                 log.Fatal(err)
@@ -362,28 +359,28 @@ func main() {
 	if _, err = io.Copy(h, os.Stdin); err != nil {
                 log.Fatal(err)
 	}
-	fmt.Print(hex.EncodeToString(h.Sum(nil)))
+	fmt.Println(hex.EncodeToString(h.Sum(nil)))
         os.Exit(0)
         }
 
         if *digest == true && *bit == 256 && *mode == 2001 && *target == "" {
 	h := gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
 	io.Copy(h, os.Stdin)
-	fmt.Print(hex.EncodeToString(h.Sum(nil)))
+	fmt.Println(hex.EncodeToString(h.Sum(nil)))
         os.Exit(0)
         }
 
         if *digest == true && *bit == 256 && *mode == 2012 && *target == "" {
 	h := gost34112012256.New()
 	io.Copy(h, os.Stdin)
-	fmt.Print(hex.EncodeToString(h.Sum(nil)))
+	fmt.Println(hex.EncodeToString(h.Sum(nil)))
         os.Exit(0)
         }
 
         if *digest == true && *bit == 512 && *mode == 2012 && *target == "" {
 	h := gost34112012512.New()
 	io.Copy(h, os.Stdin)
-	fmt.Print(hex.EncodeToString(h.Sum(nil)))
+	fmt.Println(hex.EncodeToString(h.Sum(nil)))
         os.Exit(0)
         }
 
@@ -449,14 +446,14 @@ func main() {
         if *pbkdf == true && *mode == 2012 && *bit == 256 {
 	prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012256.New)
 
-	fmt.Print(hex.EncodeToString(prvRaw))
+	fmt.Println(hex.EncodeToString(prvRaw))
 	os.Exit(1)
 	}
 
         if *pbkdf == true && *mode == 2012 && *bit == 512 {
 	prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012512.New)
 
-	fmt.Print(hex.EncodeToString(prvRaw))
+	fmt.Println(hex.EncodeToString(prvRaw))
 	os.Exit(1)
 	}
 
@@ -466,7 +463,7 @@ func main() {
 	}
 	prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, f)
 
-	fmt.Print(hex.EncodeToString(prvRaw))
+	fmt.Println(hex.EncodeToString(prvRaw))
 	os.Exit(1)
 	}
 
@@ -543,7 +540,7 @@ func main() {
 	if err != nil {
                 log.Fatal(err)
 	}
-	fmt.Print("Shared= ", hex.EncodeToString(shared))
+	fmt.Println("Shared= ", hex.EncodeToString(shared))
 	os.Exit(0)
 	}
 
@@ -597,7 +594,7 @@ func main() {
 	if err != nil {
                 log.Fatal(err)
 	}
-	fmt.Print("Shared= ", hex.EncodeToString(shared))
+	fmt.Println("Shared= ", hex.EncodeToString(shared))
 	os.Exit(0)
 	}
 
@@ -771,7 +768,7 @@ func main() {
 		if err != nil {
                         log.Fatal(err)
 		}
-		fmt.Print(hex.EncodeToString(signature))
+		fmt.Println(hex.EncodeToString(signature))
 	os.Exit(0)
 	}
 
@@ -846,7 +843,7 @@ func main() {
 		if err != nil {
                         log.Fatal(err)
 		}
-		fmt.Print(hex.EncodeToString(signature))
+		fmt.Println(hex.EncodeToString(signature))
 	os.Exit(0)
 	}
 
@@ -922,7 +919,7 @@ func main() {
 		if err != nil {
                         log.Fatal(err)
 		}
-		fmt.Print(hex.EncodeToString(signature))
+		fmt.Println(hex.EncodeToString(signature))
 	os.Exit(0)
 	}
 
