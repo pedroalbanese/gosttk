@@ -142,4 +142,7 @@ sign=$(cat sign.txt)
 <pre>./gosttk -shred keypair.ini -iter 25
 </pre>
 
+#### Note:
+The PBKDF2 function can be combined with the CRYPT and HMAC commands.
+
 ##### Military Grade Reliability. Copyright (c) 2020-2021 Pedro Albanese - ALBANESE Lab.
