@@ -2,15 +2,11 @@
 Multi purpose cross-platform cryptography tool for encryption / decryption, hash digest, hash-based message authentication code (HMAC), digital signature, shared key agreement (VKO) and PBKDF2 function.
 
 #### GOST is GOvernment STandard of Russian Federation (and Soviet Union):
-
-##### Roll 2001:
 * GOST 28147-89 64-bit block cipher (RFC 5830)
 * GOST R 34.11-94 hash function 256-bit (RFC 5831)
 * GOST R 50739-95 data sanitization method (non-cryptographic)
 * GOST R 34.10-2001 public key signature function (RFC 5832)
 * VKO GOST R 34.10-2001 key agreement function (RFC 4357)
-
-##### Roll 2012:
 * GOST R 34.10-2012 public key signature function (RFC 7091)
 * VKO GOST R 34.10-2012 key agreement function (RFC 7836)
 * GOST R 34.11-2012 Стрибог (Streebog) hash function 256/512-bit (RFC 6986)
