@@ -37,7 +37,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 #### Non-Cryptographic Functions:
 * GOST R 50739-95 data sanitization method
 
-#### Supported ParamSet:
+#### Supported ParamSets:
 * GOST R 34.10-2001 256-bit: A, B, C, XA, XB
 * GOST R 34.10-2012 256-bit: A, B, C, D
 * GOST R 34.10-2012 512-bit: A, B
