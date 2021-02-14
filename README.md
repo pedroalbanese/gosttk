@@ -136,7 +136,7 @@ sign=$(cat sign.txt)
 <pre>./gosttk -hmac [-bits 512] -key $256bitkey < file.ext
 </pre>
 #### PBKDF2 (password-based key derivation function 2):
-<pre>./gosttk -pbkdf2 [-bits|-toll] -key "pass" -iter 10000 -salt "salt"
+<pre>./gosttk -pbkdf2 [-bits|-roll] -key "pass" -iter 10000 -salt "salt"
 </pre>
 #### Shred (GOST R 50739-95 data sanitization method, 25 iterations):
 <pre>./gosttk -shred keypair.ini -iter 25
