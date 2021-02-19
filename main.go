@@ -22,13 +22,15 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 	var bit = flag.Int("bits", 256, "Bit length: 256 or 512.")
 	var block = flag.Int("block", 64, "Block size: 64 or 128. (for symmetric encryption only)")
+	var check = flag.String("check", "", "Check hashsum file.")
 	var crypt = flag.Bool("crypt", false, "Encrypt/Decrypt with symmetric ciphers.")
 	var del = flag.String("shred", "", "Files/Path/Wildcard to apply data sanitization method.")
-	var derive = flag.Bool("derive", false, "Derive secret shared key (VKO).")
+	var derive = flag.Bool("derive", false, "Derive shared secret key (VKO).")
 	var digest = flag.Bool("digest", false, "Compute single hashsum.")
 	var generate = flag.Bool("generate", false, "Generate asymmetric keypair.")
 	var iter = flag.Int("iter", 1, "Iterations. (for SHRED and PBKDF2 only)")
@@ -45,6 +47,7 @@ import (
 	var sign = flag.Bool("sign", false, "Sign with private key.")
 	var target = flag.String("hashsum", "", "File/Wildcard to generate hashsum list.")
 	var verify = flag.Bool("verify", false, "Verify with public key.")
+	var verbose = flag.Bool("verbose", false, "Verbose mode. (for CHECK command only)")
 
 func main() {
     flag.Parse()
@@ -61,7 +64,7 @@ func main() {
         os.Exit(1)
         }
 
-        if *sign == false && *verify == false && *generate == false && *digest == false && *derive == false && *crypt == false && *mac == false && *del == "" && *target == "" && *random == false && *pbkdf == false {
+        if *sign == false && *verify == false && *generate == false && *digest == false && *derive == false && *crypt == false && *mac == false && *del == "" && *check == "" && *target == "" && *random == false && *pbkdf == false {
 	fmt.Println("Usage of",os.Args[0]+":")
         flag.PrintDefaults()
         os.Exit(1)
@@ -406,7 +409,7 @@ func main() {
         if _, err := io.Copy(h, f); err != nil {
             log.Fatal(err)
         }
-    	fmt.Println(hex.EncodeToString(h.Sum(nil)), f.Name())
+    	fmt.Println(hex.EncodeToString(h.Sum(nil)), "*" + f.Name())
 	}
 	}
 
@@ -425,7 +428,7 @@ func main() {
         if _, err := io.Copy(h, f); err != nil {
             log.Fatal(err)
         }
-    	fmt.Println(hex.EncodeToString(h.Sum(nil)), f.Name())
+    	fmt.Println(hex.EncodeToString(h.Sum(nil)), "*" + f.Name())
 	}
 	}
 
@@ -444,7 +447,166 @@ func main() {
         if _, err := io.Copy(h, f); err != nil {
             log.Fatal(err)
         }
-    	fmt.Println(hex.EncodeToString(h.Sum(nil)), f.Name())
+    	fmt.Println(hex.EncodeToString(h.Sum(nil)), "*" + f.Name())
+	}
+	}
+
+
+        if *check != "" && *bit == 256 && *roll == 2012 {
+	file, err := os.Open(*check)
+ 
+	if err != nil {
+		log.Fatalf("failed opening file: %s", err)
+	}
+ 
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanLines)
+	var txtlines []string
+ 
+	for scanner.Scan() {
+		txtlines = append(txtlines, scanner.Text())
+	}
+  
+	file.Close()
+ 
+	for _, eachline := range txtlines {
+	lines := strings.Split(string(eachline), " *")
+
+	h := gost34112012256.New()
+
+	_, err := os.Stat(lines[1])
+	if err == nil {
+		f, err := os.Open(lines[1])
+		if err != nil {
+		     log.Fatal(err)
+		}
+		io.Copy(h, f)
+		
+		if *verbose {
+			if hex.EncodeToString(h.Sum(nil)) == lines[0] {
+				fmt.Println(lines[1] + rightjust("OK", 50-len(lines[1]), " "))
+			} else {
+				fmt.Println(lines[1] + rightjust("Error!", 50-len(lines[1]), " "))
+			}
+		} else {
+			if hex.EncodeToString(h.Sum(nil)) == lines[0] {
+			} else {
+				os.Exit(1)
+			}
+		}
+	} else {
+		if *verbose {
+			fmt.Println(lines[1] + rightjust("Not found!", 50-len(lines[1]), " "))
+		} else {
+			os.Exit(1)	
+		}	
+	}
+	}
+	}
+
+
+        if *check != "" && *bit == 512 && *roll == 2012 {
+	file, err := os.Open(*check)
+ 
+	if err != nil {
+		log.Fatalf("failed opening file: %s", err)
+	}
+ 
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanLines)
+	var txtlines []string
+ 
+	for scanner.Scan() {
+		txtlines = append(txtlines, scanner.Text())
+	}
+ 
+	file.Close()
+ 
+	for _, eachline := range txtlines {
+	lines := strings.Split(string(eachline), " *")
+
+	h := gost34112012512.New()
+
+	_, err := os.Stat(lines[1])
+	if err == nil {
+		f, err := os.Open(lines[1])
+		if err != nil {
+		     log.Fatal(err)
+		}
+		io.Copy(h, f)
+		
+		if *verbose {
+			if hex.EncodeToString(h.Sum(nil)) == lines[0] {
+				fmt.Println(lines[1] + rightjust("OK", 50-len(lines[1]), " "))
+			} else {
+				fmt.Println(lines[1] + rightjust("Error!", 50-len(lines[1]), " "))
+			}
+		} else {
+			if hex.EncodeToString(h.Sum(nil)) == lines[0] {
+			} else {
+				os.Exit(1)
+			}
+		}
+	} else {
+		if *verbose {
+			fmt.Println(lines[1] + rightjust("Not found!", 50-len(lines[1]), " "))
+		} else {
+			os.Exit(1)	
+		}	
+	}
+	}
+	}
+
+
+        if *check != "" && *roll == 2001 {
+	file, err := os.Open(*check)
+ 
+	if err != nil {
+		log.Fatalf("failed opening file: %s", err)
+	}
+ 
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanLines)
+	var txtlines []string
+ 
+	for scanner.Scan() {
+		txtlines = append(txtlines, scanner.Text())
+	}
+ 
+	file.Close()
+ 
+	for _, eachline := range txtlines {
+	lines := strings.Split(string(eachline), " *")
+
+	h := gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
+
+	_, err := os.Stat(lines[1])
+	if err == nil {
+		f, err := os.Open(lines[1])
+		if err != nil {
+		     log.Fatal(err)
+		}
+		io.Copy(h, f)
+		
+		if *verbose {
+			if hex.EncodeToString(h.Sum(nil)) == lines[0] {
+				fmt.Println(lines[1] + rightjust("OK", 50-len(lines[1]), " "))
+			} else {
+				fmt.Println(lines[1] + rightjust("Error!", 50-len(lines[1]), " "))
+			}
+		} else {
+			if hex.EncodeToString(h.Sum(nil)) == lines[0] {
+			} else {
+				os.Exit(1)
+			}
+		}
+	} else {
+		if *verbose {
+			fmt.Println(lines[1] + rightjust("Not found!", 50-len(lines[1]), " "))
+		} else {
+			os.Exit(1)	
+		}	
+	}
 	}
 	}
 
@@ -969,4 +1131,8 @@ func main() {
 	}
 	os.Exit(0)
 	}
+}
+
+func rightjust(s string, n int, fill string) string {
+	return strings.Repeat(fill, n) + s
 }
