@@ -58,10 +58,12 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
        Bit length: 256 or 512. (default 256)
  -block int
        Block size: 64 or 128. (for symmetric encryption only) (default 64)
+ -check string
+       Check hashsum file.
  -crypt
        Encrypt/Decrypt with symmetric ciphers.
  -derive
-       Derive secret shared key (VKO).
+       Derive shared secret key (VKO).
  -digest
        Compute single hashsum.
  -generate
@@ -94,6 +96,8 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
        Sign with private key.
  -signature string
        Input signature. (verification only)
+ -verbose
+       Verbose mode. (for CHECK command only)
  -verify
        Verify with public key.</pre>
 ### Examples:
