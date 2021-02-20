@@ -484,9 +484,9 @@ func main() {
 		
 		if *verbose {
 			if hex.EncodeToString(h.Sum(nil)) == lines[0] {
-				fmt.Println(lines[1] + rightjust("OK", 50-len(lines[1]), " "))
+				fmt.Println(lines[1] + "\t", "OK")
 			} else {
-				fmt.Println(lines[1] + rightjust("Error!", 50-len(lines[1]), " "))
+				fmt.Println(lines[1] + "\t", "FAILED")
 			}
 		} else {
 			if hex.EncodeToString(h.Sum(nil)) == lines[0] {
@@ -496,7 +496,7 @@ func main() {
 		}
 	} else {
 		if *verbose {
-			fmt.Println(lines[1] + rightjust("Not found!", 50-len(lines[1]), " "))
+			fmt.Println(lines[1] + "\t", "Not found!")
 		} else {
 			os.Exit(1)	
 		}	
@@ -537,9 +537,9 @@ func main() {
 		
 		if *verbose {
 			if hex.EncodeToString(h.Sum(nil)) == lines[0] {
-				fmt.Println(lines[1] + rightjust("OK", 50-len(lines[1]), " "))
+				fmt.Println(lines[1] + "\t", "OK")
 			} else {
-				fmt.Println(lines[1] + rightjust("Error!", 50-len(lines[1]), " "))
+				fmt.Println(lines[1] + "\t", "FAILED")
 			}
 		} else {
 			if hex.EncodeToString(h.Sum(nil)) == lines[0] {
@@ -549,7 +549,7 @@ func main() {
 		}
 	} else {
 		if *verbose {
-			fmt.Println(lines[1] + rightjust("Not found!", 50-len(lines[1]), " "))
+			fmt.Println(lines[1] + "\t", "Not found!")
 		} else {
 			os.Exit(1)	
 		}	
@@ -590,9 +590,9 @@ func main() {
 		
 		if *verbose {
 			if hex.EncodeToString(h.Sum(nil)) == lines[0] {
-				fmt.Println(lines[1] + rightjust("OK", 50-len(lines[1]), " "))
+				fmt.Println(lines[1] + "\t", "OK")
 			} else {
-				fmt.Println(lines[1] + rightjust("Error!", 50-len(lines[1]), " "))
+				fmt.Println(lines[1] + "\t", "FAILED")
 			}
 		} else {
 			if hex.EncodeToString(h.Sum(nil)) == lines[0] {
@@ -602,7 +602,7 @@ func main() {
 		}
 	} else {
 		if *verbose {
-			fmt.Println(lines[1] + rightjust("Not found!", 50-len(lines[1]), " "))
+			fmt.Println(lines[1] + "\t", "Not found!")
 		} else {
 			os.Exit(1)	
 		}	
@@ -1131,8 +1131,4 @@ func main() {
 	}
 	os.Exit(0)
 	}
-}
-
-func rightjust(s string, n int, fill string) string {
-	return strings.Repeat(fill, n) + s
 }
