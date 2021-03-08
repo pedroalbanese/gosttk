@@ -36,7 +36,7 @@ import (
 	var iter = flag.Int("iter", 1, "Iterations. (for SHRED and PBKDF2 only)")
 	var key = flag.String("key", "", "Private/Public key, password or HMAC key, depending on operation.")
 	var mac = flag.Bool("hmac", false, "Hash-based message authentication code.")
-	var roll = flag.Int("roll", 2012, "The roll of algorithms: 2001 or 2012.")
+	var old = flag.Bool("old", false, "Use old roll of algorithms.")
 	var mode = flag.String("mode", "CTR", "Mode of operation: CTR or OFB.")
 	var paramset = flag.String("paramset", "A", "Elliptic curve ParamSet: A, B, C, D, XA, XB.")
 	var pbkdf = flag.Bool("pbkdf2", false, "Password-based key derivation function 2.")
@@ -84,7 +84,7 @@ func main() {
 	}
 
 
-        if *crypt == true && *block == 128 && *roll == 2012 {
+        if *crypt == true && *block == 128 && *old == false {
 	var keyHex string
 	var prvRaw []byte
 	if *pbkdf == true && *bit == 256 {
@@ -157,7 +157,7 @@ func main() {
 	}
 
 
-        if *crypt == true && *block == 64 && *roll == 2012 {
+        if *crypt == true && *block == 64 && *old == false {
 	var keyHex string
 	var prvRaw []byte
 	if *pbkdf == true && *bit == 256 {
@@ -230,7 +230,7 @@ func main() {
 	}
 
 
-        if *crypt == true && *block == 64 && *roll == 2001 {
+        if *crypt == true && *block == 64 && *old == true {
 	var keyHex string
 	var prvRaw []byte
 	if *pbkdf == true {
@@ -303,7 +303,7 @@ func main() {
         }
 
 
-        if *mac == true && *bit == 256 && *roll == 2012 {
+        if *mac == true && *bit == 256 && *old == false {
 	var keyHex string
 	var prvRaw []byte
 	if *pbkdf == true {
@@ -324,7 +324,7 @@ func main() {
         os.Exit(0)
         }
 
-        if *mac == true && *bit == 512 && *roll == 2012 {
+        if *mac == true && *bit == 512 && *old == false {
 	var keyHex string
 	var prvRaw []byte
 	if *pbkdf == true {
@@ -345,7 +345,7 @@ func main() {
         os.Exit(0)
         }
 
-        if *mac == true && *bit == 256 && *roll == 2001 {
+        if *mac == true && *bit == 256 && *old == true {
 	var keyHex string
 	var prvRaw []byte
 	if *pbkdf == true {
@@ -372,21 +372,21 @@ func main() {
         os.Exit(0)
         }
 
-        if *digest == true && *bit == 256 && *roll == 2001 && *target == "" {
+        if *digest == true && *bit == 256 && *old == true && *target == "" {
 	h := gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
 	io.Copy(h, os.Stdin)
 	fmt.Println(hex.EncodeToString(h.Sum(nil)))
         os.Exit(0)
         }
 
-        if *digest == true && *bit == 256 && *roll == 2012 && *target == "" {
+        if *digest == true && *bit == 256 && *old == false && *target == "" {
 	h := gost34112012256.New()
 	io.Copy(h, os.Stdin)
 	fmt.Println(hex.EncodeToString(h.Sum(nil)))
         os.Exit(0)
         }
 
-        if *digest == true && *bit == 512 && *roll == 2012 && *target == "" {
+        if *digest == true && *bit == 512 && *old == false && *target == "" {
 	h := gost34112012512.New()
 	io.Copy(h, os.Stdin)
 	fmt.Println(hex.EncodeToString(h.Sum(nil)))
@@ -394,7 +394,7 @@ func main() {
         }
 
 
-        if *target != "" && *bit == 256 && *roll == 2012 {
+        if *target != "" && *bit == 256 && *old == false {
 	files, err := filepath.Glob(*target)
 	if err != nil {
 	    log.Fatal(err)
@@ -413,7 +413,7 @@ func main() {
 	}
 	}
 
-        if *target != "" && *bit == 512 && *roll == 2012 {
+        if *target != "" && *bit == 512 && *old == false {
 	files, err := filepath.Glob(*target)
 	if err != nil {
 	    log.Fatal(err)
@@ -432,7 +432,7 @@ func main() {
 	}
 	}
 
-        if *target != "" && *bit == 256 && *roll == 2001 {
+        if *target != "" && *bit == 256 && *old == true {
 	files, err := filepath.Glob(*target)
 	if err != nil {
 	    log.Fatal(err)
@@ -452,13 +452,11 @@ func main() {
 	}
 
 
-        if *check != "" && *bit == 256 && *roll == 2012 {
+        if *check != "" && *bit == 256 && *old == false {
 	file, err := os.Open(*check)
- 
 	if err != nil {
 		log.Fatalf("failed opening file: %s", err)
 	}
- 
 	scanner := bufio.NewScanner(file)
 	scanner.Split(bufio.ScanLines)
 	var txtlines []string
@@ -466,14 +464,10 @@ func main() {
 	for scanner.Scan() {
 		txtlines = append(txtlines, scanner.Text())
 	}
-  
 	file.Close()
- 
 	for _, eachline := range txtlines {
 	lines := strings.Split(string(eachline), " *")
-
 	h := gost34112012256.New()
-
 	_, err := os.Stat(lines[1])
 	if err == nil {
 		f, err := os.Open(lines[1])
@@ -505,28 +499,21 @@ func main() {
 	}
 
 
-        if *check != "" && *bit == 512 && *roll == 2012 {
+        if *check != "" && *bit == 512 && *old == false {
 	file, err := os.Open(*check)
- 
 	if err != nil {
 		log.Fatalf("failed opening file: %s", err)
 	}
- 
 	scanner := bufio.NewScanner(file)
 	scanner.Split(bufio.ScanLines)
 	var txtlines []string
- 
 	for scanner.Scan() {
 		txtlines = append(txtlines, scanner.Text())
 	}
- 
 	file.Close()
- 
 	for _, eachline := range txtlines {
 	lines := strings.Split(string(eachline), " *")
-
 	h := gost34112012512.New()
-
 	_, err := os.Stat(lines[1])
 	if err == nil {
 		f, err := os.Open(lines[1])
@@ -558,28 +545,21 @@ func main() {
 	}
 
 
-        if *check != "" && *roll == 2001 {
+        if *check != "" && *old == true {
 	file, err := os.Open(*check)
- 
 	if err != nil {
 		log.Fatalf("failed opening file: %s", err)
 	}
- 
 	scanner := bufio.NewScanner(file)
 	scanner.Split(bufio.ScanLines)
 	var txtlines []string
- 
 	for scanner.Scan() {
 		txtlines = append(txtlines, scanner.Text())
 	}
- 
 	file.Close()
- 
 	for _, eachline := range txtlines {
 	lines := strings.Split(string(eachline), " *")
-
 	h := gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
-
 	_, err := os.Stat(lines[1])
 	if err == nil {
 		f, err := os.Open(lines[1])
@@ -611,21 +591,21 @@ func main() {
 	}
 
 
-        if *pbkdf == true && *roll == 2012 && *bit == 256 {
+        if *pbkdf == true && *old == false && *bit == 256 {
 	prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012256.New)
 
 	fmt.Println(hex.EncodeToString(prvRaw))
 	os.Exit(1)
 	}
 
-        if *pbkdf == true && *roll == 2012 && *bit == 512 {
+        if *pbkdf == true && *old == false && *bit == 512 {
 	prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012512.New)
 
 	fmt.Println(hex.EncodeToString(prvRaw))
 	os.Exit(1)
 	}
 
-        if *pbkdf == true && *roll == 2001 && *bit == 256 {
+        if *pbkdf == true && *old == true && *bit == 256 {
         f := func() hash.Hash {
 	return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
 	}
@@ -654,7 +634,7 @@ func main() {
 
 
 	var err error
-        if *derive == true && *roll == 2012 && (*paramset != "XA" && *paramset != "XB") {
+        if *derive == true && *old == false && (*paramset != "XA" && *paramset != "XB") {
 
 	var curve *gost3410.Curve
  	if *bit == 256 && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "D") {
@@ -712,7 +692,7 @@ func main() {
 	}
 
 
-        if *derive == true && *roll == 2001 {
+        if *derive == true && *old == true {
 
 	var curve *gost3410.Curve
 	if (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
@@ -766,7 +746,7 @@ func main() {
 	}
 
 
-	if *generate && *roll == 2012 {
+	if *generate && *old == false {
 
 	var prvRaw []byte
 	var pubRaw []byte
@@ -838,7 +818,7 @@ func main() {
 	}
 
 
-	if *generate && *roll == 2001 && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
+	if *generate && *old == true && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
 	var curve *gost3410.Curve
         if *paramset == "A" {	
 	curve = gost3410.CurveIdGostR34102001CryptoProAParamSet()
@@ -900,7 +880,7 @@ func main() {
                 log.Fatal(err)
 	}
 
-	if *sign == true && *bit == 256 && *roll == 2012 && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "D") {
+	if *sign == true && *bit == 256 && *old == false && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "D") {
         hash := scannerWrite.Bytes()
 	data := []byte(hash)
 	hasher := gost34112012256.New()
@@ -939,7 +919,7 @@ func main() {
 	os.Exit(0)
 	}
 
-	if *verify == true && *bit == 256 && *roll == 2012 && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "D") {
+	if *verify == true && *bit == 256 && *old == false && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "D") {
         hash := scannerWrite.Bytes()
 	data := []byte(hash)
 	hasher := gost34112012256.New()
@@ -979,7 +959,7 @@ func main() {
 	}
 
 
-	if *sign == true && *bit == 512 && *roll == 2012 && (*paramset == "A" || *paramset == "B") {
+	if *sign == true && *bit == 512 && *old == false && (*paramset == "A" || *paramset == "B") {
         hash := scannerWrite.Bytes()
 	data := []byte(hash)
 	hasher := gost34112012512.New()
@@ -1014,7 +994,7 @@ func main() {
 	os.Exit(0)
 	}
 
-	if *verify == true && *bit == 512 && *roll == 2012 && (*paramset == "A" || *paramset == "B") {
+	if *verify == true && *bit == 512 && *old == false && (*paramset == "A" || *paramset == "B") {
         hash := scannerWrite.Bytes()
 	data := []byte(hash)
 	hasher := gost34112012512.New()
@@ -1049,7 +1029,7 @@ func main() {
 	} 
 
 
-	if *sign == true && *roll == 2001 && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
+	if *sign == true && *old == true && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
         hash := scannerWrite.Bytes()
 	data := []byte(hash)
 	hasher := gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
@@ -1090,7 +1070,7 @@ func main() {
 	os.Exit(0)
 	}
 
-	if *verify == true && *roll == 2001 && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
+	if *verify == true && *old == true && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
         hash := scannerWrite.Bytes()
 	data := []byte(hash)
 	hasher := gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
