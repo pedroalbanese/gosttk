@@ -102,7 +102,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
        Verify with public key.</pre>
 ### Examples:
 #### Asymmetric GOST R 34.10-2001 256-bit keypair generation (INI format):
-<pre>./gosttk -generate -old
+<pre>./gosttk -generate -roll old
 </pre>
 #### Asymmetric GOST R 34.10-2012 256/512-bit keypair generation (default):
 <pre>./gosttk -generate [-bits 512]
@@ -113,25 +113,25 @@ sign=$(cat sign.txt)
 ./gosttk -verify [-bits 512] -key $pubkey -signature $sign < file.ext
 </pre>
 #### Shared key negociation (VKO):
-<pre>./gosttk -derive [-bits 512|-old] -key $prvkey -pub $pubkey
+<pre>./gosttk -derive [-bits 512|-roll old] -key $prvkey -pub $pubkey
 </pre>
 #### Encryption/decryption with Magma (GOST R 34.12-2015) symmetric cipher (default):
 <pre>./gosttk -crypt -key $shared < plaintext.ext > ciphertext.ext
 ./gosttk -crypt -key $shared < ciphertext.ext > plaintext.ext
 </pre>
 #### Encryption/decryption with GOST 28147-89 symmetric cipher:
-<pre>./gosttk -crypt -old -key $shared < plaintext.ext > ciphertext.ext
-./gosttk -crypt -old -key $shared < ciphertext.ext > plaintext.ext
+<pre>./gosttk -crypt -roll old -key $shared < plaintext.ext > ciphertext.ext
+./gosttk -crypt -roll old -key $shared < ciphertext.ext > plaintext.ext
 </pre>
 #### Encryption/decryption with Kuznyechik (GOST R 34.12-2015) symmetric cipher:
 <pre>./gosttk -crypt -block 128 -key $shared < plaintext.ext > ciphertext.ext
 ./gosttk -crypt -block 128 -key $shared < ciphertext.ext > plaintext.ext
 </pre>
 #### GOST94-CryptoPro hashsum:
-<pre>./gosttk -digest -old < file.ext
+<pre>./gosttk -digest -roll old < file.ext
 </pre>
 #### HMAC-GOST94-CryptoPro based (hash-based message authentication code):
-<pre>./gosttk -hmac -old -key $256bitkey < file.ext
+<pre>./gosttk -hmac -roll old -key $256bitkey < file.ext
 </pre>
 #### Streebog256/512 hashsum:
 <pre>./gosttk -digest [-bits 512] < file.ext
