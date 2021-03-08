@@ -108,9 +108,9 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 <pre>./gosttk -generate [-512]
 </pre>
 #### Signature:
-<pre>./gosttk -sign [-5122|-old] -key $prvkey < file.ext > sign.txt
+<pre>./gosttk -sign [-512|-old] -key $prvkey < file.ext > sign.txt
 sign=$(cat sign.txt)
-./gosttk -verify [-5122|-old] -key $pubkey -signature $sign < file.ext
+./gosttk -verify [-512|-old] -key $pubkey -signature $sign < file.ext
 </pre>
 #### Shared key negociation (VKO):
 <pre>./gosttk -derive [-512|-old] -key $prvkey -pub $pubkey
