@@ -78,8 +78,6 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
        Private/Public key, password or HMAC key, depending on operation.
  -mode string
        Mode of operation: CTR or OFB. (default "CTR")
- -old
-       Use old roll of algorithms.
  -paramset string
        Elliptic curve ParamSet: A, B, C, D, XA, XB. (default "A")
  -pbkdf2
@@ -88,6 +86,8 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
        Remote's side public key. (for shared key derivation only)
  -rand
        Generate random 256-bit cryptographic key.
+ -roll string
+       The roll of algorithms: OLD or NEW. (default "NEW")
  -salt string
        Salt. (for PBKDF2 only)
  -shred string
