@@ -78,6 +78,8 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
        Private/Public key, password or HMAC key, depending on operation.
  -mode string
        Mode of operation: CTR or OFB. (default "CTR")
+ -old
+       Use old roll of algorithms.
  -paramset string
        Elliptic curve ParamSet: A, B, C, D, XA, XB. (default "A")
  -pbkdf2
@@ -86,8 +88,6 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
        Remote's side public key. (for shared key derivation only)
  -rand
        Generate random 256-bit cryptographic key.
- -roll int
-       The roll of algorithms: 2001 or 2012. (default 2012)
  -salt string
        Salt. (for PBKDF2 only)
  -shred string
@@ -102,7 +102,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
        Verify with public key.</pre>
 ### Examples:
 #### Asymmetric GOST R 34.10-2001 256-bit keypair generation (INI format):
-<pre>./gosttk -generate -roll 2001
+<pre>./gosttk -generate -old
 </pre>
 #### Asymmetric GOST R 34.10-2012 256/512-bit keypair generation (default):
 <pre>./gosttk -generate [-bits 512]
@@ -113,25 +113,25 @@ sign=$(cat sign.txt)
 ./gosttk -verify [-bits 512] -key $pubkey -signature $sign < file.ext
 </pre>
 #### Shared key negociation (VKO):
-<pre>./gosttk -derive [-bits 512|-roll 2001] -key $prvkey -pub $pubkey
+<pre>./gosttk -derive [-bits 512|-old] -key $prvkey -pub $pubkey
 </pre>
 #### Encryption/decryption with Magma (GOST R 34.12-2015) symmetric cipher (default):
 <pre>./gosttk -crypt -key $shared < plaintext.ext > ciphertext.ext
 ./gosttk -crypt -key $shared < ciphertext.ext > plaintext.ext
 </pre>
 #### Encryption/decryption with GOST 28147-89 symmetric cipher:
-<pre>./gosttk -crypt -roll 2001 -key $shared < plaintext.ext > ciphertext.ext
-./gosttk -crypt -roll 2001 -key $shared < ciphertext.ext > plaintext.ext
+<pre>./gosttk -crypt -old -key $shared < plaintext.ext > ciphertext.ext
+./gosttk -crypt -old -key $shared < ciphertext.ext > plaintext.ext
 </pre>
 #### Encryption/decryption with Kuznyechik (GOST R 34.12-2015) symmetric cipher:
 <pre>./gosttk -crypt -block 128 -key $shared < plaintext.ext > ciphertext.ext
 ./gosttk -crypt -block 128 -key $shared < ciphertext.ext > plaintext.ext
 </pre>
 #### GOST94-CryptoPro hashsum:
-<pre>./gosttk -digest -roll 2001 < file.ext
+<pre>./gosttk -digest -old < file.ext
 </pre>
 #### HMAC-GOST94-CryptoPro based (hash-based message authentication code):
-<pre>./gosttk -hmac -roll 2001 -key $256bitkey < file.ext
+<pre>./gosttk -hmac -old -key $256bitkey < file.ext
 </pre>
 #### Streebog256/512 hashsum:
 <pre>./gosttk -digest [-bits 512] < file.ext
