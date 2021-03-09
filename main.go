@@ -25,8 +25,8 @@ import (
 	"strings"
 )
 
-	var bit = flag.Bool("512", false, "Bit length. (default 256)")
-	var block = flag.Bool("128", false, "Block size. (for symmetric encryption only) (default 64)")
+	var bit = flag.Bool("512", false, "Bit length: 256 or 512. (default 256)")
+	var block = flag.Bool("128", false, "Block size: 64 or 128. (for symmetric encryption only) (default 64)")
 	var check = flag.String("check", "", "Check hashsum file.")
 	var crypt = flag.Bool("crypt", false, "Encrypt/Decrypt with symmetric ciphers.")
 	var del = flag.String("shred", "", "Files/Path/Wildcard to apply data sanitization method.")
