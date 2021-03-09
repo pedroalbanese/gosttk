@@ -28,8 +28,8 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 
 #### Cryptographic Functions:
 * Symmetric Encryption/Decryption
-* Digital Signature
-* VKO (выработка ключа общего) shared key negociation
+* Digital Signature (ECDSA equivalent)
+* VKO (выработка ключа общего) shared key negociation (ECDH equivalent)
 * Hash Digest 
 * HMAC (Hash-based message authentication code)
 * PBKDF2 (Password-based key derivation function 2)
