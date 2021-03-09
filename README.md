@@ -127,10 +127,13 @@ sign=$(cat sign.txt)
 <pre>./gosttk -crypt -old -key $shared < plaintext.ext > ciphertext.ext
 ./gosttk -crypt -old -key $shared < ciphertext.ext > plaintext.ext
 </pre>
-#### GOST94-CryptoPro hashsum:
+#### GOST94-CryptoPro hashsum (list):
+<pre>./gosttk -hashsum *.* -old
+</pre>
+#### GOST94-CryptoPro hashsum (single):
 <pre>./gosttk -digest -old < file.ext
 </pre>
-#### HMAC-GOST94-CryptoPro based (hash-based message authentication code):
+#### HMAC-GOST94-CryptoPro (hash-based message authentication code):
 <pre>./gosttk -hmac -old -key $256bitkey < file.ext
 </pre>
 #### Streebog256/512 hashsum:
