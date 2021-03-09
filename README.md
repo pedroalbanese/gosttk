@@ -119,13 +119,13 @@ sign=$(cat sign.txt)
 <pre>./gosttk -crypt -key $shared < plaintext.ext > ciphertext.ext
 ./gosttk -crypt -key $shared < ciphertext.ext > plaintext.ext
 </pre>
-#### Encryption/decryption with GOST 28147-89 symmetric cipher:
-<pre>./gosttk -crypt -old -key $shared < plaintext.ext > ciphertext.ext
-./gosttk -crypt -old -key $shared < ciphertext.ext > plaintext.ext
-</pre>
 #### Encryption/decryption with Kuznyechik (GOST R 34.12-2015) symmetric cipher:
 <pre>./gosttk -crypt -128 -key $shared < plaintext.ext > ciphertext.ext
 ./gosttk -crypt -128 -key $shared < ciphertext.ext > plaintext.ext
+</pre>
+#### Encryption/decryption with GOST 28147-89 symmetric cipher:
+<pre>./gosttk -crypt -old -key $shared < plaintext.ext > ciphertext.ext
+./gosttk -crypt -old -key $shared < ciphertext.ext > plaintext.ext
 </pre>
 #### GOST94-CryptoPro hashsum:
 <pre>./gosttk -digest -old < file.ext
