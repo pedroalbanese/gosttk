@@ -150,7 +150,7 @@ sign=$(cat sign.txt)
 </pre>
 
 #### Note:
-The PBKDF2 function can be combined with the CRYPT and HMAC commands.
+The PBKDF2 function can be combined with the CRYPT and HMAC commands:
 <pre>./gosttk -crypt -128 -pbkdf2 -512 -key "pass" < plaintext.ext > ciphertext.ext
 ./gosttk -hmac [-512] -pbkdf2 -key "pass" -iter 10000 -salt "salt" < file.ext
 </pre>
