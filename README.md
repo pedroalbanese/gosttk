@@ -128,7 +128,7 @@ sign=$(cat sign.txt)
 ./gosttk -crypt -old -key $shared < ciphertext.ext > plaintext.ext
 </pre>
 #### GOST94-CryptoPro hashsum (list):
-<pre>./gosttk -hashsum *.* -old
+<pre>./gosttk -hashsum "*.*" -old
 </pre>
 #### GOST94-CryptoPro hashsum (single):
 <pre>./gosttk -digest -old < file.ext
