@@ -151,6 +151,7 @@ sign=$(cat sign.txt)
 
 #### Note:
 The PBKDF2 function can be combined with the CRYPT and HMAC commands.
-
+<pre>./gosttk -crypt -128 -pbkdf2 -512 -key "pass" < plaintext.ext > ciphertext.ext
+</pre>
 ##### Military Grade Reliability. Copyright (c) 2020-2021 Pedro Albanese - ALBANESE Lab.
 
