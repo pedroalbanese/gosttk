@@ -55,9 +55,9 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 
 ### Usage:
 <pre> -128
-       Block size. (for symmetric encryption only) (default 64)
+       Block size: 64 or 128. (for symmetric encryption only) (default 64)
  -512
-       Bit length. (default 256)
+       Bit length: 256 or 512. (default 256)
  -check string
        Check hashsum file.
  -crypt
