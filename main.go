@@ -42,6 +42,7 @@ import (
 	var pbkdf = flag.Bool("pbkdf2", false, "Password-based key derivation function 2.")
 	var pubHex = flag.String("pub", "", "Remote's side public key. (for shared key derivation only)")
 	var random = flag.Bool("rand", false, "Generate random 256-bit cryptographic key.")
+	var recursive = flag.Bool("recursive", false, "Process directories recursively. (for HASHSUM command only)")
 	var salt = flag.String("salt", "", "Salt. (for PBKDF2 only)")
 	var sig = flag.String("signature", "", "Input signature. (verification only)")
 	var sign = flag.Bool("sign", false, "Sign with private key.")
@@ -394,7 +395,7 @@ func main() {
         }
 
 
-        if *target != "" && *bit == false && *old == false {
+        if *target != "" && *bit == false && *old == false && *recursive == false {
 	files, err := filepath.Glob(*target)
 	if err != nil {
 	    log.Fatal(err)
@@ -413,7 +414,43 @@ func main() {
 	}
 	}
 
-        if *target != "" && *bit == true && *old == false {
+
+        if *target != "" && *bit == false && *old == false && *recursive == true {
+		err := filepath.Walk(filepath.Dir(*target),
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			file, err := os.Stat(path)
+			if file.IsDir() {
+			} else {
+				filename := filepath.Base(path)
+				pattern := filepath.Base(*target)
+				matched, err := filepath.Match(pattern, filename)
+				if err != nil {
+					fmt.Println(err)
+				}
+				if matched {
+				h := gost34112012256.New()
+			        f, err := os.Open(path)
+			        if err != nil {
+			            log.Fatal(err)
+			        }
+				if _, err := io.Copy(h, f); err != nil {
+					log.Fatal(err)
+				}
+			fmt.Println(hex.EncodeToString(h.Sum(nil)), "*" + f.Name())
+			}
+			}
+			return nil
+		})
+		if err != nil {
+			log.Println(err)
+		}
+	}
+
+
+        if *target != "" && *bit == true && *old == false && *recursive == false {
 	files, err := filepath.Glob(*target)
 	if err != nil {
 	    log.Fatal(err)
@@ -432,7 +469,43 @@ func main() {
 	}
 	}
 
-        if *target != "" && *bit == false && *old == true {
+
+        if *target != "" && *bit == true && *old == false && *recursive == true {
+		err := filepath.Walk(filepath.Dir(*target),
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			file, err := os.Stat(path)
+			if file.IsDir() {
+			} else {
+				filename := filepath.Base(path)
+				pattern := filepath.Base(*target)
+				matched, err := filepath.Match(pattern, filename)
+				if err != nil {
+					fmt.Println(err)
+				}
+				if matched {
+				h := gost34112012512.New()
+			        f, err := os.Open(path)
+			        if err != nil {
+			            log.Fatal(err)
+			        }
+				if _, err := io.Copy(h, f); err != nil {
+					log.Fatal(err)
+				}
+			fmt.Println(hex.EncodeToString(h.Sum(nil)), "*" + f.Name())
+			}
+			}
+			return nil
+		})
+		if err != nil {
+			log.Println(err)
+		}
+	}
+
+
+        if *target != "" && *bit == false && *old == true && *recursive == false {
 	files, err := filepath.Glob(*target)
 	if err != nil {
 	    log.Fatal(err)
@@ -449,6 +522,41 @@ func main() {
         }
     	fmt.Println(hex.EncodeToString(h.Sum(nil)), "*" + f.Name())
 	}
+	}
+
+
+        if *target != "" && *bit == false && *old == true && *recursive == true {
+		err := filepath.Walk(filepath.Dir(*target),
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			file, err := os.Stat(path)
+			if file.IsDir() {
+			} else {
+				filename := filepath.Base(path)
+				pattern := filepath.Base(*target)
+				matched, err := filepath.Match(pattern, filename)
+				if err != nil {
+					fmt.Println(err)
+				}
+				if matched {
+				h := gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
+			        f, err := os.Open(path)
+			        if err != nil {
+			            log.Fatal(err)
+			        }
+				if _, err := io.Copy(h, f); err != nil {
+					log.Fatal(err)
+				}
+			fmt.Println(hex.EncodeToString(h.Sum(nil)), "*" + f.Name())
+			}
+			}
+			return nil
+		})
+		if err != nil {
+			log.Println(err)
+		}
 	}
 
 
