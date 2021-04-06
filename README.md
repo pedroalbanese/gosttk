@@ -88,6 +88,8 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
        Remote's side public key. (for shared key derivation only)
  -rand
        Generate random 256-bit cryptographic key.
+ -recursive
+       Process directories recursively. (for HASHSUM command only)
  -salt string
        Salt. (for PBKDF2 only)
  -shred string
