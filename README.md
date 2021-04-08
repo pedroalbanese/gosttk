@@ -114,7 +114,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 sign=$(cat sign.txt)
 ./gosttk -verify [-512|-old] -key $pubkey -signature $sign < file.ext
 </pre>
-##### Warning! Sign and Verify just compute the first line of the file. It must be a DIGEST/HASHSUM or HMAC single value.
+##### Warning! Sign and Verify just compute the first line of the file. It must be a DIGEST or HMAC single value.
 #### Shared key negociation (VKO):
 <pre>./gosttk -derive [-512|-old] -key $prvkey -pub $pubkey
 </pre>
