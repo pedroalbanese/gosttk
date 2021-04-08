@@ -109,13 +109,13 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 #### Asymmetric GOST R 34.10-2012 256/512-bit keypair generation (default):
 <pre>./gosttk -generate [-512]
 </pre>
-#### Signature:
+#### Signature (ECDSA equivalent):
 <pre>./gosttk -sign [-512|-old] -key $prvkey < file.ext > sign.txt
 sign=$(cat sign.txt)
 ./gosttk -verify [-512|-old] -key $pubkey -signature $sign < file.ext
 </pre>
 ##### Warning! Sign and Verify just compute the first line of the file. It must be a DIGEST or HMAC single value.
-#### Shared key negociation (VKO):
+#### VKO: Shared key negociation (ECDH equivalent):
 <pre>./gosttk -derive [-512|-old] -key $prvkey -pub $pubkey
 </pre>
 #### Encryption/decryption with Magma (GOST R 34.12-2015) symmetric cipher (default):
