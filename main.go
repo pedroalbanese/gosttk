@@ -71,7 +71,6 @@ func main() {
         os.Exit(1)
         }
 
-//--------------------------------------------------------------RANDOM
 
 	if *random == true {
 	var key []byte
@@ -85,7 +84,6 @@ func main() {
         	os.Exit(0)
 	}
 
-//--------------------------------------------------------------ENCRYPTION
 
         if *crypt == true && *block == true && *old == false {
 	var keyHex string
@@ -143,7 +141,6 @@ func main() {
         os.Exit(0)
 	}
 
-//--------------------------------------------------------------ENCRYPTION2
 
         if *crypt == true && *block == false && *old == false {
 	var keyHex string
@@ -201,7 +198,6 @@ func main() {
         os.Exit(0)
 	}
 
-//--------------------------------------------------------------ENCRYPTION2001
 
         if *crypt == true && *block == false && *old == true {
 	var keyHex string
@@ -258,8 +254,6 @@ func main() {
         }
         os.Exit(0)
         }
-
-//--------------------------------------------------------------HASHES
 
 
         if *mac == true && *bit == false && *old == false {
@@ -331,8 +325,6 @@ func main() {
         os.Exit(0)
         }
 
-
-//--------------------------------------------------------------HASHES
 
         if *digest == true && *target == "" {
 	var h hash.Hash
@@ -417,7 +409,6 @@ func main() {
 		}
 	}
 
-//--------------------------------------------------------------HASHES2
 
         if *check != "" {
 	file, err := os.Open(*check)
@@ -473,10 +464,7 @@ func main() {
 	}
 
 
-// by Chris Howey
-//--------------------------------------------------------------PBKDF2
-
-        if *pbkdf == true && *old == false && *bit == false {
+	if *pbkdf == true && *old == false && *bit == false {
 	prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012256.New)
 
 	fmt.Println(hex.EncodeToString(prvRaw))
@@ -500,8 +488,6 @@ func main() {
 	os.Exit(1)
 	}
 
-// by Paul Scheduikat 
-//--------------------------------------------------------------SHRED
 
         if *del != "" {
 	shredder := shred.Shredder{}
@@ -519,7 +505,6 @@ func main() {
 	}
 	}
 
-//--------------------------------------------------------------DERIVATION
 
 	var err error
         if *derive == true && *old == false && (*paramset != "XA" && *paramset != "XB") {
@@ -579,8 +564,6 @@ func main() {
 	os.Exit(0)
 	}
 
-//--------------------------------------------------------------DERIVATION2001
-
 
         if *derive == true && *old == true {
 
@@ -635,7 +618,6 @@ func main() {
 	os.Exit(0)
 	}
 
-//--------------------------------------------------------------GENERATE
 
 	if *generate && *old == false {
 
@@ -708,7 +690,6 @@ func main() {
 		}
 	}
 
-//--------------------------------------------------------------GENERATE2001
 
 	if *generate && *old == true && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
 	var curve *gost3410.Curve
@@ -751,8 +732,6 @@ func main() {
 
 	}
 	}
-
-//--------------------------------------------------------------SIGN
 
 
         if *sign == true || *verify == true {
@@ -922,8 +901,6 @@ func main() {
         fmt.Println("Verify correct.")
 	} 
 
-
-//--------------------------------------------------------------SIGN2001
 
 	if *sign == true && *old == true && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
         hash := scannerWrite.Bytes()
