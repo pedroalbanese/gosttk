@@ -54,23 +54,24 @@ func main() {
     flag.Parse()
 
         if (len(os.Args) < 2) {
-	fmt.Println("Usage of",os.Args[0]+":")
+	fmt.Fprintln(os.Stderr,"Usage of",os.Args[0]+":")
         flag.PrintDefaults()
         os.Exit(1)
         }
 
 	if *paramset != "" && (*paramset != "A"  && *paramset != "B" && *paramset != "C" && *paramset != "D" && *paramset != "XA" && *paramset != "XB") {
-	fmt.Println("Usage of",os.Args[0]+":")
+	fmt.Fprintln(os.Stderr,"Usage of",os.Args[0]+":")
         flag.PrintDefaults()
         os.Exit(1)
         }
 
         if *sign == false && *verify == false && *generate == false && *digest == false && *derive == false && *crypt == false && *mac == false && *del == "" && *check == "" && *target == "" && *random == false && *pbkdf == false {
-	fmt.Println("Usage of",os.Args[0]+":")
+	fmt.Fprintln(os.Stderr,"Usage of",os.Args[0]+":")
         flag.PrintDefaults()
         os.Exit(1)
         }
 
+//--------------------------------------------------------------RANDOM
 
 	if *random == true {
 	var key []byte
@@ -84,6 +85,7 @@ func main() {
         	os.Exit(0)
 	}
 
+//--------------------------------------------------------------ENCRYPTION
 
         if *crypt == true && *block == true && *old == false {
 	var keyHex string
@@ -115,10 +117,14 @@ func main() {
                         log.Fatal(err)
 		}
 	}
-	if *mode == "CTR" {
-	ciph := gost3412128.NewCipher(key)
 	iv := make([]byte, gost3412128.BlockSize)
-	stream := cipher.NewCTR(ciph, iv)
+	ciph := gost3412128.NewCipher(key)
+	var stream cipher.Stream
+	if *mode == "CTR" || *mode == "ctr" {
+	stream = cipher.NewCTR(ciph, iv)
+	} else if *mode == "OFB" || *mode == "ofb" {
+	stream = cipher.NewOFB(ciph, iv)
+	}
 	buf := make([]byte, 128*1<<10)
 	var n int
 	for {
@@ -133,30 +139,11 @@ func main() {
 		if err == io.EOF {
 			break
 		}
-	}
-	} else if *mode == "OFB" {
-	ciph := gost3412128.NewCipher(key)
-	iv := make([]byte, gost3412128.BlockSize)
-	stream := cipher.NewOFB(ciph, iv)
-	buf := make([]byte, 128*1<<10)
-	var n int
-	for {
-		n, err = os.Stdin.Read(buf)
-		if err != nil && err != io.EOF {
-                        log.Fatal(err)
-		}
-		stream.XORKeyStream(buf[:n], buf[:n])
-		if _, err := os.Stdout.Write(buf[:n]); err != nil {
-                        log.Fatal(err)
-		}
-		if err == io.EOF {
-			break
-		}
-	}
         }
         os.Exit(0)
 	}
 
+//--------------------------------------------------------------ENCRYPTION2
 
         if *crypt == true && *block == false && *old == false {
 	var keyHex string
@@ -188,10 +175,14 @@ func main() {
                         log.Fatal(err)
 		}
 	}
-	if *mode == "CTR" {
 	ciph := gost341264.NewCipher(key)
 	iv := make([]byte, gost341264.BlockSize)
-	stream := cipher.NewCTR(ciph, iv)
+	var stream cipher.Stream
+	if *mode == "CTR" || *mode == "ctr" {
+	stream = cipher.NewCTR(ciph, iv)
+	} else if *mode == "OFB" || *mode == "ofb" {
+	stream = cipher.NewOFB(ciph, iv)
+	}
 	buf := make([]byte, 64*1<<10)
 	var n int
 	for {
@@ -207,29 +198,10 @@ func main() {
 			break
 		}
 	}
-	} else if *mode == "OFB" {
-	ciph := gost341264.NewCipher(key)
-	iv := make([]byte, gost341264.BlockSize)
-	stream := cipher.NewOFB(ciph, iv)
-	buf := make([]byte, 64*1<<10)
-	var n int
-	for {
-		n, err = os.Stdin.Read(buf)
-		if err != nil && err != io.EOF {
-                        log.Fatal(err)
-		}
-		stream.XORKeyStream(buf[:n], buf[:n])
-		if _, err := os.Stdout.Write(buf[:n]); err != nil {
-                        log.Fatal(err)
-		}
-		if err == io.EOF {
-			break
-		}
-	}
-        }
         os.Exit(0)
 	}
 
+//--------------------------------------------------------------ENCRYPTION2001
 
         if *crypt == true && *block == false && *old == true {
 	var keyHex string
@@ -261,10 +233,14 @@ func main() {
                         log.Fatal(err)
 		}
 	}
-	if *mode == "CTR" {
 	ciph := gost28147.NewCipher(key, &gost28147.SboxIdGostR341194CryptoProParamSet)
 	iv := make([]byte, gost28147.BlockSize)
-	stream := cipher.NewCTR(ciph, iv)
+	var stream cipher.Stream
+	if *mode == "CTR" || *mode == "ctr" {
+	stream = cipher.NewCTR(ciph, iv)
+	} else if *mode == "OFB" || *mode == "ofb" {
+	stream = cipher.NewOFB(ciph, iv)
+	}
 	buf := make([]byte, 64*1<<10)
 	var n int
 	for {
@@ -279,29 +255,11 @@ func main() {
 		if err == io.EOF {
 			break
 		}
-	}
-	} else if *mode == "OFB" {
-	ciph := gost28147.NewCipher(key, &gost28147.SboxIdGostR341194CryptoProParamSet)
-	iv := make([]byte, gost28147.BlockSize)
-	stream := cipher.NewOFB(ciph, iv)
-	buf := make([]byte, 64*1<<10)
-	var n int
-	for {
-		n, err = os.Stdin.Read(buf)
-		if err != nil && err != io.EOF {
-                        log.Fatal(err)
-		}
-		stream.XORKeyStream(buf[:n], buf[:n])
-		if _, err := os.Stdout.Write(buf[:n]); err != nil {
-                        log.Fatal(err)
-		}
-		if err == io.EOF {
-			break
-		}
-	}
         }
         os.Exit(0)
         }
+
+//--------------------------------------------------------------HASHES
 
 
         if *mac == true && *bit == false && *old == false {
@@ -373,36 +331,39 @@ func main() {
         os.Exit(0)
         }
 
-        if *digest == true && *bit == false && *old == true && *target == "" {
-	h := gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
+
+//--------------------------------------------------------------HASHES
+
+        if *digest == true && *target == "" {
+	var h hash.Hash
+	if *old == true {
+	h = gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
+	} else if *old == false && *bit == false {
+	h = gost34112012256.New()
+	} else if *bit == true {
+	h = gost34112012512.New()
+	}
 	io.Copy(h, os.Stdin)
 	fmt.Println(hex.EncodeToString(h.Sum(nil)))
         os.Exit(0)
         }
 
-        if *digest == true && *bit == false && *old == false && *target == "" {
-	h := gost34112012256.New()
-	io.Copy(h, os.Stdin)
-	fmt.Println(hex.EncodeToString(h.Sum(nil)))
-        os.Exit(0)
-        }
 
-        if *digest == true && *bit == true && *old == false && *target == "" {
-	h := gost34112012512.New()
-	io.Copy(h, os.Stdin)
-	fmt.Println(hex.EncodeToString(h.Sum(nil)))
-        os.Exit(0)
-        }
-
-
-        if *target != "" && *bit == false && *old == false && *recursive == false {
+        if *target != "" && *recursive == false {
 	files, err := filepath.Glob(*target)
 	if err != nil {
 	    log.Fatal(err)
 	}
 
 	for _, match := range files {
-	h := gost34112012256.New()
+	var h hash.Hash
+	if *old == true {
+	h = gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
+	} else if *old == false && *bit == false {
+	h = gost34112012256.New()
+	} else if *bit == true {
+	h = gost34112012512.New()
+	}
         f, err := os.Open(match)
         if err != nil {
             log.Fatal(err)
@@ -415,7 +376,7 @@ func main() {
 	}
 
 
-        if *target != "" && *bit == false && *old == false && *recursive == true {
+        if *target != "" && *recursive == true {
 		err := filepath.Walk(filepath.Dir(*target),
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
@@ -431,7 +392,14 @@ func main() {
 					fmt.Println(err)
 				}
 				if matched {
-				h := gost34112012256.New()
+				var h hash.Hash
+				if *old == true {
+				h = gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
+				} else if *old == false && *bit == false {
+				h = gost34112012256.New()
+				} else if *bit == true {
+				h = gost34112012512.New()
+				}
 			        f, err := os.Open(path)
 			        if err != nil {
 			            log.Fatal(err)
@@ -439,8 +407,8 @@ func main() {
 				if _, err := io.Copy(h, f); err != nil {
 					log.Fatal(err)
 				}
-			fmt.Println(hex.EncodeToString(h.Sum(nil)), "*" + f.Name())
-			}
+				fmt.Println(hex.EncodeToString(h.Sum(nil)), "*" + f.Name())
+				}
 			}
 			return nil
 		})
@@ -449,118 +417,9 @@ func main() {
 		}
 	}
 
+//--------------------------------------------------------------HASHES2
 
-        if *target != "" && *bit == true && *old == false && *recursive == false {
-	files, err := filepath.Glob(*target)
-	if err != nil {
-	    log.Fatal(err)
-	}
-
-	for _, match := range files {
-	h := gost34112012512.New()
-        f, err := os.Open(match)
-        if err != nil {
-            log.Fatal(err)
-        }
-        if _, err := io.Copy(h, f); err != nil {
-            log.Fatal(err)
-        }
-    	fmt.Println(hex.EncodeToString(h.Sum(nil)), "*" + f.Name())
-	}
-	}
-
-
-        if *target != "" && *bit == true && *old == false && *recursive == true {
-		err := filepath.Walk(filepath.Dir(*target),
-		func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			file, err := os.Stat(path)
-			if file.IsDir() {
-			} else {
-				filename := filepath.Base(path)
-				pattern := filepath.Base(*target)
-				matched, err := filepath.Match(pattern, filename)
-				if err != nil {
-					fmt.Println(err)
-				}
-				if matched {
-				h := gost34112012512.New()
-			        f, err := os.Open(path)
-			        if err != nil {
-			            log.Fatal(err)
-			        }
-				if _, err := io.Copy(h, f); err != nil {
-					log.Fatal(err)
-				}
-			fmt.Println(hex.EncodeToString(h.Sum(nil)), "*" + f.Name())
-			}
-			}
-			return nil
-		})
-		if err != nil {
-			log.Println(err)
-		}
-	}
-
-
-        if *target != "" && *bit == false && *old == true && *recursive == false {
-	files, err := filepath.Glob(*target)
-	if err != nil {
-	    log.Fatal(err)
-	}
-
-	for _, match := range files {
-	h := gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
-        f, err := os.Open(match)
-        if err != nil {
-            log.Fatal(err)
-        }
-        if _, err := io.Copy(h, f); err != nil {
-            log.Fatal(err)
-        }
-    	fmt.Println(hex.EncodeToString(h.Sum(nil)), "*" + f.Name())
-	}
-	}
-
-
-        if *target != "" && *bit == false && *old == true && *recursive == true {
-		err := filepath.Walk(filepath.Dir(*target),
-		func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			file, err := os.Stat(path)
-			if file.IsDir() {
-			} else {
-				filename := filepath.Base(path)
-				pattern := filepath.Base(*target)
-				matched, err := filepath.Match(pattern, filename)
-				if err != nil {
-					fmt.Println(err)
-				}
-				if matched {
-				h := gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
-			        f, err := os.Open(path)
-			        if err != nil {
-			            log.Fatal(err)
-			        }
-				if _, err := io.Copy(h, f); err != nil {
-					log.Fatal(err)
-				}
-			fmt.Println(hex.EncodeToString(h.Sum(nil)), "*" + f.Name())
-			}
-			}
-			return nil
-		})
-		if err != nil {
-			log.Println(err)
-		}
-	}
-
-
-        if *check != "" && *bit == false && *old == false {
+        if *check != "" {
 	file, err := os.Open(*check)
 	if err != nil {
 		log.Fatalf("failed opening file: %s", err)
@@ -575,7 +434,14 @@ func main() {
 	file.Close()
 	for _, eachline := range txtlines {
 	lines := strings.Split(string(eachline), " *")
-	h := gost34112012256.New()
+	var h hash.Hash
+	if *old == true {
+	h = gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
+	} else if *old == false && *bit == false {
+	h = gost34112012256.New()
+	} else if *bit == true {
+	h = gost34112012512.New()
+	}
 	_, err := os.Stat(lines[1])
 	if err == nil {
 		f, err := os.Open(lines[1])
@@ -607,97 +473,8 @@ func main() {
 	}
 
 
-        if *check != "" && *bit == true && *old == false {
-	file, err := os.Open(*check)
-	if err != nil {
-		log.Fatalf("failed opening file: %s", err)
-	}
-	scanner := bufio.NewScanner(file)
-	scanner.Split(bufio.ScanLines)
-	var txtlines []string
-	for scanner.Scan() {
-		txtlines = append(txtlines, scanner.Text())
-	}
-	file.Close()
-	for _, eachline := range txtlines {
-	lines := strings.Split(string(eachline), " *")
-	h := gost34112012512.New()
-	_, err := os.Stat(lines[1])
-	if err == nil {
-		f, err := os.Open(lines[1])
-		if err != nil {
-		     log.Fatal(err)
-		}
-		io.Copy(h, f)
-		
-		if *verbose {
-			if hex.EncodeToString(h.Sum(nil)) == lines[0] {
-				fmt.Println(lines[1] + "\t", "OK")
-			} else {
-				fmt.Println(lines[1] + "\t", "FAILED")
-			}
-		} else {
-			if hex.EncodeToString(h.Sum(nil)) == lines[0] {
-			} else {
-				os.Exit(1)
-			}
-		}
-	} else {
-		if *verbose {
-			fmt.Println(lines[1] + "\t", "Not found!")
-		} else {
-			os.Exit(1)	
-		}	
-	}
-	}
-	}
-
-
-        if *check != "" && *old == true {
-	file, err := os.Open(*check)
-	if err != nil {
-		log.Fatalf("failed opening file: %s", err)
-	}
-	scanner := bufio.NewScanner(file)
-	scanner.Split(bufio.ScanLines)
-	var txtlines []string
-	for scanner.Scan() {
-		txtlines = append(txtlines, scanner.Text())
-	}
-	file.Close()
-	for _, eachline := range txtlines {
-	lines := strings.Split(string(eachline), " *")
-	h := gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
-	_, err := os.Stat(lines[1])
-	if err == nil {
-		f, err := os.Open(lines[1])
-		if err != nil {
-		     log.Fatal(err)
-		}
-		io.Copy(h, f)
-		
-		if *verbose {
-			if hex.EncodeToString(h.Sum(nil)) == lines[0] {
-				fmt.Println(lines[1] + "\t", "OK")
-			} else {
-				fmt.Println(lines[1] + "\t", "FAILED")
-			}
-		} else {
-			if hex.EncodeToString(h.Sum(nil)) == lines[0] {
-			} else {
-				os.Exit(1)
-			}
-		}
-	} else {
-		if *verbose {
-			fmt.Println(lines[1] + "\t", "Not found!")
-		} else {
-			os.Exit(1)	
-		}	
-	}
-	}
-	}
-
+// by Chris Howey
+//--------------------------------------------------------------PBKDF2
 
         if *pbkdf == true && *old == false && *bit == false {
 	prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012256.New)
@@ -723,6 +500,8 @@ func main() {
 	os.Exit(1)
 	}
 
+// by Paul Scheduikat 
+//--------------------------------------------------------------SHRED
 
         if *del != "" {
 	shredder := shred.Shredder{}
@@ -740,6 +519,7 @@ func main() {
 	}
 	}
 
+//--------------------------------------------------------------DERIVATION
 
 	var err error
         if *derive == true && *old == false && (*paramset != "XA" && *paramset != "XB") {
@@ -799,6 +579,8 @@ func main() {
 	os.Exit(0)
 	}
 
+//--------------------------------------------------------------DERIVATION2001
+
 
         if *derive == true && *old == true {
 
@@ -853,6 +635,7 @@ func main() {
 	os.Exit(0)
 	}
 
+//--------------------------------------------------------------GENERATE
 
 	if *generate && *old == false {
 
@@ -925,6 +708,7 @@ func main() {
 		}
 	}
 
+//--------------------------------------------------------------GENERATE2001
 
 	if *generate && *old == true && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
 	var curve *gost3410.Curve
@@ -967,6 +751,8 @@ func main() {
 
 	}
 	}
+
+//--------------------------------------------------------------SIGN
 
 
         if *sign == true || *verify == true {
@@ -1136,6 +922,8 @@ func main() {
         fmt.Println("Verify correct.")
 	} 
 
+
+//--------------------------------------------------------------SIGN2001
 
 	if *sign == true && *old == true && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
         hash := scannerWrite.Bytes()
