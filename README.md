@@ -47,6 +47,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
   - [ ] MGM Mode of operation
   - [x] OFB Mode of operation
   - [x] PBKDF2 Function
+  - [x] GOST 28147-89 CMAC
   - [x] GOST 28147-89 symmetric cipher
   - [x] GOST R 34.11-94 HMAC
   - [x] GOST R 50739-95 data sanitization method 
