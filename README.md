@@ -31,6 +31,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 * Digital Signature (ECDSA equivalent)
 * VKO (выработка ключа общего) shared key negociation (ECDH equivalent)
 * Hash Digest 
+* CMAC (Cipher-based message authentication code)
 * HMAC (Hash-based message authentication code)
 * PBKDF2 (Password-based key derivation function 2)
 
