@@ -62,6 +62,8 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
        Bit length: 256 or 512. (default 256)
  -check string
        Check hashsum file.
+ -cmac
+       Cipher-based message authentication code.
  -crypt
        Encrypt/Decrypt with symmetric ciphers.
  -derive
