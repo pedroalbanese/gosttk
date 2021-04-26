@@ -518,11 +518,21 @@ func main() {
 	os.Exit(1)
 	}
 
-        if *pbkdf == true && *old == true && *bit == false {
+        if *pbkdf == true && *old == true && *bit == false && *block == false {
         f := func() hash.Hash {
 	return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
 	}
 	prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, f)
+
+	fmt.Println(hex.EncodeToString(prvRaw))
+	os.Exit(1)
+	}
+
+        if *pbkdf == true && *old == true && *bit == false && *block == true {
+        f := func() hash.Hash {
+	return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
+	}
+	prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 16, f)
 
 	fmt.Println(hex.EncodeToString(prvRaw))
 	os.Exit(1)
