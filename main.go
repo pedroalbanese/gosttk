@@ -28,6 +28,7 @@ import (
 	var bit = flag.Bool("512", false, "Bit length: 256 or 512. (default 256)")
 	var block = flag.Bool("128", false, "Block size: 64 or 128. (for symmetric encryption only) (default 64)")
 	var check = flag.String("check", "", "Check hashsum file.")
+	var cmac = flag.Bool("cmac", false, "Cipher-based message authentication code.")
 	var crypt = flag.Bool("crypt", false, "Encrypt/Decrypt with symmetric ciphers.")
 	var del = flag.String("shred", "", "Files/Path/Wildcard to apply data sanitization method.")
 	var derive = flag.Bool("derive", false, "Derive shared secret key (VKO).")
@@ -36,9 +37,8 @@ import (
 	var iter = flag.Int("iter", 1, "Iterations. (for SHRED and PBKDF2 only)")
 	var key = flag.String("key", "", "Private/Public key, password or HMAC key, depending on operation.")
 	var mac = flag.Bool("hmac", false, "Hash-based message authentication code.")
-	var cmac = flag.Bool("cmac", false, "Cipher-based message authentication code.")
-	var old = flag.Bool("old", false, "Use old roll of algorithms.")
 	var mode = flag.String("mode", "CTR", "Mode of operation: CTR or OFB.")
+	var old = flag.Bool("old", false, "Use old roll of algorithms.")
 	var paramset = flag.String("paramset", "A", "Elliptic curve ParamSet: A, B, C, D, XA, XB.")
 	var pbkdf = flag.Bool("pbkdf2", false, "Password-based key derivation function 2.")
 	var pubHex = flag.String("pub", "", "Remote's side public key. (for shared key derivation only)")
@@ -48,8 +48,8 @@ import (
 	var sig = flag.String("signature", "", "Input signature. (verification only)")
 	var sign = flag.Bool("sign", false, "Sign with private key.")
 	var target = flag.String("hashsum", "", "File/Wildcard to generate hashsum list.")
-	var verify = flag.Bool("verify", false, "Verify with public key.")
 	var verbose = flag.Bool("verbose", false, "Verbose mode. (for CHECK command only)")
+	var verify = flag.Bool("verify", false, "Verify with public key.")
 
 func main() {
     flag.Parse()
