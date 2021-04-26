@@ -36,6 +36,7 @@ import (
 	var iter = flag.Int("iter", 1, "Iterations. (for SHRED and PBKDF2 only)")
 	var key = flag.String("key", "", "Private/Public key, password or HMAC key, depending on operation.")
 	var mac = flag.Bool("hmac", false, "Hash-based message authentication code.")
+	var cmac = flag.Bool("cmac", false, "Cipher-based message authentication code.")
 	var old = flag.Bool("old", false, "Use old roll of algorithms.")
 	var mode = flag.String("mode", "CTR", "Mode of operation: CTR or OFB.")
 	var paramset = flag.String("paramset", "A", "Elliptic curve ParamSet: A, B, C, D, XA, XB.")
@@ -65,17 +66,29 @@ func main() {
         os.Exit(1)
         }
 
-        if *sign == false && *verify == false && *generate == false && *digest == false && *derive == false && *crypt == false && *mac == false && *del == "" && *check == "" && *target == "" && *random == false && *pbkdf == false {
+        if *sign == false && *verify == false && *generate == false && *digest == false && *derive == false && *crypt == false && *mac == false && *cmac == false && *del == "" && *check == "" && *target == "" && *random == false && *pbkdf == false {
 	fmt.Fprintln(os.Stderr,"Usage of",os.Args[0]+":")
         flag.PrintDefaults()
         os.Exit(1)
         }
 
 
-	if *random == true {
+	if *random == true && *block == false {
 	var key []byte
 	var err error
 		key = make([]byte, gost3412128.KeySize)
+		_, err = io.ReadFull(rand.Reader, key)
+		if err != nil {
+                        log.Fatal(err)
+		}
+		fmt.Println(hex.EncodeToString(key))
+        	os.Exit(0)
+	}
+
+	if *random == true && *block == true {
+	var key []byte
+	var err error
+		key = make([]byte, 16)
 		_, err = io.ReadFull(rand.Reader, key)
 		if err != nil {
                         log.Fatal(err)
@@ -256,6 +269,7 @@ func main() {
         }
 
 
+
         if *mac == true && *bit == false && *old == false {
 	var keyHex string
 	var prvRaw []byte
@@ -324,6 +338,31 @@ func main() {
 	fmt.Println(hex.EncodeToString(h.Sum(nil)))
         os.Exit(0)
         }
+
+
+        if *cmac == true {
+	var keyHex string
+	var prvRaw []byte
+	if *pbkdf == true {
+        f := func() hash.Hash {
+	return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
+	}
+	prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 16, f)
+	keyHex = hex.EncodeToString(prvRaw)
+	} else {
+	keyHex = *key
+	if len(keyHex) != 256/8 {
+		fmt.Println("Secret key must have 128-bit. (try \"-rand -128\")")
+        	os.Exit(1)
+	}
+	}
+	cipher := gost28147.NewCipher([]byte(keyHex), &gost28147.SboxIdGostR341194CryptoProParamSet)
+	var iv [8]byte
+	h, _ := cipher.NewMAC(8, iv[:])
+	io.Copy(h, os.Stdin)
+	fmt.Println(hex.EncodeToString(h.Sum(nil)))
+        os.Exit(0)
+	}
 
 
         if *digest == true && *target == "" {
@@ -464,7 +503,8 @@ func main() {
 	}
 
 
-	if *pbkdf == true && *old == false && *bit == false {
+
+        if *pbkdf == true && *old == false && *bit == false {
 	prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012256.New)
 
 	fmt.Println(hex.EncodeToString(prvRaw))
@@ -563,6 +603,7 @@ func main() {
 	fmt.Println("Shared=", hex.EncodeToString(shared))
 	os.Exit(0)
 	}
+
 
 
         if *derive == true && *old == true {
@@ -734,6 +775,7 @@ func main() {
 	}
 
 
+
         if *sign == true || *verify == true {
 
         scannerWrite := bufio.NewScanner(os.Stdin)
@@ -900,6 +942,7 @@ func main() {
 	if !isValid { log.Fatal(err, "signature is invalid") }
         fmt.Println("Verify correct.")
 	} 
+
 
 
 	if *sign == true && *old == true && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
