@@ -90,8 +90,8 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
        Password-based key derivation function 2.
  -pub string
        Remote's side public key. (for shared key derivation only)
- -rand
-       Generate random 256-bit cryptographic key.
+ -rand int
+       Generate random cryptographic key: 128 or 256 bit-length.
  -recursive
        Process directories recursively. (for HASHSUM command only)
  -salt string
