@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
+	"github.com/aead/cmac"
 	"github.com/pedroalbanese/gogost/gost28147"
 	"github.com/pedroalbanese/gogost/gost3410"
 	"github.com/pedroalbanese/gogost/gost34112012256"
@@ -28,7 +29,7 @@ import (
 	var bit = flag.Bool("512", false, "Bit length: 256 or 512. (default 256)")
 	var block = flag.Bool("128", false, "Block size: 64 or 128. (for symmetric encryption only) (default 64)")
 	var check = flag.String("check", "", "Check hashsum file.")
-	var cmac = flag.Bool("cmac", false, "Cipher-based message authentication code.")
+	var ciphmac = flag.Bool("cmac", false, "Cipher-based message authentication code.")
 	var crypt = flag.Bool("crypt", false, "Encrypt/Decrypt with symmetric ciphers.")
 	var del = flag.String("shred", "", "Files/Path/Wildcard to apply data sanitization method.")
 	var derive = flag.Bool("derive", false, "Derive shared secret key (VKO).")
@@ -42,7 +43,7 @@ import (
 	var paramset = flag.String("paramset", "A", "Elliptic curve ParamSet: A, B, C, D, XA, XB.")
 	var pbkdf = flag.Bool("pbkdf2", false, "Password-based key derivation function 2.")
 	var pubHex = flag.String("pub", "", "Remote's side public key. (for shared key derivation only)")
-	var random = flag.Bool("rand", false, "Generate random 256-bit cryptographic key.")
+	var random = flag.Int("rand", 0, "Generate random cryptographic key: 128 or 256 bit-length.")
 	var recursive = flag.Bool("recursive", false, "Process directories recursively. (for HASHSUM command only)")
 	var salt = flag.String("salt", "", "Salt. (for PBKDF2 only)")
 	var sig = flag.String("signature", "", "Input signature. (verification only)")
@@ -66,14 +67,14 @@ func main() {
         os.Exit(1)
         }
 
-        if *sign == false && *verify == false && *generate == false && *digest == false && *derive == false && *crypt == false && *mac == false && *cmac == false && *del == "" && *check == "" && *target == "" && *random == false && *pbkdf == false {
+        if *sign == false && *verify == false && *generate == false && *digest == false && *derive == false && *crypt == false && *mac == false && *ciphmac == false && *del == "" && *check == "" && *target == "" && *pbkdf == false && *random == 0 {
 	fmt.Fprintln(os.Stderr,"Usage of",os.Args[0]+":")
         flag.PrintDefaults()
         os.Exit(1)
         }
 
 
-	if *random == true && *block == false {
+	if *random == 256 {
 	var key []byte
 	var err error
 		key = make([]byte, gost3412128.KeySize)
@@ -85,7 +86,7 @@ func main() {
         	os.Exit(0)
 	}
 
-	if *random == true && *block == true {
+	if *random == 128 {
 	var key []byte
 	var err error
 		key = make([]byte, 16)
@@ -340,7 +341,55 @@ func main() {
         }
 
 
-        if *cmac == true {
+        if *ciphmac == true && *block == true && *old == false {
+	var keyHex string
+	var prvRaw []byte
+	if *pbkdf == true && *bit == false {
+	prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 16, gost34112012256.New)
+	keyHex = hex.EncodeToString(prvRaw)
+	} else if *pbkdf == true && *bit == true {
+	prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 16, gost34112012512.New)
+	keyHex = hex.EncodeToString(prvRaw)
+	} else {
+	keyHex = *key
+	if len(keyHex) != 256/8 {
+		fmt.Println("Secret key must have 128-bit. (try \"-rand -128\")")
+        	os.Exit(1)
+	}
+	}
+	c := gost3412128.NewCipher([]byte(keyHex))
+	h, _ := cmac.New(c)
+	io.Copy(h, os.Stdin)
+	fmt.Println(hex.EncodeToString(h.Sum(nil)))
+        os.Exit(0)
+	}
+
+
+        if *ciphmac == true && *block == false && *old == false {
+	var keyHex string
+	var prvRaw []byte
+	if *pbkdf == true && *bit == false {
+	prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 16, gost34112012256.New)
+	keyHex = hex.EncodeToString(prvRaw)
+	} else if *pbkdf == true && *bit == true {
+	prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 16, gost34112012512.New)
+	keyHex = hex.EncodeToString(prvRaw)
+	} else {
+	keyHex = *key
+	if len(keyHex) != 256/8 {
+		fmt.Println("Secret key must have 128-bit. (try \"-rand -128\")")
+        	os.Exit(1)
+	}
+	}
+	c := gost341264.NewCipher([]byte(keyHex))
+	h, _ := cmac.New(c)
+	io.Copy(h, os.Stdin)
+	fmt.Println(hex.EncodeToString(h.Sum(nil)))
+        os.Exit(0)
+	}
+
+
+        if *ciphmac == true && *block == false && *old == true {
 	var keyHex string
 	var prvRaw []byte
 	if *pbkdf == true {
@@ -356,9 +405,9 @@ func main() {
         	os.Exit(1)
 	}
 	}
-	cipher := gost28147.NewCipher([]byte(keyHex), &gost28147.SboxIdGostR341194CryptoProParamSet)
+	c := gost28147.NewCipher([]byte(keyHex), &gost28147.SboxIdGostR341194CryptoProParamSet)
 	var iv [8]byte
-	h, _ := cipher.NewMAC(8, iv[:])
+	h, _ := c.NewMAC(8, iv[:])
 	io.Copy(h, os.Stdin)
 	fmt.Println(hex.EncodeToString(h.Sum(nil)))
         os.Exit(0)
