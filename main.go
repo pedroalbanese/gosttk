@@ -84,9 +84,7 @@ func main() {
 		}
 		fmt.Println(hex.EncodeToString(key))
         	os.Exit(0)
-	}
-
-	if *random == 128 {
+	} else if *random == 128 {
 	var key []byte
 	var err error
 		key = make([]byte, 16)
@@ -353,7 +351,7 @@ func main() {
 	} else {
 	keyHex = *key
 	if len(keyHex) != 256/8 {
-		fmt.Println("Secret key must have 128-bit. (try \"-rand -128\")")
+		fmt.Println("Secret key must have 128-bit. (try \"-rand 128\")")
         	os.Exit(1)
 	}
 	}
@@ -377,7 +375,7 @@ func main() {
 	} else {
 	keyHex = *key
 	if len(keyHex) != 256/8 {
-		fmt.Println("Secret key must have 128-bit. (try \"-rand -128\")")
+		fmt.Println("Secret key must have 128-bit. (try \"-rand 128\")")
         	os.Exit(1)
 	}
 	}
@@ -401,7 +399,7 @@ func main() {
 	} else {
 	keyHex = *key
 	if len(keyHex) != 256/8 {
-		fmt.Println("Secret key must have 128-bit. (try \"-rand -128\")")
+		fmt.Println("Secret key must have 128-bit. (try \"-rand 128\")")
         	os.Exit(1)
 	}
 	}
