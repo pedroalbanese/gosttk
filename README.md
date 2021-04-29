@@ -134,8 +134,11 @@ sign=$(cat sign.txt)
 <pre>./gosttk -crypt -old -key $shared < plaintext.ext > ciphertext.ext
 ./gosttk -crypt -old -key $shared < ciphertext.ext > plaintext.ext
 </pre>
-#### CMAC-Kuznechik:
+#### CMAC-Kuznechik (cipher-based message authentication code):
 <pre>./gosttk -cmac -128 -key $128bitkey < file.ext
+</pre>
+#### CMAC-Magma (cipher-based message authentication code):
+<pre>./gosttk -cmac [-old] -key $128bitkey < file.ext
 </pre>
 #### GOST94-CryptoPro hashsum (list):
 <pre>./gosttk -hashsum "*.*" -old [-recursive]
