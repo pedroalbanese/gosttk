@@ -836,7 +836,6 @@ func main() {
 	}
 
 
-
         if *sign == true || *verify == true {
 
         scannerWrite := bufio.NewScanner(os.Stdin)
