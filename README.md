@@ -14,7 +14,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 * GOST R 34.12-2015 64-bit block cipher Магма (Magma)
 
 #### Symmetric Ciphers:
-* GOST 28147-89
+* GOST 28147-89 CryptoPro
 * GOST R 34.12-2015 Magma (default)
 * GOST R 34.12-2015 Kuznechik (Grasshopper)
 
