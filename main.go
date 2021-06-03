@@ -19,6 +19,7 @@ import (
 	"golang.org/x/crypto/pbkdf2"
 	"hash"
 	"io"
+	"io/ioutil"
 	"log"
 	"math/big"
 	"os"
@@ -31,9 +32,11 @@ import (
 	var check = flag.String("check", "", "Check hashsum file.")
 	var ciphmac = flag.Bool("cmac", false, "Cipher-based message authentication code.")
 	var crypt = flag.Bool("crypt", false, "Encrypt/Decrypt with symmetric ciphers.")
+	var decode = flag.Bool("decode", false, "Decode hex string to binary format.")
 	var del = flag.String("shred", "", "Files/Path/Wildcard to apply data sanitization method.")
 	var derive = flag.Bool("derive", false, "Derive shared secret key (VKO).")
 	var digest = flag.Bool("digest", false, "Compute single hashsum.")
+	var encode = flag.Bool("encode", false, "Encode binary string to hex format.")
 	var generate = flag.Bool("generate", false, "Generate asymmetric keypair.")
 	var iter = flag.Int("iter", 1, "Iterations. (for SHRED and PBKDF2 only)")
 	var key = flag.String("key", "", "Private/Public key, password or HMAC key, depending on operation.")
@@ -67,7 +70,7 @@ func main() {
         os.Exit(1)
         }
 
-        if *sign == false && *verify == false && *generate == false && *digest == false && *derive == false && *crypt == false && *mac == false && *ciphmac == false && *del == "" && *check == "" && *target == "" && *pbkdf == false && *random == 0 {
+        if *sign == false && *verify == false && *generate == false && *digest == false && *derive == false && *crypt == false && *mac == false && *ciphmac == false && *del == "" && *check == "" && *target == "" && *pbkdf == false && *random == 0 && *encode == false && *decode == false {
 	fmt.Fprintln(os.Stderr,"Usage of",os.Args[0]+":")
         flag.PrintDefaults()
         os.Exit(1)
@@ -94,6 +97,46 @@ func main() {
 		}
 		fmt.Println(hex.EncodeToString(key))
         	os.Exit(0)
+	}
+
+
+
+
+	if *encode == true {
+	b, err := ioutil.ReadAll(os.Stdin)
+
+	if len(b) == 0 {
+		os.Exit(0)
+	}
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	o := make([]byte, hex.EncodedLen(len(b)))
+	hex.Encode(o, b)
+
+	os.Stdout.Write(o)
+	}
+
+	if *decode == true {
+	b, err := ioutil.ReadAll(os.Stdin)
+
+	if len(b) < 2 {
+		os.Exit(0)
+	}
+
+	if (len(b)%2 != 0) || (err != nil) {
+		log.Fatal(err)
+	}
+
+	o := make([]byte, hex.DecodedLen(len(b)))
+	_, err = hex.Decode(o, b)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	os.Stdout.Write(o)
 	}
 
 
@@ -555,14 +598,28 @@ func main() {
 
 
 
-        if *pbkdf == true && *old == false && *bit == false {
+        if *pbkdf == true && *old == false && *bit == false && *block == false {
 	prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012256.New)
 
 	fmt.Println(hex.EncodeToString(prvRaw))
 	os.Exit(1)
 	}
 
-        if *pbkdf == true && *old == false && *bit == true {
+        if *pbkdf == true && *old == false && *bit == false && *block == true {
+	prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 16, gost34112012256.New)
+
+	fmt.Println(hex.EncodeToString(prvRaw))
+	os.Exit(1)
+	}
+
+        if *pbkdf == true && *old == false && *bit == true && *block == false {
+	prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012512.New)
+
+	fmt.Println(hex.EncodeToString(prvRaw))
+	os.Exit(1)
+	}
+
+        if *pbkdf == true && *old == false && *bit == true && *block == true {
 	prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012512.New)
 
 	fmt.Println(hex.EncodeToString(prvRaw))
@@ -834,6 +891,7 @@ func main() {
 
 	}
 	}
+
 
 
         if *sign == true || *verify == true {
