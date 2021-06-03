@@ -67,10 +67,14 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
        Cipher-based message authentication code.
  -crypt
        Encrypt/Decrypt with symmetric ciphers.
+ -decode
+       Decode hex string to binary format.
  -derive
        Derive shared secret key (VKO).
  -digest
        Compute single hashsum.
+ -encode
+       Encode binary string to hex format.
  -generate
        Generate asymmetric keypair.
  -hashsum string
