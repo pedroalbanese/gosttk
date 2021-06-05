@@ -107,8 +107,6 @@ func main() {
 	}
 
 
-
-
 	if *encode == true {
 	b, err := ioutil.ReadAll(os.Stdin)
 
@@ -316,7 +314,6 @@ func main() {
         }
         os.Exit(0)
         }
-
 
 
         if *mac == true && *bit == false && *old == false {
@@ -604,7 +601,6 @@ func main() {
 	}
 
 
-
         if *pbkdf == true && *old == false && *bit == false && *block == false {
 	prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012256.New)
 
@@ -728,7 +724,6 @@ func main() {
 	fmt.Println("Shared=", hex.EncodeToString(shared))
 	os.Exit(0)
 	}
-
 
 
         if *derive == true && *old == true {
@@ -900,7 +895,6 @@ func main() {
 	}
 
 
-
         if *sign == true || *verify == true {
 
         scannerWrite := bufio.NewScanner(os.Stdin)
@@ -1067,7 +1061,6 @@ func main() {
 	if !isValid { log.Fatal(err, "signature is invalid") }
         fmt.Println("Verify correct.")
 	} 
-
 
 
 	if *sign == true && *old == true && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
