@@ -109,38 +109,30 @@ func main() {
 
 	if *encode == true {
 	b, err := ioutil.ReadAll(os.Stdin)
-
 	if len(b) == 0 {
 		os.Exit(0)
 	}
-
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	o := make([]byte, hex.EncodedLen(len(b)))
 	hex.Encode(o, b)
-
 	os.Stdout.Write(o)
 	}
 
 	if *decode == true {
 	b, err := ioutil.ReadAll(os.Stdin)
-
 	if len(b) < 2 {
 		os.Exit(0)
 	}
-
 	if (len(b)%2 != 0) || (err != nil) {
 		log.Fatal(err)
 	}
-
 	o := make([]byte, hex.DecodedLen(len(b)))
 	_, err = hex.Decode(o, b)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	os.Stdout.Write(o)
 	}
 
