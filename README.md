@@ -177,5 +177,5 @@ The PBKDF2 function can be combined with the CRYPT and HMAC commands:
 
 This project is licensed under the MIT License.
 
-#### Military Grade Reliability. Copyright (c) 2020-2021 Pedro Albanese - ALBANESE Lab.
+##### Military Grade Reliability. Copyright (c) 2020-2021 Pedro Albanese - ALBANESE Lab.
 
