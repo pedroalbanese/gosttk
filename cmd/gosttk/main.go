@@ -8,7 +8,7 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
-	"github.com/aead/cmac"
+	"github.com/pedroalbanese/cmac"
 	"github.com/pedroalbanese/gogost/gost28147"
 	"github.com/pedroalbanese/gogost/gost3410"
 	"github.com/pedroalbanese/gogost/gost34112012256"
