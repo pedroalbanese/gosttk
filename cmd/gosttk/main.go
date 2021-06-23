@@ -660,11 +660,13 @@ func main() {
 			} else if *bit == false && *paramset == "D" {
 				curve = gost3410.CurveIdtc26gost34102012256paramSetD()
 			}
-		} else if *bit == true && (*paramset == "A" || *paramset == "B") {
+		} else if *bit == true && (*paramset == "A" || *paramset == "B" || *paramset == "C") {
 			if *paramset == "A" {
 				curve = gost3410.CurveIdtc26gost341012512paramSetA()
 			} else if *paramset == "B" {
 				curve = gost3410.CurveIdtc26gost341012512paramSetB()
+			} else if *paramset == "C" {
+				curve = gost3410.CurveIdtc26gost34102012512paramSetC()
 			}
 		}
 
@@ -797,14 +799,16 @@ func main() {
 
 		}
 
-		if *bit == true && (*paramset == "A" || *paramset == "B") {
+		if *bit == true && (*paramset == "A" || *paramset == "B" || *paramset == "C") {
 			var curve *gost3410.Curve
 			if *paramset == "A" {
 				curve = gost3410.CurveIdtc26gost341012512paramSetA()
 			} else if *paramset == "B" {
 				curve = gost3410.CurveIdtc26gost341012512paramSetB()
-
+			} else if *paramset == "C" {
+				curve = gost3410.CurveIdtc26gost34102012512paramSetC()
 			}
+
 			prvRaw = make([]byte, 512/8)
 			_, err = io.ReadFull(rand.Reader, prvRaw)
 			if err != nil {
@@ -969,7 +973,7 @@ func main() {
 			os.Exit(0)
 		}
 
-		if *sign == true && *bit == true && *old == false && (*paramset == "A" || *paramset == "B") {
+		if *sign == true && *bit == true && *old == false && (*paramset == "A" || *paramset == "B" || *paramset == "C") {
 			hash := scannerWrite.Bytes()
 			data := []byte(hash)
 			hasher := gost34112012512.New()
@@ -983,6 +987,8 @@ func main() {
 				curve = gost3410.CurveIdtc26gost341012512paramSetA()
 			} else if *paramset == "B" {
 				curve = gost3410.CurveIdtc26gost341012512paramSetB()
+			} else if *paramset == "C" {
+				curve = gost3410.CurveIdtc26gost34102012512paramSetC()
 			}
 			prvRaw, err = hex.DecodeString(*key)
 			if err != nil {
@@ -1004,7 +1010,7 @@ func main() {
 			os.Exit(0)
 		}
 
-		if *verify == true && *bit == true && *old == false && (*paramset == "A" || *paramset == "B") {
+		if *verify == true && *bit == true && *old == false && (*paramset == "A" || *paramset == "B" || *paramset == "C") {
 			hash := scannerWrite.Bytes()
 			data := []byte(hash)
 			hasher := gost34112012512.New()
@@ -1018,6 +1024,8 @@ func main() {
 				curve = gost3410.CurveIdtc26gost341012512paramSetA()
 			} else if *paramset == "B" {
 				curve = gost3410.CurveIdtc26gost341012512paramSetB()
+			} else if *paramset == "C" {
+				curve = gost3410.CurveIdtc26gost34102012512paramSetC()
 			}
 			pubRaw, err = hex.DecodeString(*key)
 			if err != nil {
