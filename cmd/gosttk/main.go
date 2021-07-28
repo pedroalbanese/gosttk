@@ -966,7 +966,7 @@ func main() {
 				log.Fatal(err)
 			}
 			if !isValid {
-				log.Fatal(err, "signature is invalid")
+				log.Fatal("signature is invalid")
 			}
 			fmt.Println("Verify correct.")
 			os.Exit(0)
@@ -1040,7 +1040,7 @@ func main() {
 				log.Fatal(err)
 			}
 			if !isValid {
-				log.Fatal(err, "signature is invalid")
+				log.Fatal("signature is invalid")
 			}
 			fmt.Println("Verify correct.")
 		}
@@ -1121,7 +1121,7 @@ func main() {
 				log.Fatal(err)
 			}
 			if !isValid {
-				log.Fatal(err, "signature is invalid")
+				log.Fatal("signature is invalid")
 			}
 			fmt.Println("Verify correct.")
 		}
