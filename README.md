@@ -123,7 +123,6 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 sign=$(cat sign.txt)
 ./gosttk -verify [-512|-old] -key $pubkey -signature $sign < file.ext
 </pre>
-##### Warning! Sign and Verify just computes the first line of the file or STDIN. It must be a DIGEST or HMAC single value.
 #### VKO: Shared key negociation (ECDH equivalent):
 <pre>./gosttk -derive [-512|-old] -key $prvkey -pub $pubkey
 </pre>
