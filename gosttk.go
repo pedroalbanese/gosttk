@@ -1,4 +1,4 @@
 // Pure Go GOST Cipher Suite.
 package gosttk
 
-const Version = "1.1.3"
+const Version = "1.2.2"
