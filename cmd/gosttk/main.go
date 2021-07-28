@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"crypto/cipher"
 	"crypto/hmac"
 	"crypto/rand"
@@ -876,11 +877,10 @@ func main() {
 
 	if *sign == true || *verify == true {
 
-		scannerWrite := bufio.NewScanner(os.Stdin)
-		if !scannerWrite.Scan() {
-			log.Printf("Failed to read: %v", scannerWrite.Err())
-			return
-		}
+		buf := bytes.NewBuffer(nil)
+		scanner := os.Stdin
+		io.Copy(buf, scanner)
+		hash := string(buf.Bytes())
 
 		var prvRaw []byte
 		var pubRaw []byte
@@ -894,7 +894,7 @@ func main() {
 		}
 
 		if *sign == true && *bit == false && *old == false && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "D") {
-			hash := scannerWrite.Bytes()
+
 			data := []byte(hash)
 			hasher := gost34112012256.New()
 			_, err := hasher.Write(data)
@@ -933,7 +933,6 @@ func main() {
 		}
 
 		if *verify == true && *bit == false && *old == false && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "D") {
-			hash := scannerWrite.Bytes()
 			data := []byte(hash)
 			hasher := gost34112012256.New()
 			_, err := hasher.Write(data)
@@ -974,7 +973,6 @@ func main() {
 		}
 
 		if *sign == true && *bit == true && *old == false && (*paramset == "A" || *paramset == "B" || *paramset == "C") {
-			hash := scannerWrite.Bytes()
 			data := []byte(hash)
 			hasher := gost34112012512.New()
 			_, err := hasher.Write(data)
@@ -1011,7 +1009,6 @@ func main() {
 		}
 
 		if *verify == true && *bit == true && *old == false && (*paramset == "A" || *paramset == "B" || *paramset == "C") {
-			hash := scannerWrite.Bytes()
 			data := []byte(hash)
 			hasher := gost34112012512.New()
 			_, err := hasher.Write(data)
@@ -1049,7 +1046,6 @@ func main() {
 		}
 
 		if *sign == true && *old == true && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
-			hash := scannerWrite.Bytes()
 			data := []byte(hash)
 			hasher := gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
 			_, err := hasher.Write(data)
@@ -1090,7 +1086,6 @@ func main() {
 		}
 
 		if *verify == true && *old == true && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
-			hash := scannerWrite.Bytes()
 			data := []byte(hash)
 			hasher := gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
 			_, err := hasher.Write(data)
