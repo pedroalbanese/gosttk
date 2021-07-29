@@ -123,7 +123,14 @@ func main() {
 	}
 
 	if *decode == true {
-		b, err := ioutil.ReadAll(os.Stdin)
+		var err error
+		buf := bytes.NewBuffer(nil)
+		data := os.Stdin
+		io.Copy(buf, data)
+		b := strings.TrimSuffix(string(buf.Bytes()), "\n")
+		if len(b) == 0 {
+			os.Exit(0)
+		}
 		if len(b) < 2 {
 			os.Exit(0)
 		}
@@ -131,7 +138,7 @@ func main() {
 			log.Fatal(err)
 		}
 		o := make([]byte, hex.DecodedLen(len(b)))
-		_, err = hex.Decode(o, b)
+		_, err = hex.Decode(o, []byte(b))
 		if err != nil {
 			log.Fatal(err)
 		}
