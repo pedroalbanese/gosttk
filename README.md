@@ -176,6 +176,10 @@ The PBKDF2 function can be combined with the CRYPT and HMAC commands:
 ./gosttk -hmac [-512] -pbkdf2 -key "pass" -iter 10000 -salt "salt" < file.ext
 </pre>
 
+#### Hex to PEM/PEM to Hex:
+<pre>echo $pubkey|./gosttk -pem enc [-salt "PEM BLOCK;TYPE,ALG"] > Pubkey.pem
+./gosttk -pem dec [-salt "PEM BLOCK"] < Pubkey.pem
+</pre>
 #### Random Art (Public Key Fingerprint):
 <pre>./gosttk -key $pubkey
 </pre>
