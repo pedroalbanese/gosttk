@@ -38,6 +38,8 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 #### Non-Cryptographic Functions:
 * GOST R 50739-95 data sanitization method
 * Bin to Hex/Hex to Bin string conversion
+* Hex to PEM/PEM to Hex string conversion
+* Random Art Public key Fingerprint
 
 #### Supported ParamSets:
 * GOST R 34.10-2001 256-bit: A, B, C, XA, XB
@@ -172,6 +174,9 @@ The PBKDF2 function can be combined with the CRYPT and HMAC commands:
 ./gosttk -hmac [-512] -pbkdf2 -key "pass" -iter 10000 -salt "salt" < file.ext
 </pre>
 
+#### Random Art (Public Key Fingerprint):
+<pre>./gosttk -key $pubkey
+</pre>
 ## License
 
 This project is licensed under the ISC License.
