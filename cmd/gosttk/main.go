@@ -84,30 +84,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	if *random == 256 {
+	if *random == 128 || *random == 256 || *random == 512 {
 		var key []byte
 		var err error
-		key = make([]byte, gost3412128.KeySize)
-		_, err = io.ReadFull(rand.Reader, key)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println(hex.EncodeToString(key))
-		os.Exit(0)
-	} else if *random == 128 {
-		var key []byte
-		var err error
-		key = make([]byte, 16)
-		_, err = io.ReadFull(rand.Reader, key)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println(hex.EncodeToString(key))
-		os.Exit(0)
-	} else if *random == 512 {
-		var key []byte
-		var err error
-		key = make([]byte, 64)
+		key = make([]byte, *random/8)
 		_, err = io.ReadFull(rand.Reader, key)
 		if err != nil {
 			log.Fatal(err)
