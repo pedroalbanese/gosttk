@@ -142,8 +142,8 @@ func main() {
 		typ = "-"
 		if *salt != "" {
 			salt := *salt
-			if strings.Contains(salt, ",") {
-				split := strings.Split(salt, ",")
+			if strings.Contains(salt, ";") {
+				split := strings.Split(salt, ";")
 				if len(split) < 2 {
 					fmt.Println("PEM encoding needs two salts separated by comma.")
 					os.Exit(2)
