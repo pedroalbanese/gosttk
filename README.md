@@ -66,23 +66,21 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
  -check string
        Check hashsum file.
  -cmac
-       Cipher-based message authentication code.
+       Compute cipher-based message authentication code.
  -crypt
        Encrypt/Decrypt with symmetric ciphers.
- -decode
-       Decode hex string to binary format.
  -derive
        Derive shared secret key (VKO).
  -digest
        Compute single hashsum.
- -encode
-       Encode binary string to hex format.
  -generate
        Generate asymmetric keypair.
  -hashsum string
        File/Wildcard to generate hashsum list.
+ -hex string
+       Encode binary string to hex format and vice-versa.
  -hmac
-       Hash-based message authentication code.
+       Compute hash-based message authentication code.
  -iter int
        Iterations. (for SHRED and PBKDF2 only) (default 1)
  -key string
@@ -95,10 +93,12 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
        Elliptic curve ParamSet: A, B, C, D, XA, XB. (default "A")
  -pbkdf2
        Password-based key derivation function 2.
+ -pem string
+       Encode hex string to pem format and vice-versa.
  -pub string
        Remote's side public key. (for shared key derivation only)
  -rand int
-       Generate random cryptographic key: 128 or 256 bit-length.
+       Generate random cryptographic key: 128, 256 or 512 bit-length.
  -recursive
        Process directories recursively. (for HASHSUM command only)
  -salt string
@@ -112,7 +112,9 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
  -verbose
        Verbose mode. (for CHECK command only)
  -verify
-       Verify with public key.</pre>
+       Verify with public key.
+ -version
+       Print version information.</pre>
 ### Examples:
 #### Asymmetric GOST R 34.10-2001 256-bit keypair generation (INI format):
 <pre>./gosttk -generate -old
