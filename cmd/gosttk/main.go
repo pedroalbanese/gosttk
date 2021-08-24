@@ -7,8 +7,10 @@ import (
 	"crypto/hmac"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/pem"
 	"flag"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/pedroalbanese/cmac"
 	"github.com/pedroalbanese/gogost/gost28147"
 	"github.com/pedroalbanese/gogost/gost3410"
@@ -19,6 +21,7 @@ import (
 	"github.com/pedroalbanese/gogost/gost341264"
 	"github.com/pedroalbanese/gost-shred"
 	"github.com/pedroalbanese/gosttk"
+	"github.com/pedroalbanese/randomart"
 	"golang.org/x/crypto/pbkdf2"
 	"hash"
 	"io"
@@ -36,11 +39,11 @@ var (
 	check     = flag.String("check", "", "Check hashsum file.")
 	ciphmac   = flag.Bool("cmac", false, "Compute cipher-based message authentication code.")
 	crypt     = flag.Bool("crypt", false, "Encrypt/Decrypt with symmetric ciphers.")
-	decode    = flag.Bool("decode", false, "Decode hex string to binary format.")
 	del       = flag.String("shred", "", "Files/Path/Wildcard to apply data sanitization method.")
 	derive    = flag.Bool("derive", false, "Derive shared secret key (VKO).")
 	digest    = flag.Bool("digest", false, "Compute single hashsum.")
-	encode    = flag.Bool("encode", false, "Encode binary string to hex format.")
+	encode    = flag.String("hex", "", "Encode binary string to hex format and vice-versa.")
+	encpem    = flag.String("pem", "", "Encode hex string to pem format and vice-versa.")
 	generate  = flag.Bool("generate", false, "Generate asymmetric keypair.")
 	iter      = flag.Int("iter", 1, "Iterations. (for SHRED and PBKDF2 only)")
 	key       = flag.String("key", "", "Private/Public key, password or HMAC key, depending on operation.")
@@ -50,7 +53,7 @@ var (
 	paramset  = flag.String("paramset", "A", "Elliptic curve ParamSet: A, B, C, D, XA, XB.")
 	pbkdf     = flag.Bool("pbkdf2", false, "Password-based key derivation function 2.")
 	pubHex    = flag.String("pub", "", "Remote's side public key. (for shared key derivation only)")
-	random    = flag.Int("rand", 0, "Generate random cryptographic key: 128 or 256 bit-length.")
+	random    = flag.Int("rand", 0, "Generate random cryptographic key: 128, 256 or 512 bit-length.")
 	recursive = flag.Bool("recursive", false, "Process directories recursively. (for HASHSUM command only)")
 	salt      = flag.String("salt", "", "Salt. (for PBKDF2 only)")
 	sig       = flag.String("signature", "", "Input signature. (verification only)")
@@ -81,12 +84,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	if *sign == false && *verify == false && *generate == false && *digest == false && *derive == false && *crypt == false && *mac == false && *ciphmac == false && *del == "" && *check == "" && *target == "" && *pbkdf == false && *random == 0 && *encode == false && *decode == false {
-		fmt.Fprintln(os.Stderr, "Usage of", os.Args[0]+":")
-		flag.PrintDefaults()
-		os.Exit(1)
-	}
-
 	if *random == 256 {
 		var key []byte
 		var err error
@@ -107,9 +104,19 @@ func main() {
 		}
 		fmt.Println(hex.EncodeToString(key))
 		os.Exit(0)
+	} else if *random == 512 {
+		var key []byte
+		var err error
+		key = make([]byte, 64)
+		_, err = io.ReadFull(rand.Reader, key)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(hex.EncodeToString(key))
+		os.Exit(0)
 	}
 
-	if *encode == true {
+	if *encode == "enc" || *encode == "encode" {
 		b, err := ioutil.ReadAll(os.Stdin)
 		if len(b) == 0 {
 			os.Exit(0)
@@ -120,14 +127,16 @@ func main() {
 		o := make([]byte, hex.EncodedLen(len(b)))
 		hex.Encode(o, b)
 		os.Stdout.Write(o)
+		os.Exit(0)
 	}
 
-	if *decode == true {
+	if *encode == "dec" || *encode == "decode" {
 		var err error
 		buf := bytes.NewBuffer(nil)
 		data := os.Stdin
 		io.Copy(buf, data)
-		b := strings.TrimSuffix(string(buf.Bytes()), "\n")
+		b := strings.TrimSuffix(string(buf.Bytes()), "\r\n")
+		b = strings.TrimSuffix(string(b), "\n")
 		if len(b) == 0 {
 			os.Exit(0)
 		}
@@ -143,6 +152,69 @@ func main() {
 			log.Fatal(err)
 		}
 		os.Stdout.Write(o)
+		os.Exit(0)
+	}
+
+	if *encpem == "enc" || *encpem == "encode" {
+		var blc string
+		var typ string
+		blc = "PEM BLOCK"
+		typ = "-"
+		if *salt != "" {
+			salt := *salt
+			if strings.Contains(salt, ",") {
+				split := strings.Split(salt, ",")
+				if len(split) < 2 {
+					fmt.Println("PEM encoding needs two salts separated by comma.")
+					os.Exit(2)
+				}
+				if split[0] != "" {
+					blc = split[0]
+				}
+				typ = split[1]
+			} else {
+				blc = salt
+			}
+		}
+		u := uuid.New()
+		buf := bytes.NewBuffer(nil)
+		scanner := os.Stdin
+		io.Copy(buf, scanner)
+
+		block := &pem.Block{
+			Type: blc,
+			Headers: map[string]string{
+				"typ": typ,
+				"uid": u.String(),
+			},
+			Bytes: []byte(buf.Bytes()),
+		}
+		if err := pem.Encode(os.Stdout, block); err != nil {
+			log.Fatal(err)
+		}
+		os.Exit(0)
+	}
+
+	if *encpem == "dec" || *encpem == "decode" {
+		var blc string
+		blc = "PEM BLOCK"
+		if *salt != "" {
+			blc = *salt
+		}
+		buf := bytes.NewBuffer(nil)
+		scanner := os.Stdin
+		io.Copy(buf, scanner)
+
+		block, _ := pem.Decode(buf.Bytes())
+
+		if block == nil || block.Type != blc {
+			log.Fatal("failed to decode PEM block containing " + blc)
+		}
+
+		pub, _ := hex.DecodeString(string(block.Bytes))
+
+		fmt.Printf("%x\n", pub)
+		os.Exit(0)
 	}
 
 	if *crypt == true && *block == true && *old == false {
@@ -494,6 +566,7 @@ func main() {
 				fmt.Println(hex.EncodeToString(h.Sum(nil)), "*"+f.Name())
 			}
 		}
+		os.Exit(0)
 	}
 
 	if *target != "" && *recursive == true {
@@ -535,12 +608,19 @@ func main() {
 		if err != nil {
 			log.Println(err)
 		}
+		os.Exit(0)
 	}
 
 	if *check != "" {
-		file, err := os.Open(*check)
-		if err != nil {
-			log.Fatalf("failed opening file: %s", err)
+		var file io.Reader
+		var err error
+		if *check == "-" {
+			file = os.Stdin
+		} else {
+			file, err = os.Open(*check)
+			if err != nil {
+				log.Fatalf("failed opening file: %s", err)
+			}
 		}
 		scanner := bufio.NewScanner(file)
 		scanner.Split(bufio.ScanLines)
@@ -549,109 +629,52 @@ func main() {
 		for scanner.Scan() {
 			txtlines = append(txtlines, scanner.Text())
 		}
-		file.Close()
+
 		for _, eachline := range txtlines {
 			lines := strings.Split(string(eachline), " *")
-			var h hash.Hash
-			if *old == true {
-				h = gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
-			} else if *old == false && *bit == false {
-				h = gost34112012256.New()
-			} else if *bit == true {
-				h = gost34112012512.New()
-			}
-			_, err := os.Stat(lines[1])
-			if err == nil {
-				f, err := os.Open(lines[1])
-				if err != nil {
-					log.Fatal(err)
-				}
-				io.Copy(h, f)
 
-				if *verbose {
-					if hex.EncodeToString(h.Sum(nil)) == lines[0] {
-						fmt.Println(lines[1]+"\t", "OK")
+			if strings.Contains(string(eachline), " *") {
+
+				var h hash.Hash
+				if *old == true {
+					h = gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
+				} else if *old == false && *bit == false {
+					h = gost34112012256.New()
+				} else if *bit == true {
+					h = gost34112012512.New()
+				}
+
+				_, err := os.Stat(lines[1])
+				if err == nil {
+					f, err := os.Open(lines[1])
+					if err != nil {
+						log.Fatal(err)
+					}
+					io.Copy(h, f)
+					f.Close()
+
+					if *verbose {
+						if hex.EncodeToString(h.Sum(nil)) == lines[0] {
+							fmt.Println(lines[1]+"\t", "OK")
+						} else {
+							fmt.Println(lines[1]+"\t", "FAILED")
+						}
 					} else {
-						fmt.Println(lines[1]+"\t", "FAILED")
+						if hex.EncodeToString(h.Sum(nil)) == lines[0] {
+						} else {
+							os.Exit(1)
+						}
 					}
 				} else {
-					if hex.EncodeToString(h.Sum(nil)) == lines[0] {
+					if *verbose {
+						fmt.Println(lines[1]+"\t", "Not found!")
 					} else {
 						os.Exit(1)
 					}
 				}
-			} else {
-				if *verbose {
-					fmt.Println(lines[1]+"\t", "Not found!")
-				} else {
-					os.Exit(1)
-				}
 			}
 		}
-	}
-
-	if *pbkdf == true && *old == false && *bit == false && *block == false {
-		prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012256.New)
-
-		fmt.Println(hex.EncodeToString(prvRaw))
-		os.Exit(1)
-	}
-
-	if *pbkdf == true && *old == false && *bit == false && *block == true {
-		prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 16, gost34112012256.New)
-
-		fmt.Println(hex.EncodeToString(prvRaw))
-		os.Exit(1)
-	}
-
-	if *pbkdf == true && *old == false && *bit == true && *block == false {
-		prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012512.New)
-
-		fmt.Println(hex.EncodeToString(prvRaw))
-		os.Exit(1)
-	}
-
-	if *pbkdf == true && *old == false && *bit == true && *block == true {
-		prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012512.New)
-
-		fmt.Println(hex.EncodeToString(prvRaw))
-		os.Exit(1)
-	}
-
-	if *pbkdf == true && *old == true && *bit == false && *block == false {
-		f := func() hash.Hash {
-			return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
-		}
-		prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, f)
-
-		fmt.Println(hex.EncodeToString(prvRaw))
-		os.Exit(1)
-	}
-
-	if *pbkdf == true && *old == true && *bit == false && *block == true {
-		f := func() hash.Hash {
-			return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
-		}
-		prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 16, f)
-
-		fmt.Println(hex.EncodeToString(prvRaw))
-		os.Exit(1)
-	}
-
-	if *del != "" {
-		shredder := shred.Shredder{}
-		shredconf := shred.NewShredderConf(&shredder, shred.WriteZeros|shred.WriteRand, *iter, true)
-		matches, err := filepath.Glob(*del)
-		if err != nil {
-			panic(err)
-		}
-
-		for _, match := range matches {
-			err := shredconf.ShredDir(match)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
+		os.Exit(0)
 	}
 
 	var err error
@@ -763,8 +786,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println("Shared=", hex.EncodeToString(shared))
-		os.Exit(0)
+		fmt.Println("Shared=", hex.EncodeToString(shared)[0:16])
 	}
 
 	if *generate && *old == false {
@@ -786,10 +808,16 @@ func main() {
 				curve = gost3410.CurveIdtc26gost34102012256paramSetD()
 			}
 
-			prvRaw = make([]byte, 256/8)
-			_, err = io.ReadFull(rand.Reader, prvRaw)
-			if err != nil {
-				log.Fatal(err)
+			if *key != "" && *pbkdf == false {
+				prvRaw, _ = hex.DecodeString(*key)
+			} else if *key != "" && *pbkdf {
+				prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012256.New)
+			} else {
+				prvRaw = make([]byte, 256/8)
+				_, err = io.ReadFull(rand.Reader, prvRaw)
+				if err != nil {
+					log.Fatal(err)
+				}
 			}
 			fmt.Println("Private=", hex.EncodeToString(prvRaw))
 
@@ -805,6 +833,7 @@ func main() {
 			pubRaw = pub.Raw()
 			fmt.Println("Public=", hex.EncodeToString(pubRaw))
 
+			os.Exit(0)
 		}
 
 		if *bit == true && (*paramset == "A" || *paramset == "B" || *paramset == "C") {
@@ -817,10 +846,16 @@ func main() {
 				curve = gost3410.CurveIdtc26gost34102012512paramSetC()
 			}
 
-			prvRaw = make([]byte, 512/8)
-			_, err = io.ReadFull(rand.Reader, prvRaw)
-			if err != nil {
-				log.Fatal(err)
+			if *key != "" && *pbkdf == false {
+				prvRaw, _ = hex.DecodeString(*key)
+			} else if *key != "" && *pbkdf {
+				prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 64, gost34112012512.New)
+			} else {
+				prvRaw = make([]byte, 512/8)
+				_, err = io.ReadFull(rand.Reader, prvRaw)
+				if err != nil {
+					log.Fatal(err)
+				}
 			}
 			fmt.Println("Private=", hex.EncodeToString(prvRaw))
 
@@ -860,10 +895,19 @@ func main() {
 		var pub *gost3410.PublicKey
 
 		if *bit == false {
-			prvRaw = make([]byte, 256/8)
-			_, err = io.ReadFull(rand.Reader, prvRaw)
-			if err != nil {
-				log.Fatal(err)
+			if *key != "" && *pbkdf == false {
+				prvRaw, _ = hex.DecodeString(*key)
+			} else if *key != "" && *pbkdf {
+				f := func() hash.Hash {
+					return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
+				}
+				prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, f)
+			} else {
+				prvRaw = make([]byte, 256/8)
+				_, err = io.ReadFull(rand.Reader, prvRaw)
+				if err != nil {
+					log.Fatal(err)
+				}
 			}
 			fmt.Println("Private=", hex.EncodeToString(prvRaw))
 
@@ -880,6 +924,7 @@ func main() {
 			fmt.Println("Public=", hex.EncodeToString(pubRaw))
 
 		}
+		os.Exit(0)
 	}
 
 	if *sign == true || *verify == true {
@@ -1133,5 +1178,76 @@ func main() {
 			fmt.Println("Verify correct.")
 		}
 		os.Exit(0)
+	}
+
+	if *pbkdf == true && *old == false && *bit == false && *block == false {
+		prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012256.New)
+
+		fmt.Println(hex.EncodeToString(prvRaw))
+		os.Exit(0)
+	}
+
+	if *pbkdf == true && *old == false && *bit == false && *block == true {
+		prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 16, gost34112012256.New)
+
+		fmt.Println(hex.EncodeToString(prvRaw))
+		os.Exit(0)
+	}
+
+	if *pbkdf == true && *old == false && *bit == true && *block == false {
+		prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012512.New)
+
+		fmt.Println(hex.EncodeToString(prvRaw))
+		os.Exit(0)
+	}
+
+	if *pbkdf == true && *old == false && *bit == true && *block == true {
+		prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 16, gost34112012512.New)
+
+		fmt.Println(hex.EncodeToString(prvRaw))
+		os.Exit(0)
+	}
+
+	if *pbkdf == true && *old == true && *bit == false && *block == false {
+		f := func() hash.Hash {
+			return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
+		}
+		prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, f)
+
+		fmt.Println(hex.EncodeToString(prvRaw))
+		os.Exit(0)
+	}
+
+	if *pbkdf == true && *old == true && *bit == false && *block == true {
+		f := func() hash.Hash {
+			return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
+		}
+		prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 16, f)
+
+		fmt.Println(hex.EncodeToString(prvRaw))
+		os.Exit(0)
+	}
+
+	if *del != "" {
+		shredder := shred.Shredder{}
+		shredconf := shred.NewShredderConf(&shredder, shred.WriteZeros|shred.WriteRand, *iter, true)
+		matches, err := filepath.Glob(*del)
+		if err != nil {
+			panic(err)
+		}
+
+		for _, match := range matches {
+			err := shredconf.ShredDir(match)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		os.Exit(0)
+	}
+
+	if *key == "-" {
+		fmt.Println(randomart.FromFile(os.Stdin))
+	} else {
+		fmt.Println(randomart.FromString(*key))
 	}
 }
