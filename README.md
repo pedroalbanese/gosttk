@@ -39,7 +39,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 * GOST R 50739-95 data sanitization method
 * Bin to Hex/Hex to Bin string conversion
 * Hex to PEM/PEM to Hex string conversion
-* Random Art Public key Fingerprint
+* Random Art Public key Fingerprint (ssh-keygen equivalent)
 
 #### Supported ParamSets:
 * GOST R 34.10-2001 256-bit: A, B, C, XA, XB
