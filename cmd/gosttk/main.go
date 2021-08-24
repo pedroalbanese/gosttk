@@ -94,6 +94,8 @@ func main() {
 		}
 		fmt.Println(hex.EncodeToString(key))
 		os.Exit(0)
+	} else if *random != 128 && *random != 256 && *random != 512 {
+		log.Fatal("RAND must have 128/256/512-bit.")
 	}
 
 	if *encode == "enc" || *encode == "encode" {
