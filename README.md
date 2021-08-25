@@ -166,9 +166,6 @@ sign=$(cat sign.txt)
 #### PBKDF2 (password-based key derivation function 2):
 <pre>./gosttk -pbkdf2 [-512|-old] -key "pass" -iter 10000 -salt "salt"
 </pre>
-#### Shred (GOST R 50739-95 data sanitization method, 25 iterations):
-<pre>./gosttk -shred keypair.ini -iter 25
-</pre>
 
 #### Note:
 The PBKDF2 function can be combined with the CRYPT and HMAC commands:
@@ -176,6 +173,9 @@ The PBKDF2 function can be combined with the CRYPT and HMAC commands:
 ./gosttk -hmac [-512] -pbkdf2 -key "pass" -iter 10000 -salt "salt" < file.ext
 </pre>
 
+#### Shred (GOST R 50739-95 data sanitization method, 25 iterations):
+<pre>./gosttk -shred keypair.ini -iter 25
+</pre>
 #### Hex to PEM/PEM to Hex:
 <pre>echo $pubkey|./gosttk -pem enc [-salt "PEM BLOCK;TYPE,ALG"] > Pubkey.pem
 ./gosttk -pem dec [-salt "PEM BLOCK"] < Pubkey.pem
