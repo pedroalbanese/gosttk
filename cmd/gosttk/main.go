@@ -84,7 +84,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if *random == 128 || *random == 256 || *random == 512 {
+	if *random != 0 && (*random == 128 || *random == 256 || *random == 512) {
 		var key []byte
 		var err error
 		key = make([]byte, *random/8)
@@ -94,7 +94,7 @@ func main() {
 		}
 		fmt.Println(hex.EncodeToString(key))
 		os.Exit(0)
-	} else if *random != 128 && *random != 256 && *random != 512 {
+	} else if *random != 0 && (*random != 128 && *random != 256 && *random != 512) {
 		log.Fatal("RAND must have 128/256/512-bit.")
 	}
 
