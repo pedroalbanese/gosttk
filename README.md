@@ -64,19 +64,15 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
  -512
        Bit length: 256 or 512. (default 256)
  -check string
-       Check hashsum file.
+       Check hashsum file. (- for STDIN)
  -cmac
        Compute cipher-based message authentication code.
  -crypt
        Encrypt/Decrypt with symmetric ciphers.
  -derive
        Derive shared secret key (VKO).
- -digest
-       Compute single hashsum.
- -generate
-       Generate asymmetric keypair.
- -hashsum string
-       File/Wildcard to generate hashsum list.
+ -digest string
+       File/Wildcard to generate hashsum list. (- for STDIN)
  -hex string
        Encode binary string to hex format and vice-versa.
  -hmac
@@ -85,6 +81,8 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
        Iterations. (for SHRED and PBKDF2 only) (default 1)
  -key string
        Private/Public key, password or HMAC key, depending on operation.
+ -keygen
+       Generate asymmetric keypair.
  -mode string
        Mode of operation: CTR or OFB. (default "CTR")
  -old
@@ -96,11 +94,11 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
  -pem string
        Encode hex string to pem format and vice-versa.
  -pub string
-       Remote's side public key. (for shared key derivation only)
+       Remote's side public key/remote's side public IP/PEM BLOCK.
  -rand int
        Generate random cryptographic key: 128, 256 or 512 bit-length.
  -recursive
-       Process directories recursively. (for HASHSUM command only)
+       Process directories recursively. (for DIGEST command only)
  -salt string
        Salt. (for PBKDF2 only)
  -shred string
@@ -109,6 +107,8 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
        Sign with private key.
  -signature string
        Input signature. (verification only)
+ -tcp string
+       TCP/IP Transfer Protocol.
  -verbose
        Verbose mode. (for CHECK command only)
  -verify
@@ -117,10 +117,10 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
        Print version information.</pre>
 ### Examples:
 #### Asymmetric GOST R 34.10-2001 256-bit keypair generation (INI format):
-<pre>./gosttk -generate -old
+<pre>./gosttk -keygen -old [-paramset A|B|C|XA|XB]
 </pre>
 #### Asymmetric GOST R 34.10-2012 256/512-bit keypair generation (default):
-<pre>./gosttk -generate [-512]
+<pre>./gosttk -keygen [-paramset A|B|C|D] [-512 -paramset A|B|C]
 </pre>
 #### Signature (ECDSA equivalent):
 <pre>./gosttk -sign [-512|-old] -key $prvkey < file.ext > sign.txt
@@ -176,10 +176,23 @@ PBKDF2 function can be combined with the CRYPT and HMAC commands:
 #### Shred (GOST R 50739-95 data sanitization method, 25 iterations):
 <pre>./gosttk -shred keypair.ini -iter 25
 </pre>
-#### Hex to PEM/PEM to Hex:
-<pre>echo $pubkey|./gosttk -pem enc [-salt "PEM BLOCK;TYPE,ALG"] > Pubkey.pem
-./gosttk -pem dec [-salt "PEM BLOCK"] < Pubkey.pem
+
+#### Hex to Bin/Bin to Hex:
+<pre>echo somestring|./gmsmtk -hex enc
+echo hexstring|./gmsmtk -hex dec
 </pre>
+
+#### Hex to PEM/PEM to Hex:
+<pre>echo $pubkey|./gosttk -pem enc [-pub "PEM BLOCK;TYPE,ALG"] > Pubkey.pem
+./gosttk -pem dec [-pub "PEM BLOCK"] < Pubkey.pem
+</pre>
+
+#### TCP/IP Dump/Send:
+<pre>./gosttk -tcp ip > PublicIP.txt
+./gosttk -tcp dump [-pub "8081"] > Pubkey.pem
+./gosttk -tcp send [-pub "127.0.0.1:8081"] < Pubkey.pem
+</pre>
+
 #### Random Art (Public Key Fingerprint):
 <pre>./gosttk -key $pubkey
 </pre>
