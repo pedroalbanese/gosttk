@@ -188,8 +188,7 @@ echo hexstring|./gmsmtk -hex dec
 </pre>
 
 #### TCP/IP Dump/Send:
-<pre>./gosttk -tcp ip > PublicIP.txt
-./gosttk -tcp dump [-pub "8081"] > Pubkey.pem
+<pre>./gosttk -tcp dump [-pub "8081"] > Pubkey.pem
 ./gosttk -tcp send [-pub "127.0.0.1:8081"] < Pubkey.pem
 </pre>
 
