@@ -11,7 +11,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/pedroalbanese/cmac"
-	"github.com/pedroalbanese/go-external-ip"
 	"github.com/pedroalbanese/gogost/gost28147"
 	"github.com/pedroalbanese/gogost/gost3410"
 	"github.com/pedroalbanese/gogost/gost34112012256"
@@ -426,13 +425,6 @@ func main() {
 
 		text = strings.TrimSuffix(string(buf.Bytes()), "\n")
 		fmt.Println(text)
-		os.Exit(0)
-	}
-
-	if *tcpip == "ip" {
-		consensus := externalip.DefaultConsensus(nil, nil)
-		ip, _ := consensus.ExternalIP()
-		fmt.Println(ip.String())
 		os.Exit(0)
 	}
 
