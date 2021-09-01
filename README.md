@@ -149,16 +149,16 @@ sign=$(cat sign.txt)
 <pre>./gosttk -cmac [-old] -key $128bitkey < file.ext
 </pre>
 #### GOST94-CryptoPro hashsum (list):
-<pre>./gosttk -hashsum "*.*" -old [-recursive]
+<pre>./gosttk -digest "*.*" -old [-recursive]
 </pre>
 #### GOST94-CryptoPro hashsum (single):
-<pre>./gosttk -digest -old < file.ext
+<pre>./gosttk -digest -old - < file.ext
 </pre>
 #### HMAC-GOST94-CryptoPro (hash-based message authentication code):
 <pre>./gosttk -hmac -old -key $256bitkey < file.ext
 </pre>
 #### Streebog256/512 hashsum:
-<pre>./gosttk -digest [-512] < file.ext
+<pre>./gosttk -digest [-512] - < file.ext
 </pre>
 #### HMAC-Streebog256/512:
 <pre>./gosttk -hmac [-512] -key $256bitkey < file.ext
