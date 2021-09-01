@@ -10,8 +10,8 @@ import (
 	"encoding/pem"
 	"flag"
 	"fmt"
-	"github.com/google/uuid"
 	"github.com/pedroalbanese/cmac"
+	"github.com/pedroalbanese/go-external-ip"
 	"github.com/pedroalbanese/gogost/gost28147"
 	"github.com/pedroalbanese/gogost/gost3410"
 	"github.com/pedroalbanese/gogost/gost34112012256"
@@ -28,6 +28,7 @@ import (
 	"io/ioutil"
 	"log"
 	"math/big"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -36,15 +37,14 @@ import (
 var (
 	bit       = flag.Bool("512", false, "Bit length: 256 or 512. (default 256)")
 	block     = flag.Bool("128", false, "Block size: 64 or 128. (for symmetric encryption only) (default 64)")
-	check     = flag.String("check", "", "Check hashsum file.")
+	check     = flag.String("check", "", "Check hashsum file. (- for STDIN)")
 	ciphmac   = flag.Bool("cmac", false, "Compute cipher-based message authentication code.")
 	crypt     = flag.Bool("crypt", false, "Encrypt/Decrypt with symmetric ciphers.")
 	del       = flag.String("shred", "", "Files/Path/Wildcard to apply data sanitization method.")
 	derive    = flag.Bool("derive", false, "Derive shared secret key (VKO).")
-	digest    = flag.Bool("digest", false, "Compute single hashsum.")
 	encode    = flag.String("hex", "", "Encode binary string to hex format and vice-versa.")
 	encpem    = flag.String("pem", "", "Encode hex string to pem format and vice-versa.")
-	generate  = flag.Bool("generate", false, "Generate asymmetric keypair.")
+	generate  = flag.Bool("keygen", false, "Generate asymmetric keypair.")
 	iter      = flag.Int("iter", 1, "Iterations. (for SHRED and PBKDF2 only)")
 	key       = flag.String("key", "", "Private/Public key, password or HMAC key, depending on operation.")
 	mac       = flag.Bool("hmac", false, "Compute hash-based message authentication code.")
@@ -52,13 +52,14 @@ var (
 	old       = flag.Bool("old", false, "Use old roll of algorithms.")
 	paramset  = flag.String("paramset", "A", "Elliptic curve ParamSet: A, B, C, D, XA, XB.")
 	pbkdf     = flag.Bool("pbkdf2", false, "Password-based key derivation function 2.")
-	pubHex    = flag.String("pub", "", "Remote's side public key. (for shared key derivation only)")
+	public    = flag.String("pub", "", "Remote's side public key/remote's side public IP/PEM BLOCK.")
 	random    = flag.Int("rand", 0, "Generate random cryptographic key: 128, 256 or 512 bit-length.")
-	recursive = flag.Bool("recursive", false, "Process directories recursively. (for HASHSUM command only)")
+	recursive = flag.Bool("recursive", false, "Process directories recursively. (for DIGEST command only)")
 	salt      = flag.String("salt", "", "Salt. (for PBKDF2 only)")
 	sig       = flag.String("signature", "", "Input signature. (verification only)")
 	sign      = flag.Bool("sign", false, "Sign with private key.")
-	target    = flag.String("hashsum", "", "File/Wildcard to generate hashsum list.")
+	target    = flag.String("digest", "", "File/Wildcard to generate hashsum list. (- for STDIN)")
+	tcpip     = flag.String("tcp", "", "TCP/IP Transfer Protocol.")
 	verbose   = flag.Bool("verbose", false, "Verbose mode. (for CHECK command only)")
 	verify    = flag.Bool("verify", false, "Verify with public key.")
 	version   = flag.Bool("version", false, "Print version information.")
@@ -98,7 +99,7 @@ func main() {
 		log.Fatal("RAND must have 128/256/512-bit.")
 	}
 
-	if *encode == "enc" || *encode == "encode" {
+	if *encode == "e" || *encode == "enc" || *encode == "encode" {
 		b, err := ioutil.ReadAll(os.Stdin)
 		if len(b) == 0 {
 			os.Exit(0)
@@ -112,7 +113,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *encode == "dec" || *encode == "decode" {
+	if *encode == "d" || *encode == "dec" || *encode == "decode" {
 		var err error
 		buf := bytes.NewBuffer(nil)
 		data := os.Stdin
@@ -137,17 +138,17 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *encpem == "enc" || *encpem == "encode" {
+	if (*encpem == "e" || *encpem == "enc" || *encpem == "encode") && *key == "" {
 		var blc string
 		var typ string
 		blc = "PEM BLOCK"
 		typ = "-"
-		if *salt != "" {
-			salt := *salt
-			if strings.Contains(salt, ";") {
-				split := strings.Split(salt, ";")
+		if *public != "" {
+			name := *public
+			if strings.Contains(name, ";") {
+				split := strings.Split(name, ";")
 				if len(split) < 2 {
-					fmt.Println("PEM encoding needs two salts separated by comma.")
+					fmt.Println("PEM encoding needs two signature values separated by semicolon.")
 					os.Exit(2)
 				}
 				if split[0] != "" {
@@ -155,10 +156,9 @@ func main() {
 				}
 				typ = split[1]
 			} else {
-				blc = salt
+				blc = name
 			}
 		}
-		u := uuid.New()
 		buf := bytes.NewBuffer(nil)
 		scanner := os.Stdin
 		io.Copy(buf, scanner)
@@ -167,7 +167,6 @@ func main() {
 			Type: blc,
 			Headers: map[string]string{
 				"typ": typ,
-				"uid": u.String(),
 			},
 			Bytes: []byte(buf.Bytes()),
 		}
@@ -177,11 +176,11 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *encpem == "dec" || *encpem == "decode" {
+	if (*encpem == "d" || *encpem == "dec" || *encpem == "decode") && *key == "" {
 		var blc string
 		blc = "PEM BLOCK"
-		if *salt != "" {
-			blc = *salt
+		if *public != "" {
+			blc = *public
 		}
 		buf := bytes.NewBuffer(nil)
 		scanner := os.Stdin
@@ -196,6 +195,244 @@ func main() {
 		pub, _ := hex.DecodeString(string(block.Bytes))
 
 		fmt.Printf("%x\n", pub)
+		os.Exit(0)
+	}
+
+	if (*encpem == "e" || *encpem == "enc" || *encpem == "encode") && *key != "" {
+		var blc string
+		var typ string
+		blc = "PEM BLOCK"
+		typ = "-"
+		if *public != "" {
+			name := *public
+			if strings.Contains(name, ";") {
+				split := strings.Split(name, ";")
+				if len(split) < 2 {
+					fmt.Println("PEM encoding needs two signature values separated by semicolon.")
+					os.Exit(2)
+				}
+				if split[0] != "" {
+					blc = split[0]
+				}
+				typ = split[1]
+			} else {
+				blc = name
+			}
+		}
+		var keyHex string
+		var err error
+		var prvRaw []byte
+		if *pbkdf == true && *bit == false {
+			prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012256.New)
+			keyHex = hex.EncodeToString(prvRaw)
+		} else if *pbkdf == true && *bit == true {
+			prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012512.New)
+			keyHex = hex.EncodeToString(prvRaw)
+		} else if *pbkdf == true && *old == true {
+			f := func() hash.Hash {
+				return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
+			}
+			prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, f)
+			keyHex = hex.EncodeToString(prvRaw)
+		} else {
+			keyHex = *key
+		}
+		var key []byte
+		key, err = hex.DecodeString(keyHex)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if len(key) != gost3412128.KeySize {
+			log.Fatal(err)
+		}
+
+		var ciph cipher.Block
+		var stream cipher.Stream
+		var iv []byte
+
+		if *block == false && *old == true {
+			ciph = gost28147.NewCipher(key, &gost28147.SboxIdGostR341194CryptoProParamSet)
+			iv = make([]byte, gost341264.BlockSize)
+		} else if *block == true && *old == false {
+			ciph = gost3412128.NewCipher(key)
+			iv = make([]byte, gost3412128.BlockSize)
+		} else if *block == false && *old == false {
+			ciph = gost341264.NewCipher(key)
+			iv = make([]byte, gost341264.BlockSize)
+		}
+
+		if *mode == "CTR" || *mode == "ctr" {
+			stream = cipher.NewCTR(ciph, iv)
+		} else if *mode == "OFB" || *mode == "ofb" {
+			stream = cipher.NewOFB(ciph, iv)
+		}
+
+		buf := make([]byte, 128*1<<10)
+		var n int
+		for {
+			n, err = os.Stdin.Read(buf)
+			if err != nil && err != io.EOF {
+				log.Fatal(err)
+			}
+			stream.XORKeyStream(buf[:n], buf[:n])
+			if err == io.EOF {
+				break
+			}
+
+			block := &pem.Block{
+				Type: blc,
+				Headers: map[string]string{
+					"typ": typ,
+				},
+				Bytes: []byte(hex.EncodeToString(buf[:n])),
+			}
+			if err := pem.Encode(os.Stdout, block); err != nil {
+				log.Fatal(err)
+			}
+			os.Exit(0)
+		}
+		os.Exit(0)
+	}
+
+	if (*encpem == "d" || *encpem == "dec" || *encpem == "decode") && *key != "" {
+		var blc string
+		blc = "PEM BLOCK"
+		if *public != "" {
+			blc = *public
+		}
+		buf := bytes.NewBuffer(nil)
+		scanner := os.Stdin
+		io.Copy(buf, scanner)
+
+		pemblock, _ := pem.Decode(buf.Bytes())
+
+		if block == nil || pemblock.Type != blc {
+			log.Fatal("failed to decode PEM block containing " + blc)
+		}
+
+		pub, _ := hex.DecodeString(string(pemblock.Bytes))
+
+		var keyHex string
+		var err error
+		var prvRaw []byte
+		if *pbkdf == true && *bit == false {
+			prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012256.New)
+			keyHex = hex.EncodeToString(prvRaw)
+		} else if *pbkdf == true && *bit == true {
+			prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012512.New)
+			keyHex = hex.EncodeToString(prvRaw)
+		} else if *pbkdf == true && *old == true {
+			f := func() hash.Hash {
+				return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
+			}
+			prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, f)
+			keyHex = hex.EncodeToString(prvRaw)
+		} else {
+			keyHex = *key
+		}
+		var key []byte
+		key, err = hex.DecodeString(keyHex)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if len(key) != gost3412128.KeySize {
+			log.Fatal(err)
+		}
+
+		var ciph cipher.Block
+		var stream cipher.Stream
+		var iv []byte
+
+		if *block == false && *old == true {
+			ciph = gost28147.NewCipher(key, &gost28147.SboxIdGostR341194CryptoProParamSet)
+			iv = make([]byte, gost341264.BlockSize)
+		} else if *block == true && *old == false {
+			ciph = gost3412128.NewCipher(key)
+			iv = make([]byte, gost3412128.BlockSize)
+		} else if *block == false && *old == false {
+			ciph = gost341264.NewCipher(key)
+			iv = make([]byte, gost341264.BlockSize)
+		}
+
+		if *mode == "CTR" || *mode == "ctr" {
+			stream = cipher.NewCTR(ciph, iv)
+		} else if *mode == "OFB" || *mode == "ofb" {
+			stream = cipher.NewOFB(ciph, iv)
+		}
+
+		stream.XORKeyStream(pub, pub)
+		fmt.Println(string(pub))
+		os.Exit(0)
+	}
+
+	if *tcpip == "dump" {
+		port := "8081"
+		if *public != "" {
+			port = *public
+		}
+		ln, err := net.Listen("tcp", ":"+port)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		conn, err := ln.Accept()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		defer ln.Close()
+
+		strRemoteAddr := conn.RemoteAddr()
+		strLocalAddr := conn.LocalAddr()
+		fmt.Fprint(os.Stderr, "Remote TCP address: ")
+		fmt.Fprintln(os.Stderr, strRemoteAddr)
+		fmt.Fprint(os.Stderr, "Local TCP address: ")
+		fmt.Fprintln(os.Stderr, strLocalAddr)
+
+		var buf bytes.Buffer
+		io.Copy(&buf, conn)
+		text := strings.TrimSuffix(string(buf.Bytes()), "\n")
+		fmt.Println(text)
+		os.Exit(0)
+	}
+
+	if *tcpip == "send" {
+		ipport := "127.0.0.1:8081"
+		if *public != "" {
+			ipport = *public
+		}
+		conn, err := net.Dial("tcp", ipport)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		strRemoteAddr := conn.RemoteAddr()
+		strLocalAddr := conn.LocalAddr()
+		fmt.Fprint(os.Stderr, "Remote TCP address: ")
+		fmt.Fprintln(os.Stderr, strRemoteAddr)
+		fmt.Fprint(os.Stderr, "Local TCP address: ")
+		fmt.Fprintln(os.Stderr, strLocalAddr)
+
+		buf := bytes.NewBuffer(nil)
+		scanner := os.Stdin
+		io.Copy(buf, scanner)
+
+		text := string(buf.Bytes())
+
+		fmt.Fprintf(conn, text)
+
+		text = strings.TrimSuffix(string(buf.Bytes()), "\n")
+		fmt.Println(text)
+		os.Exit(0)
+	}
+
+	if *tcpip == "ip" {
+		consensus := externalip.DefaultConsensus(nil, nil)
+		ip, _ := consensus.ExternalIP()
+		fmt.Println(ip.String())
 		os.Exit(0)
 	}
 
@@ -506,7 +743,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *digest == true && *target == "" {
+	if *target == "-" {
 		var h hash.Hash
 		if *old == true {
 			h = gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
@@ -699,7 +936,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		pubRaw, err = hex.DecodeString(*pubHex)
+		pubRaw, err = hex.DecodeString(*public)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -752,7 +989,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		pubRaw, err = hex.DecodeString(*pubHex)
+		pubRaw, err = hex.DecodeString(*public)
 		if err != nil {
 			log.Fatal(err)
 		}
