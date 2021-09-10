@@ -18,6 +18,7 @@ import (
 	"github.com/pedroalbanese/gogost/gost341194"
 	"github.com/pedroalbanese/gogost/gost3412128"
 	"github.com/pedroalbanese/gogost/gost341264"
+	"github.com/pedroalbanese/gogost/mgm"
 	"github.com/pedroalbanese/gost-shred"
 	"github.com/pedroalbanese/gosttk"
 	"github.com/pedroalbanese/randomart"
@@ -38,7 +39,7 @@ var (
 	block     = flag.Bool("128", false, "Block size: 64 or 128. (for symmetric encryption only) (default 64)")
 	check     = flag.String("check", "", "Check hashsum file. (- for STDIN)")
 	ciphmac   = flag.Bool("cmac", false, "Compute cipher-based message authentication code.")
-	crypt     = flag.Bool("crypt", false, "Encrypt/Decrypt with symmetric ciphers.")
+	crypt     = flag.String("crypt", "", "Encrypt/Decrypt with symmetric ciphers.")
 	del       = flag.String("shred", "", "Files/Path/Wildcard to apply data sanitization method.")
 	derive    = flag.Bool("derive", false, "Derive shared secret key (VKO).")
 	encode    = flag.String("hex", "", "Encode binary string to hex format and vice-versa.")
@@ -47,7 +48,7 @@ var (
 	iter      = flag.Int("iter", 1, "Iterations. (for SHRED and PBKDF2 only)")
 	key       = flag.String("key", "", "Private/Public key, password or HMAC key, depending on operation.")
 	mac       = flag.Bool("hmac", false, "Compute hash-based message authentication code.")
-	mode      = flag.String("mode", "CTR", "Mode of operation: CTR or OFB.")
+	mode      = flag.String("mode", "MGM", "Mode of operation: MGM, CTR or OFB.")
 	old       = flag.Bool("old", false, "Use old roll of algorithms.")
 	paramset  = flag.String("paramset", "A", "Elliptic curve ParamSet: A, B, C, D, XA, XB.")
 	pbkdf     = flag.Bool("pbkdf2", false, "Password-based key derivation function 2.")
@@ -260,11 +261,7 @@ func main() {
 			iv = make([]byte, gost341264.BlockSize)
 		}
 
-		if *mode == "CTR" || *mode == "ctr" {
-			stream = cipher.NewCTR(ciph, iv)
-		} else if *mode == "OFB" || *mode == "ofb" {
-			stream = cipher.NewOFB(ciph, iv)
-		}
+		stream = cipher.NewCTR(ciph, iv)
 
 		buf := make([]byte, 128*1<<10)
 		var n int
@@ -353,11 +350,7 @@ func main() {
 			iv = make([]byte, gost341264.BlockSize)
 		}
 
-		if *mode == "CTR" || *mode == "ctr" {
-			stream = cipher.NewCTR(ciph, iv)
-		} else if *mode == "OFB" || *mode == "ofb" {
-			stream = cipher.NewOFB(ciph, iv)
-		}
+		stream = cipher.NewCTR(ciph, iv)
 
 		stream.XORKeyStream(pub, pub)
 		fmt.Println(string(pub))
@@ -428,7 +421,122 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *crypt == true && *block == true && *old == false {
+	if *crypt == "enc" && *mode == "MGM" {
+		var keyHex string
+		var prvRaw []byte
+		if *pbkdf == true && *bit == false {
+			prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012256.New)
+			keyHex = hex.EncodeToString(prvRaw)
+		} else if *pbkdf == true && *bit == true {
+			prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012512.New)
+			keyHex = hex.EncodeToString(prvRaw)
+		} else {
+			keyHex = *key
+		}
+		var key []byte
+		var err error
+		if keyHex == "" {
+			key = make([]byte, 32)
+			_, err = io.ReadFull(rand.Reader, key)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Fprintln(os.Stderr, "Key=", hex.EncodeToString(key))
+		} else {
+			key, err = hex.DecodeString(keyHex)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if len(key) != 32 {
+				log.Fatal(err)
+			}
+		}
+
+		buf := bytes.NewBuffer(nil)
+		data := os.Stdin
+		io.Copy(buf, data)
+		msg := buf.Bytes()
+		var c cipher.Block
+		var n int
+		if *block == false && *old == true {
+			c = gost28147.NewCipher(key, &gost28147.SboxIdGostR341194CryptoProParamSet)
+			n = 8
+		} else if *block == true && *old == false {
+			c = gost3412128.NewCipher(key)
+			n = 16
+		} else if *block == false && *old == false {
+			c = gost341264.NewCipher(key)
+			n = 8
+		}
+		aead, _ := mgm.NewMGM(c, n)
+
+		nonce := make([]byte, aead.NonceSize(), aead.NonceSize()+len(msg)+aead.Overhead())
+
+		out := aead.Seal(nonce, nonce, msg, nil)
+		fmt.Printf("%s", out)
+		os.Exit(0)
+	}
+
+	if *crypt == "dec" && *mode == "MGM" {
+		var keyHex string
+		var prvRaw []byte
+		if *pbkdf == true && *bit == false {
+			prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012256.New)
+			keyHex = hex.EncodeToString(prvRaw)
+		} else if *pbkdf == true && *bit == true {
+			prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012512.New)
+			keyHex = hex.EncodeToString(prvRaw)
+		} else {
+			keyHex = *key
+		}
+		var key []byte
+		var err error
+		if keyHex == "" {
+			key = make([]byte, 32)
+			_, err = io.ReadFull(rand.Reader, key)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Fprintln(os.Stderr, "Key=", hex.EncodeToString(key))
+		} else {
+			key, err = hex.DecodeString(keyHex)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if len(key) != 32 {
+				log.Fatal(err)
+			}
+		}
+
+		buf := bytes.NewBuffer(nil)
+		data := os.Stdin
+		io.Copy(buf, data)
+		msg := buf.Bytes()
+		var c cipher.Block
+		var n int
+		if *block == false && *old == true {
+			c = gost28147.NewCipher(key, &gost28147.SboxIdGostR341194CryptoProParamSet)
+			n = 8
+		} else if *block == true && *old == false {
+			c = gost3412128.NewCipher(key)
+			n = 16
+		} else if *block == false && *old == false {
+			c = gost341264.NewCipher(key)
+			n = 8
+		}
+		aead, _ := mgm.NewMGM(c, n)
+
+		nonce, msg := msg[:aead.NonceSize()], msg[aead.NonceSize():]
+
+		out, err := aead.Open(nil, nonce, msg, nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("%s", out)
+		os.Exit(0)
+	}
+
+	if (*crypt == "enc" || *crypt == "dec") && *block == true && *old == false && (*mode == "OFB" || *mode == "CTR") {
 		var keyHex string
 		var prvRaw []byte
 		if *pbkdf == true && *bit == false {
@@ -484,7 +592,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *crypt == true && *block == false && *old == false {
+	if (*crypt == "enc" || *crypt == "dec") && *block == false && *old == false && (*mode == "OFB" || *mode == "CTR") {
 		var keyHex string
 		var prvRaw []byte
 		if *pbkdf == true && *bit == false {
@@ -540,7 +648,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *crypt == true && *block == false && *old == true {
+	if (*crypt == "enc" || *crypt == "dec") && *block == false && *old == true && (*mode == "OFB" || *mode == "CTR") {
 		var keyHex string
 		var prvRaw []byte
 		if *pbkdf == true {
