@@ -47,7 +47,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 * GOST R 34.10-2012 512-bit: A, B, C
 
 #### TODO:
-  - [ ] MGM Mode of operation
+  - [x] MGM Mode of operation
   - [x] OFB Mode of operation
   - [x] PBKDF2 Function
   - [x] GOST 28147-89 CMAC
@@ -67,7 +67,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
        Check hashsum file. (- for STDIN)
  -cmac
        Compute cipher-based message authentication code.
- -crypt
+ -crypt string
        Encrypt/Decrypt with symmetric ciphers.
  -derive
        Derive shared secret key (VKO).
@@ -84,7 +84,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
  -keygen
        Generate asymmetric keypair.
  -mode string
-       Mode of operation: CTR or OFB. (default "CTR")
+       Mode of operation: MGM, CTR or OFB. (default "MGM")
  -old
        Use old roll of algorithms.
  -paramset string
@@ -131,16 +131,16 @@ sign=$(cat sign.txt)
 <pre>./gosttk -derive [-512|-old] -key $prvkey -pub $pubkey
 </pre>
 #### Encryption/decryption with Magma (GOST R 34.12-2015) symmetric cipher (default):
-<pre>./gosttk -crypt -key $shared < plaintext.ext > ciphertext.ext
-./gosttk -crypt -key $shared < ciphertext.ext > plaintext.ext
+<pre>./gosttk -crypt enc -key $shared < plaintext.ext > ciphertext.ext
+./gosttk -crypt dec -key $shared < ciphertext.ext > plaintext.ext
 </pre>
 #### Encryption/decryption with Kuznyechik (GOST R 34.12-2015) symmetric cipher:
-<pre>./gosttk -crypt -128 -key $shared < plaintext.ext > ciphertext.ext
-./gosttk -crypt -128 -key $shared < ciphertext.ext > plaintext.ext
+<pre>./gosttk -crypt enc -128 -key $shared < plaintext.ext > ciphertext.ext
+./gosttk -crypt dec -128 -key $shared < ciphertext.ext > plaintext.ext
 </pre>
 #### Encryption/decryption with GOST 28147-89 CryptoPro symmetric cipher:
-<pre>./gosttk -crypt -old -key $shared < plaintext.ext > ciphertext.ext
-./gosttk -crypt -old -key $shared < ciphertext.ext > plaintext.ext
+<pre>./gosttk -crypt enc -old -key $shared < plaintext.ext > ciphertext.ext
+./gosttk -crypt dec -old -key $shared < ciphertext.ext > plaintext.ext
 </pre>
 #### CMAC-Kuznechik (cipher-based message authentication code):
 <pre>./gosttk -cmac -128 -key $128bitkey < file.ext
