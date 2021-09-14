@@ -179,8 +179,8 @@ echo $prvkey|./prottk -pem enc -pbkdf2 -key "pass" -salt "salt" -iter 10000
 </pre>
 
 #### Hex to Bin/Bin to Hex:
-<pre>echo somestring|./gmsmtk -hex enc
-echo hexstring|./gmsmtk -hex dec
+<pre>echo somestring|./gosttk -hex enc
+echo hexstring|./gosttk -hex dec
 </pre>
 
 #### Hex to PEM/PEM to Hex:
