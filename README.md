@@ -181,8 +181,8 @@ echo hexstring|./gosttk -hex dec
 </pre>
 
 #### TCP/IP Dump/Send:
-<pre>./gosttk -tcp dump [-pub "8081"] > Pubkey.pem
-./gosttk -tcp send [-pub "127.0.0.1:8081"] < Pubkey.pem
+<pre>./gosttk -tcp dump [-pub "8081"] > Pubkey.txt
+./gosttk -tcp send [-pub "127.0.0.1:8081"] < Pubkey.txt
 </pre>
 
 #### Random Art (Public Key Fingerprint):
