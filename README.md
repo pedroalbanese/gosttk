@@ -38,7 +38,6 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 #### Non-Cryptographic Functions:
 * GOST R 50739-95 data sanitization method
 * Bin to Hex/Hex to Bin string conversion
-* Hex to PEM/PEM to Hex string conversion
 * Random Art Public key Fingerprint (ssh-keygen equivalent)
 
 #### Supported ParamSets:
@@ -91,8 +90,6 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
        Elliptic curve ParamSet: A, B, C, D, XA, XB. (default "A")
  -pbkdf2
        Password-based key derivation function 2.
- -pem string
-       Encode hex string to pem format and vice-versa.
  -pub string
        Remote's side public key/remote's side public IP/PEM BLOCK.
  -rand int
@@ -178,14 +175,9 @@ echo $prvkey|./prottk -pem enc -pbkdf2 -key "pass" -salt "salt" -iter 10000
 <pre>./gosttk -shred keypair.ini -iter 25
 </pre>
 
-#### Hex to Bin/Bin to Hex:
+#### Bin to Hex/Hex to Bin:
 <pre>echo somestring|./gosttk -hex enc
 echo hexstring|./gosttk -hex dec
-</pre>
-
-#### Hex to PEM/PEM to Hex:
-<pre>echo $pubkey|./gosttk -pem enc [-pub "PEM BLOCK;TYPE,ALG"] > Pubkey.pem
-./gosttk -pem dec [-pub "PEM BLOCK"] < Pubkey.pem
 </pre>
 
 #### TCP/IP Dump/Send:
