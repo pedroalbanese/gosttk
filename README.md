@@ -18,6 +18,11 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 * GOST R 34.12-2015 Magma (default)
 * GOST R 34.12-2015 Kuznechik (Grasshopper)
 
+##### Modes of operation:
+* MGM: Multilinear Galois Mode (AEAD)
+* CTR: Counter Mode
+* OFB: Output Feedback Mode
+
 #### Asymmetric Ciphers:
 * GOST R 34.10-2001 CryptoPro 256-bit
 * GOST R 34.10-2012 256/512-bit (default) 
