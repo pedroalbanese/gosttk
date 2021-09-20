@@ -7,7 +7,6 @@ import (
 	"crypto/hmac"
 	"crypto/rand"
 	"encoding/hex"
-	"encoding/pem"
 	"flag"
 	"fmt"
 	"github.com/pedroalbanese/cmac"
@@ -43,7 +42,6 @@ var (
 	del       = flag.String("shred", "", "Files/Path/Wildcard to apply data sanitization method.")
 	derive    = flag.Bool("derive", false, "Derive shared secret key (VKO).")
 	encode    = flag.String("hex", "", "Encode binary string to hex format and vice-versa.")
-	encpem    = flag.String("pem", "", "Encode hex string to pem format and vice-versa.")
 	generate  = flag.Bool("keygen", false, "Generate asymmetric keypair.")
 	iter      = flag.Int("iter", 1, "Iterations. (for SHRED and PBKDF2 only)")
 	key       = flag.String("key", "", "Private/Public key, password or HMAC key, depending on operation.")
@@ -138,225 +136,6 @@ func main() {
 		os.Exit(0)
 	}
 
-	if (*encpem == "e" || *encpem == "enc" || *encpem == "encode") && *key == "" {
-		var blc string
-		var typ string
-		blc = "PEM BLOCK"
-		typ = "-"
-		if *public != "" {
-			name := *public
-			if strings.Contains(name, ";") {
-				split := strings.Split(name, ";")
-				if len(split) < 2 {
-					fmt.Println("PEM encoding needs two signature values separated by semicolon.")
-					os.Exit(2)
-				}
-				if split[0] != "" {
-					blc = split[0]
-				}
-				typ = split[1]
-			} else {
-				blc = name
-			}
-		}
-		buf := bytes.NewBuffer(nil)
-		scanner := os.Stdin
-		io.Copy(buf, scanner)
-
-		block := &pem.Block{
-			Type: blc,
-			Headers: map[string]string{
-				"typ": typ,
-			},
-			Bytes: []byte(buf.Bytes()),
-		}
-		if err := pem.Encode(os.Stdout, block); err != nil {
-			log.Fatal(err)
-		}
-		os.Exit(0)
-	}
-
-	if (*encpem == "d" || *encpem == "dec" || *encpem == "decode") && *key == "" {
-		var blc string
-		blc = "PEM BLOCK"
-		if *public != "" {
-			blc = *public
-		}
-		buf := bytes.NewBuffer(nil)
-		scanner := os.Stdin
-		io.Copy(buf, scanner)
-
-		block, _ := pem.Decode(buf.Bytes())
-
-		if block == nil || block.Type != blc {
-			log.Fatal("failed to decode PEM block containing " + blc)
-		}
-
-		pub, _ := hex.DecodeString(string(block.Bytes))
-
-		fmt.Printf("%x\n", pub)
-		os.Exit(0)
-	}
-
-	if (*encpem == "e" || *encpem == "enc" || *encpem == "encode") && *key != "" {
-		var blc string
-		var typ string
-		blc = "PEM BLOCK"
-		typ = "-"
-		if *public != "" {
-			name := *public
-			if strings.Contains(name, ";") {
-				split := strings.Split(name, ";")
-				if len(split) < 2 {
-					fmt.Println("PEM encoding needs two signature values separated by semicolon.")
-					os.Exit(2)
-				}
-				if split[0] != "" {
-					blc = split[0]
-				}
-				typ = split[1]
-			} else {
-				blc = name
-			}
-		}
-		var keyHex string
-		var err error
-		var prvRaw []byte
-		if *pbkdf == true && *bit == false {
-			prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012256.New)
-			keyHex = hex.EncodeToString(prvRaw)
-		} else if *pbkdf == true && *bit == true {
-			prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012512.New)
-			keyHex = hex.EncodeToString(prvRaw)
-		} else if *pbkdf == true && *old == true {
-			f := func() hash.Hash {
-				return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
-			}
-			prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, f)
-			keyHex = hex.EncodeToString(prvRaw)
-		} else {
-			keyHex = *key
-		}
-		var key []byte
-		key, err = hex.DecodeString(keyHex)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if len(key) != gost3412128.KeySize {
-			log.Fatal(err)
-		}
-
-		var ciph cipher.Block
-		var stream cipher.Stream
-		var iv []byte
-
-		if *block == false && *old == true {
-			ciph = gost28147.NewCipher(key, &gost28147.SboxIdGostR341194CryptoProParamSet)
-			iv = make([]byte, gost341264.BlockSize)
-		} else if *block == true && *old == false {
-			ciph = gost3412128.NewCipher(key)
-			iv = make([]byte, gost3412128.BlockSize)
-		} else if *block == false && *old == false {
-			ciph = gost341264.NewCipher(key)
-			iv = make([]byte, gost341264.BlockSize)
-		}
-
-		stream = cipher.NewCTR(ciph, iv)
-
-		buf := make([]byte, 128*1<<10)
-		var n int
-		for {
-			n, err = os.Stdin.Read(buf)
-			if err != nil && err != io.EOF {
-				log.Fatal(err)
-			}
-			stream.XORKeyStream(buf[:n], buf[:n])
-			if err == io.EOF {
-				break
-			}
-
-			block := &pem.Block{
-				Type: blc,
-				Headers: map[string]string{
-					"typ": typ,
-				},
-				Bytes: []byte(hex.EncodeToString(buf[:n])),
-			}
-			if err := pem.Encode(os.Stdout, block); err != nil {
-				log.Fatal(err)
-			}
-			os.Exit(0)
-		}
-		os.Exit(0)
-	}
-
-	if (*encpem == "d" || *encpem == "dec" || *encpem == "decode") && *key != "" {
-		var blc string
-		blc = "PEM BLOCK"
-		if *public != "" {
-			blc = *public
-		}
-		buf := bytes.NewBuffer(nil)
-		scanner := os.Stdin
-		io.Copy(buf, scanner)
-
-		pemblock, _ := pem.Decode(buf.Bytes())
-
-		if block == nil || pemblock.Type != blc {
-			log.Fatal("failed to decode PEM block containing " + blc)
-		}
-
-		pub, _ := hex.DecodeString(string(pemblock.Bytes))
-
-		var keyHex string
-		var err error
-		var prvRaw []byte
-		if *pbkdf == true && *bit == false {
-			prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012256.New)
-			keyHex = hex.EncodeToString(prvRaw)
-		} else if *pbkdf == true && *bit == true {
-			prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012512.New)
-			keyHex = hex.EncodeToString(prvRaw)
-		} else if *pbkdf == true && *old == true {
-			f := func() hash.Hash {
-				return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
-			}
-			prvRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, f)
-			keyHex = hex.EncodeToString(prvRaw)
-		} else {
-			keyHex = *key
-		}
-		var key []byte
-		key, err = hex.DecodeString(keyHex)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if len(key) != gost3412128.KeySize {
-			log.Fatal(err)
-		}
-
-		var ciph cipher.Block
-		var stream cipher.Stream
-		var iv []byte
-
-		if *block == false && *old == true {
-			ciph = gost28147.NewCipher(key, &gost28147.SboxIdGostR341194CryptoProParamSet)
-			iv = make([]byte, gost341264.BlockSize)
-		} else if *block == true && *old == false {
-			ciph = gost3412128.NewCipher(key)
-			iv = make([]byte, gost3412128.BlockSize)
-		} else if *block == false && *old == false {
-			ciph = gost341264.NewCipher(key)
-			iv = make([]byte, gost341264.BlockSize)
-		}
-
-		stream = cipher.NewCTR(ciph, iv)
-
-		stream.XORKeyStream(pub, pub)
-		fmt.Println(string(pub))
-		os.Exit(0)
-	}
-
 	if *tcpip == "dump" {
 		port := "8081"
 		if *public != "" {
@@ -376,12 +155,18 @@ func main() {
 
 		defer ln.Close()
 
-		strRemoteAddr := conn.RemoteAddr()
+		strRemoteAddr := conn.RemoteAddr().String()
 		strLocalAddr := conn.LocalAddr()
-		fmt.Fprint(os.Stderr, "Remote TCP address: ")
+		fmt.Fprint(os.Stderr, "Remote TCP address= ")
 		fmt.Fprintln(os.Stderr, strRemoteAddr)
-		fmt.Fprint(os.Stderr, "Local TCP address: ")
+		fmt.Fprint(os.Stderr, "Local TCP address= ")
 		fmt.Fprintln(os.Stderr, strLocalAddr)
+
+		split := strings.Split(strRemoteAddr, ":")
+		ipv4Addr := net.ParseIP(split[0] + "")
+		ipv4Mask := net.CIDRMask(24, 32)
+		fmt.Fprint(os.Stderr, "IPv4= ")
+		fmt.Fprintln(os.Stderr, ipv4Addr.Mask(ipv4Mask))
 
 		var buf bytes.Buffer
 		io.Copy(&buf, conn)
@@ -401,12 +186,18 @@ func main() {
 			os.Exit(1)
 		}
 
-		strRemoteAddr := conn.RemoteAddr()
+		strRemoteAddr := conn.RemoteAddr().String()
 		strLocalAddr := conn.LocalAddr()
-		fmt.Fprint(os.Stderr, "Remote TCP address: ")
+		fmt.Fprint(os.Stderr, "Remote TCP address= ")
 		fmt.Fprintln(os.Stderr, strRemoteAddr)
-		fmt.Fprint(os.Stderr, "Local TCP address: ")
+		fmt.Fprint(os.Stderr, "Local TCP address= ")
 		fmt.Fprintln(os.Stderr, strLocalAddr)
+
+		split := strings.Split(strRemoteAddr, ":")
+		ipv4Addr := net.ParseIP(split[0])
+		ipv4Mask := net.CIDRMask(24, 32)
+		fmt.Fprint(os.Stderr, "IPv4= ")
+		fmt.Fprintln(os.Stderr, ipv4Addr.Mask(ipv4Mask))
 
 		buf := bytes.NewBuffer(nil)
 		scanner := os.Stdin
@@ -491,14 +282,7 @@ func main() {
 		}
 		var key []byte
 		var err error
-		if keyHex == "" {
-			key = make([]byte, 32)
-			_, err = io.ReadFull(rand.Reader, key)
-			if err != nil {
-				log.Fatal(err)
-			}
-			fmt.Fprintln(os.Stderr, "Key=", hex.EncodeToString(key))
-		} else {
+		if keyHex != "" {
 			key, err = hex.DecodeString(keyHex)
 			if err != nil {
 				log.Fatal(err)
@@ -506,6 +290,8 @@ func main() {
 			if len(key) != 32 {
 				log.Fatal(err)
 			}
+		} else {
+			os.Exit(1)
 		}
 
 		buf := bytes.NewBuffer(nil)
