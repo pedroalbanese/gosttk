@@ -170,10 +170,9 @@ sign=$(cat sign.txt)
 </pre>
 
 #### Note:
-PBKDF2 function can be combined with the CRYPT, HMAC and PEM commands:
+PBKDF2 function can be combined with the CRYPT, HMAC commands:
 <pre>./gosttk -crypt enc -128 -pbkdf2 -512 -key "pass" < plaintext.ext > ciphertext.ext
 ./gosttk -hmac [-512] -pbkdf2 -key "pass" -salt "salt" -iter 10000 < file.ext
-echo $prvkey|./prottk -pem enc -pbkdf2 -key "pass" -salt "salt" -iter 10000
 </pre>
 
 #### Shred (GOST R 50739-95 data sanitization method, 25 iterations):
