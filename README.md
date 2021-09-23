@@ -51,6 +51,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 * GOST R 34.10-2012 512-bit: A, B, C
 
 #### TODO:
+  - [ ] TLS 1.3
   - [x] MGM Mode of operation
   - [x] OFB Mode of operation
   - [x] PBKDF2 Function
