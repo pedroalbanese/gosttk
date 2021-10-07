@@ -1,9 +1,9 @@
 ## GOST Toolkit: GOST Cipher Suite written in Go ☭
 Multi purpose cross-platform cryptography tool for encryption / decryption, hash digest, cipher-based message authentication code (CMAC), hash-based message authentication code (HMAC), digital signature, shared key agreement (VKO) and PBKDF2 function for embedded systems. 
 
-**GOST refers to a set of technical standards maintained by the Euro-Asian Council for Standardization, Metrology and Certification (EASC), a regional standards organization operating under the auspices of the Commonwealth of Independent States (CIS).**
+***GOST refers to a set of technical standards maintained by the Euro-Asian Council for Standardization, Metrology and Certification (EASC), a regional standards organization operating under the auspices of the Commonwealth of Independent States (CIS).***
 
-### GOST is GOvernment STandard of Russian Federation (and Soviet Union):
+#### GOST is GOvernment STandard of Russian Federation (and Soviet Union):
 * GOST 28147-89 64-bit block cipher (RFC 5830)
 * GOST R 34.11-94 hash function 256-bit (RFC 5831)
 * GOST R 50739-95 data sanitization method (non-cryptographic)
