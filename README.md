@@ -15,8 +15,8 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 * GOST R 34.12-2015 128-bit block cipher Кузнечик (Kuznechik) (RFC 7801)
 * GOST R 34.12-2015 64-bit block cipher Магма (Magma)
 
-### Algorithms
-#### Symmetric Algorithms:
+### Algorithms:
+#### Symmetric:
 - Block Ciphers:
    - GOST 28147-89 CryptoPro
    - GOST R 34.12-2015 Magma (default)
@@ -31,7 +31,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
    - GOST R 34.11-94 CryptoPro 256-bit
    - GOST R 34.11-2012 Streebog 256/512-bit (default) 
 
-#### Asymmetric algorithms:
+#### Asymmetric:
 - Public key Algorithms:
    - GOST R 34.10-2001 CryptoPro 256-bit
    - GOST R 34.10-2012 256/512-bit (default) 
