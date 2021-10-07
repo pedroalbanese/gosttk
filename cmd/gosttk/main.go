@@ -9,6 +9,17 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
+	"golang.org/x/crypto/pbkdf2"
+	"hash"
+	"io"
+	"io/ioutil"
+	"log"
+	"math/big"
+	"net"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/pedroalbanese/cmac"
 	"github.com/pedroalbanese/gogost/gost28147"
 	"github.com/pedroalbanese/gogost/gost3410"
@@ -21,16 +32,6 @@ import (
 	"github.com/pedroalbanese/gost-shred"
 	"github.com/pedroalbanese/gosttk"
 	"github.com/pedroalbanese/randomart"
-	"golang.org/x/crypto/pbkdf2"
-	"hash"
-	"io"
-	"io/ioutil"
-	"log"
-	"math/big"
-	"net"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 var (
@@ -50,7 +51,7 @@ var (
 	old       = flag.Bool("old", false, "Use old roll of algorithms.")
 	paramset  = flag.String("paramset", "A", "Elliptic curve ParamSet: A, B, C, D, XA, XB.")
 	pbkdf     = flag.Bool("pbkdf2", false, "Password-based key derivation function 2.")
-	public    = flag.String("pub", "", "Remote's side public key/remote's side public IP/PEM BLOCK.")
+	public    = flag.String("pub", "", "Remote's side public key/remote's side public IP.")
 	random    = flag.Int("rand", 0, "Generate random cryptographic key: 128, 256 or 512 bit-length.")
 	recursive = flag.Bool("recursive", false, "Process directories recursively. (for DIGEST command only)")
 	salt      = flag.String("salt", "", "Salt. (for PBKDF2 only)")
