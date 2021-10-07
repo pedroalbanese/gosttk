@@ -13,42 +13,46 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 * GOST R 34.12-2015 128-bit block cipher Кузнечик (Kuznechik) (RFC 7801)
 * GOST R 34.12-2015 64-bit block cipher Магма (Magma)
 
-#### Symmetric Ciphers:
-* GOST 28147-89 CryptoPro
-* GOST R 34.12-2015 Magma (default)
-* GOST R 34.12-2015 Kuznechik (Grasshopper)
+### Symmetric Algorithms:
+- Symmetric Ciphers:
+   - GOST 28147-89 CryptoPro
+   - GOST R 34.12-2015 Magma (default)
+   - GOST R 34.12-2015 Kuznechik (Grasshopper)
 
-#### Modes of operation:
-* MGM: Multilinear Galois Mode (AEAD)
-* CTR: Counter Mode
-* OFB: Output Feedback Mode
+- Modes of operation:
+   - MGM: Multilinear Galois Mode (AEAD)
+   - CTR: Counter Mode
+   - OFB: Output Feedback Mode
 
-#### Asymmetric Ciphers:
-* GOST R 34.10-2001 CryptoPro 256-bit
-* GOST R 34.10-2012 256/512-bit (default) 
+- Hash Ciphers:
+   - GOST R 34.11-94 CryptoPro 256-bit
+   - GOST R 34.11-2012 Streebog 256/512-bit (default) 
 
-#### Hash Ciphers:
-* GOST R 34.11-94 CryptoPro 256-bit
-* GOST R 34.11-2012 Streebog 256/512-bit (default) 
+### Asymmetric algorithms:
+- Public key Algorithms:
+   - GOST R 34.10-2001 CryptoPro 256-bit
+   - GOST R 34.10-2012 256/512-bit (default) 
 
-#### Cryptographic Functions:
-* Symmetric Encryption/Decryption
-* Digital Signature (ECDSA equivalent)
-* VKO (выработка ключа общего) shared key negociation (ECDH equivalent)
-* Hash Digest 
-* CMAC (Cipher-based message authentication code)
-* HMAC (Hash-based message authentication code)
-* PBKDF2 (Password-based key derivation function 2)
+- Supported ParamSets:
+   - GOST R 34.10-2001 256-bit: A, B, C, XA, XB
+   - GOST R 34.10-2012 256-bit: A, B, C, D
+   - GOST R 34.10-2012 512-bit: A, B, C
 
-#### Non-Cryptographic Functions:
-* GOST R 50739-95 data sanitization method
-* Bin to Hex/Hex to Bin string conversion
-* Random Art Public key Fingerprint (ssh-keygen equivalent)
+### FUNCTIONS
 
-#### Supported ParamSets:
-* GOST R 34.10-2001 256-bit: A, B, C, XA, XB
-* GOST R 34.10-2012 256-bit: A, B, C, D
-* GOST R 34.10-2012 512-bit: A, B, C
+- Cryptographic Functions:
+   - Symmetric Encryption/Decryption
+   - Digital Signature (ECDSA equivalent)
+   - VKO (выработка ключа общего) shared key negociation (ECDH equivalent)
+   - Hash Digest 
+   - CMAC (Cipher-based message authentication code)
+   - HMAC (Hash-based message authentication code)
+   - PBKDF2 (Password-based key derivation function 2)
+
+- Non-Cryptographic Functions:
+   - GOST R 50739-95 data sanitization method
+   - Bin to Hex/Hex to Bin string conversion
+   - Random Art Public key Fingerprint (ssh-keygen equivalent)
 
 #### TODO:
   - [ ] TLS 1.3
