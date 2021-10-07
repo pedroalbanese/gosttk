@@ -70,7 +70,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
   - [x] VKO GOST R 34.10-2001 key agreement function
   - [x] GOST R 34.12-2015 Magma symmetric cipher
 
-### Usage
+### Usage:
 <pre> -128
        Block size: 64 or 128. (for symmetric encryption only) (default 64)
  -512
