@@ -38,7 +38,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
    - GOST R 34.10-2012 256-bit: A, B, C, D
    - GOST R 34.10-2012 512-bit: A, B, C
 
-### FUNCTIONS
+### Functions:
 
 - Cryptographic Functions:
    - Symmetric Encryption/Decryption
