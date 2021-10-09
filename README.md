@@ -198,6 +198,11 @@ echo hexstring|./gosttk -hex dec
 ./gosttk -tcp send [-pub "127.0.0.1:8081"] < Pubkey.txt
 </pre>
 
+#### TLS Layer TCP/IP Dump/Send:
+<pre>./gostls -tcp dump [-pub "8081"] > Pubkey.txt
+./gostls -tcp send [-pub "127.0.0.1:8081"] < Pubkey.txt
+</pre>
+
 #### Random Art (Public Key Fingerprint):
 <pre>./gosttk -key $pubkey
 </pre>
