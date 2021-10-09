@@ -52,6 +52,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
    - CMAC (Cipher-based message authentication code)
    - HMAC (Hash-based message authentication code)
    - PBKDF2 (Password-based key derivation function 2)
+   - TLS (Transport Layer Security)
 
 - Non-Cryptographic Functions:
    - GOST R 50739-95 data sanitization method
