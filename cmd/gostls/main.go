@@ -126,7 +126,7 @@ func main() {
 		certs := conn.ConnectionState().PeerCertificates
 		for _, cert := range certs {
 		fmt.Printf("Issuer Name: %s\n", cert.Issuer)
-		fmt.Printf("Expiry: %s \n", cert.NotAfter.Format("2006-01-02T15:04:05"))
+		fmt.Printf("Expiry: %s \n", cert.NotAfter.Format("Monday, 02-Jan-06 15:04:05 MST"))
 		fmt.Printf("Common Name: %s \n", cert.Issuer.CommonName)
 		}
 		if err != nil {
