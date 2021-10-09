@@ -17,13 +17,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pedroalbanese/go-external-ip"
 	"crypto/go.cypherpunks.ru/gogost/v5/gost3410"
+	"github.com/pedroalbanese/go-external-ip"
 )
 
 var (
-	tcpip = flag.String("tcp", "", "Encrypted TCP/IP Transfer Protocol.")	
-	key   = flag.String("key", "", "Secret key.")	
+	tcpip = flag.String("tcp", "", "Encrypted TCP/IP Transfer Protocol.")
+	key   = flag.String("key", "", "Secret key.")
+	pub   = flag.String("pub", "", "Remote's side IP address.")
 )
 
 func handleConnection(c net.Conn) {
@@ -60,18 +61,19 @@ func main() {
 	template := x509.Certificate{
 		SerialNumber: big.NewInt(12345),
 		Subject: pkix.Name{
-			CommonName:   ip.String(),
-			PostalCode:   []string{*key},
-			ExtraNames:   []pkix.AttributeTypeAndValue{
+			CommonName: ip.String(),
+			PostalCode: []string{*key},
+			ExtraNames: []pkix.AttributeTypeAndValue{
 				{
 					Type:  []int{2, 5, 4, 42},
 					Value: *key,
 				},
 			},
 		},
-		DNSNames:     []string{commonName},
-		NotBefore: time.Now(),
-		NotAfter:  NotAfter,
+		DNSNames:    []string{commonName},
+		IPAddresses: []net.IP{net.IPv4(127, 0, 0, 1).To4(), net.ParseIP("2001:4860:0:2001::68")},
+		NotBefore:   time.Now(),
+		NotAfter:    NotAfter,
 	}
 	certDer, err := x509.CreateCertificate(
 		rand.Reader,
@@ -86,18 +88,22 @@ func main() {
 	}
 	priv := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: privBytes})
 
-
 	if *tcpip == "dump" {
 		cert, err := tls.X509KeyPair(cert, priv)
 		cfg := tls.Config{Certificates: []tls.Certificate{cert}, ClientAuth: tls.RequireAnyClientCert}
-	 	cfg.Rand = rand.Reader
+		cfg.Rand = rand.Reader
 
-		ln, err := tls.Listen("tcp", ":8081", &cfg)
+		port := "8081"
+		if *pub != "" {
+			port = *pub
+		}
+
+		ln, err := tls.Listen("tcp", ":"+port, &cfg)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		fmt.Println("Server(TLS) up and listening on port 8081")
+		fmt.Println("Server(TLS) up and listening on port " + port)
 
 		for {
 			conn, err := ln.Accept()
@@ -119,15 +125,21 @@ func main() {
 		cert, err := tls.X509KeyPair(cert, priv)
 		cfg := tls.Config{Certificates: []tls.Certificate{cert}, InsecureSkipVerify: true}
 
-		conn, err := tls.Dial("tcp", "127.0.0.1:8081", &cfg)
+		ipport := "127.0.0.1:8081"
+		if *pub != "" {
+			ipport = *pub
+		}
+
+		conn, err := tls.Dial("tcp", ipport, &cfg)
 		if err != nil {
 			log.Fatal(err)
 		}
 		certs := conn.ConnectionState().PeerCertificates
 		for _, cert := range certs {
-		fmt.Printf("Issuer Name: %s\n", cert.Issuer)
-		fmt.Printf("Expiry: %s \n", cert.NotAfter.Format("Monday, 02-Jan-06 15:04:05 MST"))
-		fmt.Printf("Common Name: %s \n", cert.Issuer.CommonName)
+			fmt.Printf("Issuer Name: %s\n", cert.Issuer)
+			fmt.Printf("Expiry: %s \n", cert.NotAfter.Format("Monday, 02-Jan-06 15:04:05 MST"))
+			fmt.Printf("Common Name: %s \n", cert.Issuer.CommonName)
+			fmt.Printf("IP Address: %s \n", cert.IPAddresses)
 		}
 		if err != nil {
 			log.Fatal(err)
