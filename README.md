@@ -42,7 +42,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
    - GOST R 34.10-2012 256-bit: A, B, C, D
    - GOST R 34.10-2012 512-bit: A, B, C
 
-### Functions:
+## Features
 
 - Cryptographic Functions:
    - Symmetric Encryption/Decryption
@@ -72,7 +72,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
   - [x] VKO GOST R 34.10-2001 key agreement function
   - [x] GOST R 34.12-2015 Magma symmetric cipher
 
-### Usage:
+## Usage
 <pre> -128
        Block size: 64 or 128. (for symmetric encryption only) (default 64)
  -512
@@ -127,7 +127,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
        Verify with public key.
  -version
        Print version information.</pre>
-### Examples:
+## Examples
 #### Asymmetric GOST R 34.10-2001 256-bit keypair generation (INI format):
 <pre>./gosttk -keygen -old [-paramset A|B|C|XA|XB]
 </pre>
@@ -207,6 +207,7 @@ echo hexstring|./gosttk -hex dec
 #### Random Art (Public Key Fingerprint):
 <pre>./gosttk -key $pubkey
 </pre>
+
 ## License
 
 This project is licensed under the ISC License.
