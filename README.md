@@ -1,5 +1,5 @@
 # GOSTTk ☭
-### GOST Toolkit: GOST Cipher Suiter written in Go
+## GOST Toolkit: GOST Cipher Suiter written in Go
 Multi purpose cross-platform cryptography tool for encryption / decryption, hash digest, cipher-based message authentication code (CMAC), hash-based message authentication code (HMAC), digital signature, shared key agreement (VKO) and PBKDF2 function for embedded systems. 
 
 **GOST refers to a set of technical standards maintained by the Euro-Asian Council for Standardization, Metrology and Certification (EASC), a regional standards organization operating under the auspices of the Commonwealth of Independent States (CIS).**
@@ -16,7 +16,7 @@ Multi purpose cross-platform cryptography tool for encryption / decryption, hash
 * GOST R 34.12-2015 128-bit block cipher Кузнечик (Kuznechik) (RFC 7801)
 * GOST R 34.12-2015 64-bit block cipher Магма (Magma)
 
-### Algorithms:
+## Algorithms
 #### Symmetric:
 - Block Ciphers:
    - GOST 28147-89 CryptoPro
