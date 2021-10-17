@@ -22,9 +22,8 @@ import (
 )
 
 var (
-	tcpip = flag.String("tcp", "", "Encrypted TCP/IP Transfer Protocol.")
-	key   = flag.String("key", "", "Secret key.")
-	pub   = flag.String("pub", "", "Remote's side IP address.")
+	tcpip = flag.String("tcp", "", "Encrypted TCP/IP Transfer Protocol. [dump|ip|send]")
+	pub   = flag.String("pub", "", "Remote's side IP address / local port.")
 )
 
 func handleConnection(c net.Conn) {
@@ -34,6 +33,12 @@ func handleConnection(c net.Conn) {
 
 func main() {
 	flag.Parse()
+
+	if len(os.Args) < 2 {
+		fmt.Fprintln(os.Stderr, "Usage of", os.Args[0]+":")
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
 
 	var err error
 	gost341012256PrivRaw := make([]byte, 32)
@@ -62,13 +67,6 @@ func main() {
 		SerialNumber: big.NewInt(12345),
 		Subject: pkix.Name{
 			CommonName: ip.String(),
-			PostalCode: []string{*key},
-			ExtraNames: []pkix.AttributeTypeAndValue{
-				{
-					Type:  []int{2, 5, 4, 42},
-					Value: *key,
-				},
-			},
 		},
 		DNSNames:    []string{commonName},
 		IPAddresses: []net.IP{net.IPv4(127, 0, 0, 1).To4(), net.ParseIP("2001:4860:0:2001::68")},
@@ -103,7 +101,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		fmt.Println("Server(TLS) up and listening on port " + port)
+		fmt.Fprintln(os.Stderr, "Server(TLS) up and listening on port "+port)
 
 		for {
 			conn, err := ln.Accept()
