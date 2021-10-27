@@ -663,7 +663,7 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			file, err := os.Stat(match)
+			file, _ := os.Stat(match)
 			if file.IsDir() {
 			} else {
 				if _, err := io.Copy(h, f); err != nil {
@@ -681,7 +681,7 @@ func main() {
 				if err != nil {
 					return err
 				}
-				file, err := os.Stat(path)
+				file, _ := os.Stat(path)
 				if file.IsDir() {
 				} else {
 					filename := filepath.Base(path)
