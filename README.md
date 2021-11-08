@@ -2,6 +2,8 @@
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](https://github.com/pedroalbanese/gosttk/blob/master/LICENSE.md) 
 [![GoDoc](https://godoc.org/github.com/pedroalbanese/gosttk?status.png)](http://godoc.org/github.com/pedroalbanese/gosttk)
 [![Go Report Card](https://goreportcard.com/badge/github.com/pedroalbanese/gosttk)](https://goreportcard.com/report/github.com/pedroalbanese/gosttk)
+[![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/pedroalbanese/gosttk)](https://golang.org)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/pedroalbanese/gosttk)](https://github.com/pedroalbanese/gosttk/releases)
 
 Multi purpose cross-platform cryptography tool for symmetric encryption, cipher-based message authentication code (CMAC), recursive hash digest, hash-based message authentication code (HMAC), digital signature, shared key agreement (VKO) and PBKDF2 function for embedded systems. 
 
