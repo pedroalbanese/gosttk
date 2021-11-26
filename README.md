@@ -217,5 +217,5 @@ echo hexstring|./gosttk -hex dec
 
 This project is licensed under the ISC License.
 
-##### Military Grade Reliability. Copyright (c) 2020-2021 Pedro Albanese - ALBANESE Lab.
+##### Military Grade Reliability. Copyright (c) 2020-2021 ALBANESE Исследовательская лаборатория.
 
