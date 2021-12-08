@@ -1,5 +1,6 @@
 ## GOST Toolkit: GOST Security Suite written in Go ☭
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](https://github.com/pedroalbanese/gosttk/blob/master/LICENSE.md) 
+[![GitHub downloads](https://img.shields.io/github/downloads/pedroalbanese/gosttk/total.svg?logo=github&logoColor=white)](https://github.com/pedroalbanese/gosttk/releases)
 [![GoDoc](https://godoc.org/github.com/pedroalbanese/gosttk?status.png)](http://godoc.org/github.com/pedroalbanese/gosttk)
 [![Go Report Card](https://goreportcard.com/badge/github.com/pedroalbanese/gosttk)](https://goreportcard.com/report/github.com/pedroalbanese/gosttk)
 [![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/pedroalbanese/gosttk)](https://golang.org)
