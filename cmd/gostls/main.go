@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/rand"
 	"crypto/tls"
@@ -22,7 +23,7 @@ import (
 )
 
 var (
-	tcpip = flag.String("tcp", "", "Encrypted TCP/IP Transfer Protocol. [dump|ip|send]")
+	tcpip = flag.String("tcp", "", "Encrypted TCP/IP Transfer Protocol. [listen|dump|ip|send|dial]")
 	pub   = flag.String("pub", "", "Remote's side IP address / local port.")
 )
 
@@ -119,6 +120,44 @@ func main() {
 		}
 	}
 
+	if *tcpip == "listen" {
+		cert, err := tls.X509KeyPair(cert, priv)
+		cfg := tls.Config{Certificates: []tls.Certificate{cert}, ClientAuth: tls.RequireAnyClientCert}
+		cfg.Rand = rand.Reader
+
+		port := "8081"
+		if *pub != "" {
+			port = *pub
+		}
+
+		ln, err := tls.Listen("tcp", ":"+port, &cfg)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Fprintln(os.Stderr, "Server(TLS) up and listening on port "+port)
+
+		conn, err := ln.Accept()
+		if err != nil {
+			log.Println(err)
+		}
+		defer ln.Close()
+
+		fmt.Println("Connection accepted")
+
+		for {
+			message, err := bufio.NewReader(conn).ReadString('\n')
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(3)
+			}
+			fmt.Print("Received: ", string(message))
+
+			newmessage := strings.ToUpper(message)
+			conn.Write([]byte(newmessage + "\n"))
+		}
+	}
+
 	if *tcpip == "send" {
 		cert, err := tls.X509KeyPair(cert, priv)
 		cfg := tls.Config{Certificates: []tls.Certificate{cert}, InsecureSkipVerify: true}
@@ -154,6 +193,50 @@ func main() {
 		defer conn.Close()
 	}
 
+	if *tcpip == "dial" {
+		cert, err := tls.X509KeyPair(cert, priv)
+		cfg := tls.Config{Certificates: []tls.Certificate{cert}, InsecureSkipVerify: true}
+
+		ipport := "127.0.0.1:8081"
+		if *pub != "" {
+			ipport = *pub
+		}
+
+		conn, err := tls.Dial("tcp", ipport, &cfg)
+		if err != nil {
+			log.Fatal(err)
+		}
+		certs := conn.ConnectionState().PeerCertificates
+		for _, cert := range certs {
+			fmt.Printf("Issuer Name: %s\n", cert.Issuer)
+			fmt.Printf("Expiry: %s \n", cert.NotAfter.Format("Monday, 02-Jan-06 15:04:05 MST"))
+			fmt.Printf("Common Name: %s \n", cert.Issuer.CommonName)
+			fmt.Printf("IP Address: %s \n", cert.IPAddresses)
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer conn.Close()
+
+		for {
+			reader := bufio.NewReader(os.Stdin)
+			fmt.Print("Text to be sent: ")
+			text, err := reader.ReadString('\n')
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(3)
+			}
+			fmt.Fprintf(conn, text+"\n")
+
+			message, err := bufio.NewReader(conn).ReadString('\n')
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(3)
+			}
+			fmt.Print("Server response: " + message)
+		}
+	}
+
 	if *tcpip == "ip" {
 		consensus := externalip.DefaultConsensus(nil, nil)
 		ip, _ := consensus.ExternalIP()
@@ -161,4 +244,3 @@ func main() {
 		os.Exit(0)
 	}
 }
-
