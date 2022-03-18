@@ -209,6 +209,9 @@ echo hexstring|./gosttk -hex dec
 #### TLS Layer TCP/IP Dump/Send:
 <pre>./gostls -tcp dump [-pub "8081"] > Pubkey.txt
 ./gostls -tcp send [-pub "127.0.0.1:8081"] < Pubkey.txt
+
+./gostls -tcp listen [-pub "8081"]
+./gostls -tcp dial [-pub "127.0.0.1:8081"]
 </pre>
 
 #### Random Art (Public Key Fingerprint):
