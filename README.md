@@ -178,7 +178,7 @@ echo $?
 #### HMAC-Streebog256/512:
 <pre>./gosttk -mac hmac [-512] -key $256bitkey < file.ext
 </pre>
-#### HKDF (HMAC-based key derivation function 2):
+#### HKDF (HMAC-based key derivation function):
 <pre>./gosttk -hkdf 256 [-512|-old] -key "pass" -info "AAD" -salt "salt"
 </pre>
 #### PBKDF2 (password-based key derivation function 2):
