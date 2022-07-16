@@ -32,7 +32,7 @@ Multi purpose cross-platform cryptography tool for symmetric encryption, cipher-
 
 - Modes of Operation:
    - MGM: Multilinear Galois Mode (AEAD)
-   - CTR: Counter Mode
+   - CTR: Counter Mode (a.k.a. CNT)
    - OFB: Output Feedback Mode
 
 - Message Digest Algorithms:
@@ -59,7 +59,7 @@ Multi purpose cross-platform cryptography tool for symmetric encryption, cipher-
    - CMAC (Cipher-based message authentication code)
    - HMAC (Hash-based message authentication code)
    - PBKDF2 (Password-based key derivation function 2)
-   - TLS (Transport Layer Security)
+   - TLS 1.2 (Transport Layer Security)
 
 - Non-Cryptographic Functions:
    - GOST R 50739-95 data sanitization method
@@ -85,25 +85,25 @@ Multi purpose cross-platform cryptography tool for symmetric encryption, cipher-
  -512
        Bit length: 256 or 512. (default 256)
  -check string
-       Check hashsum file. (- for STDIN)
- -cmac
-       Compute cipher-based message authentication code.
+       Check hashsum file. ('-' for STDIN)
  -crypt string
        Encrypt/Decrypt with symmetric ciphers.
- -derive
-       Derive shared secret key (VKO).
  -digest string
-       File/Wildcard to generate hashsum list. (- for STDIN)
+       File/Wildcard to generate hashsum list. ('-' for STDIN)
  -hex string
        Encode binary string to hex format and vice-versa.
- -hmac
-       Compute hash-based message authentication code.
+ -hkdf int
+       Hash-based key derivation function with a given output bit length.
+ -info string
+       Associated data, additional info. (for HKDF and AEAD encryption)
  -iter int
        Iterations. (for SHRED and PBKDF2 only) (default 1)
+ -iv string
+       Initialization vector. (for non-AEAD symmetric encryption)
  -key string
        Private/Public key, password or HMAC key, depending on operation.
- -keygen
-       Generate asymmetric keypair.
+ -mac string
+       Compute hash-based/cipher-based message authentication code.
  -mode string
        Mode of operation: MGM, CTR or OFB. (default "MGM")
  -old
@@ -112,42 +112,37 @@ Multi purpose cross-platform cryptography tool for symmetric encryption, cipher-
        Elliptic curve ParamSet: A, B, C, D, XA, XB. (default "A")
  -pbkdf2
        Password-based key derivation function 2.
+ -pkey string
+       Generate keypair, Derive shared secret, Sign and Verify.
  -pub string
-       Remote's side public key/remote's side public IP/PEM BLOCK.
+       Remote's side public key.
  -rand int
-       Generate random cryptographic key: 128, 256 or 512 bit-length.
+       Generate random cryptographic with a given output bit length.
  -recursive
        Process directories recursively. (for DIGEST command only)
  -salt string
        Salt. (for PBKDF2 only)
  -shred string
        Files/Path/Wildcard to apply data sanitization method.
- -sign
-       Sign with private key.
  -signature string
        Input signature. (verification only)
- -tcp string
-       TCP/IP Transfer Protocol.
- -verbose
-       Verbose mode. (for CHECK command only)
- -verify
-       Verify with public key.
  -version
        Print version information.</pre>
 ## Examples
 #### Asymmetric GOST R 34.10-2001 256-bit keypair generation (INI format):
-<pre>./gosttk -keygen -old [-paramset A|B|C|XA|XB]
+<pre>./gosttk -pkey generate -old [-paramset A|B|C|XA|XB]
 </pre>
 #### Asymmetric GOST R 34.10-2012 256/512-bit keypair generation (default):
-<pre>./gosttk -keygen [-paramset A|B|C|D] [-512 -paramset A|B|C]
+<pre>./gosttk -pkey generate [-paramset A|B|C|D] [-512 -paramset A|B|C]
 </pre>
 #### Signature (ECDSA equivalent):
-<pre>./gosttk -sign [-512|-old] -key $prvkey < file.ext > sign.txt
+<pre>./gosttk -pkey sign [-512|-old] -key $prvkey < file.ext > sign.txt
 sign=$(cat sign.txt)
-./gosttk -verify [-512|-old] -key $pubkey -signature $sign < file.ext
+./gosttk -pkey verify [-512|-old] -key $pubkey -signature $sign < file.ext
+echo $?
 </pre>
 #### VKO: Shared key negociation (ECDH equivalent):
-<pre>./gosttk -derive [-512|-old] -key $prvkey -pub $pubkey
+<pre>./gosttk -pkey derive [-512|-old] -key $prvkey -pub $pubkey
 </pre>
 #### Encryption/decryption with Magma (GOST R 34.12-2015) symmetric cipher (default):
 <pre>./gosttk -crypt enc -key $shared < plaintext.ext > ciphertext.ext
@@ -181,6 +176,9 @@ sign=$(cat sign.txt)
 </pre>
 #### HMAC-Streebog256/512:
 <pre>./gosttk -hmac [-512] -key $256bitkey < file.ext
+</pre>
+#### HKDF (hash-based key derivation function 2):
+<pre>./gosttk -hkdf [-512|-old] -key "pass" -info "AAD" -salt "salt"
 </pre>
 #### PBKDF2 (password-based key derivation function 2):
 <pre>./gosttk -pbkdf2 [-512|-old] -key "pass" -iter 10000 -salt "salt"
@@ -222,5 +220,5 @@ echo hexstring|./gosttk -hex dec
 
 This project is licensed under the ISC License.
 
-##### Military Grade Reliability. Copyright (c) 2020-2021 ALBANESE Research Lab.
+##### Military Grade Reliability. Copyright (c) 2020-2022 ALBANESE Research Lab.
 
