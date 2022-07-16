@@ -9,13 +9,13 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
+	"golang.org/x/crypto/hkdf"
 	"golang.org/x/crypto/pbkdf2"
 	"hash"
 	"io"
 	"io/ioutil"
 	"log"
 	"math/big"
-	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -37,11 +37,11 @@ import (
 var (
 	bit       = flag.Bool("512", false, "Bit length: 256 or 512. (default 256)")
 	block     = flag.Bool("128", false, "Block size: 64 or 128. (for symmetric encryption only) (default 64)")
-	check     = flag.String("check", "", "Check hashsum file. (- for STDIN)")
+	check     = flag.String("check", "", "Check hashsum file. ('-' for STDIN)")
 	ciphmac   = flag.Bool("cmac", false, "Compute cipher-based message authentication code.")
 	crypt     = flag.String("crypt", "", "Encrypt/Decrypt with symmetric ciphers.")
 	del       = flag.String("shred", "", "Files/Path/Wildcard to apply data sanitization method.")
-	derive    = flag.Bool("derive", false, "Derive shared secret key (VKO).")
+	derive    = flag.Bool("derive", false, "Derive shared secret (VKO).")
 	encode    = flag.String("hex", "", "Encode binary string to hex format and vice-versa.")
 	generate  = flag.Bool("keygen", false, "Generate asymmetric keypair.")
 	iter      = flag.Int("iter", 1, "Iterations. (for SHRED and PBKDF2 only)")
@@ -51,17 +51,18 @@ var (
 	old       = flag.Bool("old", false, "Use old roll of algorithms.")
 	paramset  = flag.String("paramset", "A", "Elliptic curve ParamSet: A, B, C, D, XA, XB.")
 	pbkdf     = flag.Bool("pbkdf2", false, "Password-based key derivation function 2.")
-	public    = flag.String("pub", "", "Remote's side public key/remote's side public IP.")
+	public    = flag.String("pub", "", "Remote's side public key.")
 	random    = flag.Int("rand", 0, "Generate random cryptographic key: 128, 256 or 512 bit-length.")
 	recursive = flag.Bool("recursive", false, "Process directories recursively. (for DIGEST command only)")
 	salt      = flag.String("salt", "", "Salt. (for PBKDF2 only)")
 	sig       = flag.String("signature", "", "Input signature. (verification only)")
 	sign      = flag.Bool("sign", false, "Sign with private key.")
-	target    = flag.String("digest", "", "File/Wildcard to generate hashsum list. (- for STDIN)")
-	tcpip     = flag.String("tcp", "", "TCP/IP Transfer Protocol.")
-	verbose   = flag.Bool("verbose", false, "Verbose mode. (for CHECK command only)")
+	target    = flag.String("digest", "", "File/Wildcard to generate hashsum list. ('-' for STDIN)")
 	verify    = flag.Bool("verify", false, "Verify with public key.")
 	version   = flag.Bool("version", false, "Print version information.")
+	info      = flag.String("info", "", "Associated data, additional info. (for HKDF and AEAD encryption)")
+	vector    = flag.String("iv", "", "Initialization vector. (for symmetric encryption)")
+	kdf       = flag.Bool("hkdf", false, "Hash-based key derivation function.")
 )
 
 func main() {
@@ -137,82 +138,6 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *tcpip == "dump" {
-		port := "8081"
-		if *public != "" {
-			port = *public
-		}
-		ln, err := net.Listen("tcp", ":"+port)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		conn, err := ln.Accept()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		defer ln.Close()
-
-		strRemoteAddr := conn.RemoteAddr().String()
-		strLocalAddr := conn.LocalAddr()
-		fmt.Fprint(os.Stderr, "Remote TCP address= ")
-		fmt.Fprintln(os.Stderr, strRemoteAddr)
-		fmt.Fprint(os.Stderr, "Local TCP address= ")
-		fmt.Fprintln(os.Stderr, strLocalAddr)
-
-		split := strings.Split(strRemoteAddr, ":")
-		ipv4Addr := net.ParseIP(split[0] + "")
-		ipv4Mask := net.CIDRMask(24, 32)
-		fmt.Fprint(os.Stderr, "IPv4= ")
-		fmt.Fprintln(os.Stderr, ipv4Addr.Mask(ipv4Mask))
-
-		var buf bytes.Buffer
-		io.Copy(&buf, conn)
-		text := strings.TrimSuffix(string(buf.Bytes()), "\n")
-		fmt.Println(text)
-		os.Exit(0)
-	}
-
-	if *tcpip == "send" {
-		ipport := "127.0.0.1:8081"
-		if *public != "" {
-			ipport = *public
-		}
-		conn, err := net.Dial("tcp", ipport)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		strRemoteAddr := conn.RemoteAddr().String()
-		strLocalAddr := conn.LocalAddr()
-		fmt.Fprint(os.Stderr, "Remote TCP address= ")
-		fmt.Fprintln(os.Stderr, strRemoteAddr)
-		fmt.Fprint(os.Stderr, "Local TCP address= ")
-		fmt.Fprintln(os.Stderr, strLocalAddr)
-
-		split := strings.Split(strRemoteAddr, ":")
-		ipv4Addr := net.ParseIP(split[0])
-		ipv4Mask := net.CIDRMask(24, 32)
-		fmt.Fprint(os.Stderr, "IPv4= ")
-		fmt.Fprintln(os.Stderr, ipv4Addr.Mask(ipv4Mask))
-
-		buf := bytes.NewBuffer(nil)
-		scanner := os.Stdin
-		io.Copy(buf, scanner)
-
-		text := string(buf.Bytes())
-
-		fmt.Fprintf(conn, text)
-
-		text = strings.TrimSuffix(string(buf.Bytes()), "\n")
-		fmt.Println(text)
-		os.Exit(0)
-	}
-
 	if *crypt == "enc" && *mode == "MGM" {
 		var keyHex string
 		var prvRaw []byte
@@ -264,7 +189,7 @@ func main() {
 
 		nonce := make([]byte, aead.NonceSize(), aead.NonceSize()+len(msg)+aead.Overhead())
 
-		out := aead.Seal(nonce, nonce, msg, nil)
+		out := aead.Seal(nonce, nonce, msg, []byte(*info))
 		fmt.Printf("%s", out)
 		os.Exit(0)
 	}
@@ -315,7 +240,7 @@ func main() {
 
 		nonce, msg := msg[:aead.NonceSize()], msg[aead.NonceSize():]
 
-		out, err := aead.Open(nil, nonce, msg, nil)
+		out, err := aead.Open(nil, nonce, msg, []byte(*info))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -353,7 +278,13 @@ func main() {
 				log.Fatal(err)
 			}
 		}
-		iv := make([]byte, gost3412128.BlockSize)
+		var iv []byte
+		if *vector != "" {
+			iv, _ = hex.DecodeString(*vector)
+		} else {
+			iv = make([]byte, gost3412128.BlockSize)
+			fmt.Fprintf(os.Stderr, "IV= %x\n", iv)
+		}
 		ciph := gost3412128.NewCipher(key)
 		var stream cipher.Stream
 		if *mode == "CTR" || *mode == "ctr" {
@@ -410,7 +341,13 @@ func main() {
 			}
 		}
 		ciph := gost341264.NewCipher(key)
-		iv := make([]byte, gost341264.BlockSize)
+		var iv []byte
+		if *vector != "" {
+			iv, _ = hex.DecodeString(*vector)
+		} else {
+			iv = make([]byte, gost341264.BlockSize)
+			fmt.Fprintf(os.Stderr, "IV= %x\n", iv)
+		}
 		var stream cipher.Stream
 		if *mode == "CTR" || *mode == "ctr" {
 			stream = cipher.NewCTR(ciph, iv)
@@ -466,7 +403,13 @@ func main() {
 			}
 		}
 		ciph := gost28147.NewCipher(key, &gost28147.SboxIdGostR341194CryptoProParamSet)
-		iv := make([]byte, gost28147.BlockSize)
+		var iv []byte
+		if *vector != "" {
+			iv, _ = hex.DecodeString(*vector)
+		} else {
+			iv = make([]byte, gost28147.BlockSize)
+			fmt.Fprintf(os.Stderr, "IV= %x\n", iv)
+		}
 		var stream cipher.Stream
 		if *mode == "CTR" || *mode == "ctr" {
 			stream = cipher.NewCTR(ciph, iv)
@@ -736,9 +679,9 @@ func main() {
 			txtlines = append(txtlines, scanner.Text())
 		}
 
+		var exit int
 		for _, eachline := range txtlines {
 			lines := strings.Split(string(eachline), " *")
-
 			if strings.Contains(string(eachline), " *") {
 
 				var h hash.Hash
@@ -759,28 +702,19 @@ func main() {
 					io.Copy(h, f)
 					f.Close()
 
-					if *verbose {
-						if hex.EncodeToString(h.Sum(nil)) == lines[0] {
-							fmt.Println(lines[1]+"\t", "OK")
-						} else {
-							fmt.Println(lines[1]+"\t", "FAILED")
-						}
+					if hex.EncodeToString(h.Sum(nil)) == lines[0] {
+						fmt.Println(lines[1]+"\t", "OK")
 					} else {
-						if hex.EncodeToString(h.Sum(nil)) == lines[0] {
-						} else {
-							os.Exit(1)
-						}
+						fmt.Println(lines[1]+"\t", "FAILED")
+						exit = 1
 					}
 				} else {
-					if *verbose {
-						fmt.Println(lines[1]+"\t", "Not found!")
-					} else {
-						os.Exit(1)
-					}
+					fmt.Println(lines[1]+"\t", "Not found!")
+					exit = 1
 				}
 			}
 		}
-		os.Exit(0)
+		os.Exit(exit)
 	}
 
 	var err error
@@ -1334,12 +1268,22 @@ func main() {
 		os.Exit(0)
 	}
 
+	if *kdf {
+		keyRaw, err := Hkdf([]byte(*key), []byte(*salt), []byte(*info))
+		if err != nil {
+			log.Fatal(err)
+		}
+		keySlice := string(keyRaw[:])
+		fmt.Println(hex.EncodeToString([]byte(keySlice)[:32]))
+		os.Exit(0)
+	}
+
 	if *del != "" {
 		shredder := shred.Shredder{}
 		shredconf := shred.NewShredderConf(&shredder, shred.WriteZeros|shred.WriteRand, *iter, true)
 		matches, err := filepath.Glob(*del)
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 
 		for _, match := range matches {
@@ -1356,4 +1300,19 @@ func main() {
 	} else {
 		fmt.Println(randomart.FromString(*key))
 	}
+}
+
+func Hkdf(master, salt, info []byte) ([128]byte, error) {
+	var h func() hash.Hash
+	if *bit == false {
+		h = gost34112012256.New
+	} else if *bit == true {
+		h = gost34112012512.New
+	}
+	hkdf := hkdf.New(h, master, salt, info)
+	key := make([]byte, 32)
+	_, err := io.ReadFull(hkdf, key)
+	var result [128]byte
+	copy(result[:], key)
+	return result, err
 }
