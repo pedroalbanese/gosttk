@@ -145,15 +145,15 @@ echo $?
 #### VKO: Shared key negociation (ECDH equivalent):
 <pre>./gosttk -pkey derive [-512|-old] -key $prvkey -pub $pubkey
 </pre>
-#### Encryption/decryption with Magma (GOST R 34.12-2015) symmetric cipher (default):
+#### Encryption/decryption with Magma (GOST R 34.12-2015) block cipher (default):
 <pre>./gosttk -crypt enc -key $shared < plaintext.ext > ciphertext.ext
 ./gosttk -crypt dec -key $shared < ciphertext.ext > plaintext.ext
 </pre>
-#### Encryption/decryption with Kuznyechik (GOST R 34.12-2015) symmetric cipher:
+#### Encryption/decryption with Kuznyechik (GOST R 34.12-2015) block cipher:
 <pre>./gosttk -crypt enc -128 -key $shared < plaintext.ext > ciphertext.ext
 ./gosttk -crypt dec -128 -key $shared < ciphertext.ext > plaintext.ext
 </pre>
-#### Encryption/decryption with GOST 28147-89 CryptoPro symmetric cipher:
+#### Encryption/decryption with GOST 28147-89 CryptoPro block cipher:
 <pre>./gosttk -crypt enc -old -key $shared < plaintext.ext > ciphertext.ext
 ./gosttk -crypt dec -old -key $shared < ciphertext.ext > plaintext.ext
 </pre>
@@ -178,7 +178,7 @@ echo $?
 #### HMAC-Streebog256/512:
 <pre>./gosttk -mac hmac [-512] -key $256bitkey < file.ext
 </pre>
-#### HKDF (hash-based key derivation function 2):
+#### HKDF (HMAC-based key derivation function 2):
 <pre>./gosttk -hkdf [-512|-old] -key "pass" -info "AAD" -salt "salt"
 </pre>
 #### PBKDF2 (password-based key derivation function 2):
