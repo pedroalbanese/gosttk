@@ -199,13 +199,9 @@ PBKDF2 function can be combined with the CRYPT, HMAC commands:
 echo hexstring|./gosttk -hex dec
 </pre>
 
-#### TCP/IP Dump/Send:
-<pre>./gosttk -tcp dump [-pub "8081"] > Pubkey.txt
-./gosttk -tcp send [-pub "127.0.0.1:8081"] < Pubkey.txt
-</pre>
-
 #### TLS Layer TCP/IP Dump/Send:
-<pre>./gostls -tcp dump [-pub "8081"] > Pubkey.txt
+<pre>./gostls -tcp ip > PubIP.txt
+./gostls -tcp dump [-pub "8081"] > Pubkey.txt
 ./gostls -tcp send [-pub "127.0.0.1:8081"] < Pubkey.txt
 
 ./gostls -tcp listen [-pub "8081"]
