@@ -94,7 +94,7 @@ Multi purpose cross-platform cryptography tool for symmetric encryption, cipher-
  -hex string
        Encode binary string to hex format and vice-versa.
  -hkdf int
-       Hash-based key derivation function with a given output bit length.
+       HMAC-based key derivation function with a given output bit length.
  -info string
        Associated data, additional info. (for HKDF and AEAD encryption)
  -iter int
@@ -122,7 +122,7 @@ Multi purpose cross-platform cryptography tool for symmetric encryption, cipher-
  -recursive
        Process directories recursively. (for DIGEST command only)
  -salt string
-       Salt. (for PBKDF2 only)
+       Salt. (for PBKDF2 and HKDF commands)
  -shred string
        Files/Path/Wildcard to apply data sanitization method.
  -signature string
