@@ -179,7 +179,7 @@ echo $?
 <pre>./gosttk -mac hmac [-512] -key $256bitkey < file.ext
 </pre>
 #### HKDF (HMAC-based key derivation function 2):
-<pre>./gosttk -hkdf [-512|-old] -key "pass" -info "AAD" -salt "salt"
+<pre>./gosttk -hkdf 256 [-512|-old] -key "pass" -info "AAD" -salt "salt"
 </pre>
 #### PBKDF2 (password-based key derivation function 2):
 <pre>./gosttk -pbkdf2 [-512|-old] -key "pass" -iter 10000 -salt "salt"
