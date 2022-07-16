@@ -38,31 +38,27 @@ var (
 	bit       = flag.Bool("512", false, "Bit length: 256 or 512. (default 256)")
 	block     = flag.Bool("128", false, "Block size: 64 or 128. (for symmetric encryption only) (default 64)")
 	check     = flag.String("check", "", "Check hashsum file. ('-' for STDIN)")
-	ciphmac   = flag.Bool("cmac", false, "Compute cipher-based message authentication code.")
 	crypt     = flag.String("crypt", "", "Encrypt/Decrypt with symmetric ciphers.")
 	del       = flag.String("shred", "", "Files/Path/Wildcard to apply data sanitization method.")
-	derive    = flag.Bool("derive", false, "Derive shared secret (VKO).")
 	encode    = flag.String("hex", "", "Encode binary string to hex format and vice-versa.")
-	generate  = flag.Bool("keygen", false, "Generate asymmetric keypair.")
+	info      = flag.String("info", "", "Associated data, additional info. (for HKDF and AEAD encryption)")
 	iter      = flag.Int("iter", 1, "Iterations. (for SHRED and PBKDF2 only)")
+	kdf       = flag.Int("hkdf", 0, "Hash-based key derivation function with a given output bit length.")
 	key       = flag.String("key", "", "Private/Public key, password or HMAC key, depending on operation.")
-	mac       = flag.Bool("hmac", false, "Compute hash-based message authentication code.")
+	mac       = flag.String("mac", "", "Compute hash-based/cipher-based message authentication code.")
 	mode      = flag.String("mode", "MGM", "Mode of operation: MGM, CTR or OFB.")
 	old       = flag.Bool("old", false, "Use old roll of algorithms.")
 	paramset  = flag.String("paramset", "A", "Elliptic curve ParamSet: A, B, C, D, XA, XB.")
 	pbkdf     = flag.Bool("pbkdf2", false, "Password-based key derivation function 2.")
+	pkey      = flag.String("pkey", "", "Generate keypair, Derive shared secret, Sign and Verify.")
 	public    = flag.String("pub", "", "Remote's side public key.")
-	random    = flag.Int("rand", 0, "Generate random cryptographic key: 128, 256 or 512 bit-length.")
+	random    = flag.Int("rand", 0, "Generate random cryptographic with a given output bit length.")
 	recursive = flag.Bool("recursive", false, "Process directories recursively. (for DIGEST command only)")
 	salt      = flag.String("salt", "", "Salt. (for PBKDF2 only)")
 	sig       = flag.String("signature", "", "Input signature. (verification only)")
-	sign      = flag.Bool("sign", false, "Sign with private key.")
 	target    = flag.String("digest", "", "File/Wildcard to generate hashsum list. ('-' for STDIN)")
-	verify    = flag.Bool("verify", false, "Verify with public key.")
+	vector    = flag.String("iv", "", "Initialization vector. (for non-AEAD symmetric encryption)")
 	version   = flag.Bool("version", false, "Print version information.")
-	info      = flag.String("info", "", "Associated data, additional info. (for HKDF and AEAD encryption)")
-	vector    = flag.String("iv", "", "Initialization vector. (for symmetric encryption)")
-	kdf       = flag.Bool("hkdf", false, "Hash-based key derivation function.")
 )
 
 func main() {
@@ -85,7 +81,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if *random != 0 && (*random == 128 || *random == 256 || *random == 512) {
+	if *random != 0 && (*random == 64 || *random == 128 || *random == 256 || *random == 512) {
 		var key []byte
 		var err error
 		key = make([]byte, *random/8)
@@ -95,8 +91,8 @@ func main() {
 		}
 		fmt.Println(hex.EncodeToString(key))
 		os.Exit(0)
-	} else if *random != 0 && (*random != 128 && *random != 256 && *random != 512) {
-		log.Fatal("RAND must have 128/256/512-bit.")
+	} else if *random != 0 && (*random != 64 && *random != 128 && *random != 256 && *random != 512) {
+		log.Fatal("RAND must have 64/128/256/512-bit.")
 	}
 
 	if *encode == "e" || *encode == "enc" || *encode == "encode" {
@@ -434,7 +430,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *mac == true && *bit == false && *old == false {
+	if *mac == "hmac" && *bit == false && *old == false {
 		var keyHex string
 		var prvRaw []byte
 		if *pbkdf == true {
@@ -455,7 +451,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *mac == true && *bit == true && *old == false {
+	if *mac == "hmac" && *bit == true && *old == false {
 		var keyHex string
 		var prvRaw []byte
 		if *pbkdf == true {
@@ -476,7 +472,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *mac == true && *bit == false && *old == true {
+	if *mac == "hmac" && *bit == false && *old == true {
 		var keyHex string
 		var prvRaw []byte
 		if *pbkdf == true {
@@ -503,7 +499,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *ciphmac == true && *block == true && *old == false {
+	if *mac == "cmac" && *block == true && *old == false {
 		var keyHex string
 		var prvRaw []byte
 		if *pbkdf == true && *bit == false {
@@ -526,7 +522,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *ciphmac == true && *block == false && *old == false {
+	if *mac == "cmac" && *block == false && *old == false {
 		var keyHex string
 		var prvRaw []byte
 		if *pbkdf == true && *bit == false {
@@ -549,7 +545,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *ciphmac == true && *block == false && *old == true {
+	if *mac == "cmac" && *block == false && *old == true {
 		var keyHex string
 		var prvRaw []byte
 		if *pbkdf == true {
@@ -718,7 +714,7 @@ func main() {
 	}
 
 	var err error
-	if *derive == true && *old == false && (*paramset != "XA" && *paramset != "XB") {
+	if *pkey == "derive" && *old == false && (*paramset != "XA" && *paramset != "XB") {
 
 		var curve *gost3410.Curve
 		if *bit == false && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "D") {
@@ -777,7 +773,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *derive == true && *old == true {
+	if *pkey == "derive" && *old == true {
 
 		var curve *gost3410.Curve
 		if *paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB" {
@@ -829,7 +825,7 @@ func main() {
 		fmt.Println("Shared=", hex.EncodeToString(shared)[0:16])
 	}
 
-	if *generate && *old == false {
+	if (*pkey == "generate" || *pkey == "gen") && *old == false {
 
 		var prvRaw []byte
 		var pubRaw []byte
@@ -915,7 +911,7 @@ func main() {
 		}
 	}
 
-	if *generate && *old == true && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
+	if (*pkey == "generate" || *pkey == "gen") && *old == true && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
 		var curve *gost3410.Curve
 		if *paramset == "A" {
 			curve = gost3410.CurveIdGostR34102001CryptoProAParamSet()
@@ -967,7 +963,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *sign == true || *verify == true {
+	if *pkey == "sign" || *pkey == "verify" {
 
 		buf := bytes.NewBuffer(nil)
 		scanner := os.Stdin
@@ -985,7 +981,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		if *sign == true && *bit == false && *old == false && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "D") {
+		if *pkey == "sign" && *bit == false && *old == false && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "D") {
 
 			data := []byte(hash)
 			hasher := gost34112012256.New()
@@ -1024,7 +1020,7 @@ func main() {
 			os.Exit(0)
 		}
 
-		if *verify == true && *bit == false && *old == false && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "D") {
+		if *pkey == "verify" && *bit == false && *old == false && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "D") {
 			data := []byte(hash)
 			hasher := gost34112012256.New()
 			_, err := hasher.Write(data)
@@ -1064,7 +1060,7 @@ func main() {
 			os.Exit(0)
 		}
 
-		if *sign == true && *bit == true && *old == false && (*paramset == "A" || *paramset == "B" || *paramset == "C") {
+		if *pkey == "sign" && *bit == true && *old == false && (*paramset == "A" || *paramset == "B" || *paramset == "C") {
 			data := []byte(hash)
 			hasher := gost34112012512.New()
 			_, err := hasher.Write(data)
@@ -1100,7 +1096,7 @@ func main() {
 			os.Exit(0)
 		}
 
-		if *verify == true && *bit == true && *old == false && (*paramset == "A" || *paramset == "B" || *paramset == "C") {
+		if *pkey == "verify" && *bit == true && *old == false && (*paramset == "A" || *paramset == "B" || *paramset == "C") {
 			data := []byte(hash)
 			hasher := gost34112012512.New()
 			_, err := hasher.Write(data)
@@ -1137,7 +1133,7 @@ func main() {
 			fmt.Println("Verify correct.")
 		}
 
-		if *sign == true && *old == true && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
+		if *pkey == "sign" && *old == true && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
 			data := []byte(hash)
 			hasher := gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
 			_, err := hasher.Write(data)
@@ -1177,7 +1173,7 @@ func main() {
 			os.Exit(0)
 		}
 
-		if *verify == true && *old == true && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
+		if *pkey == "verify" && *old == true && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
 			data := []byte(hash)
 			hasher := gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
 			_, err := hasher.Write(data)
@@ -1234,47 +1230,13 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *pbkdf == true && *old == false && *bit == true && *block == false {
-		prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012512.New)
-
-		fmt.Println(hex.EncodeToString(prvRaw))
-		os.Exit(0)
-	}
-
-	if *pbkdf == true && *old == false && *bit == true && *block == true {
-		prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 16, gost34112012512.New)
-
-		fmt.Println(hex.EncodeToString(prvRaw))
-		os.Exit(0)
-	}
-
-	if *pbkdf == true && *old == true && *bit == false && *block == false {
-		f := func() hash.Hash {
-			return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
-		}
-		prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, f)
-
-		fmt.Println(hex.EncodeToString(prvRaw))
-		os.Exit(0)
-	}
-
-	if *pbkdf == true && *old == true && *bit == false && *block == true {
-		f := func() hash.Hash {
-			return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
-		}
-		prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 16, f)
-
-		fmt.Println(hex.EncodeToString(prvRaw))
-		os.Exit(0)
-	}
-
-	if *kdf {
+	if *kdf > 0 {
 		keyRaw, err := Hkdf([]byte(*key), []byte(*salt), []byte(*info))
 		if err != nil {
 			log.Fatal(err)
 		}
 		keySlice := string(keyRaw[:])
-		fmt.Println(hex.EncodeToString([]byte(keySlice)[:32]))
+		fmt.Println(hex.EncodeToString([]byte(keySlice)[:*kdf/8]))
 		os.Exit(0)
 	}
 
