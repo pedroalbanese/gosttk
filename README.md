@@ -157,10 +157,10 @@ echo $?
 ./gosttk -crypt dec -old -key $shared < ciphertext.ext > plaintext.ext
 </pre>
 #### CMAC-Kuznechik (cipher-based message authentication code):
-<pre>./gosttk -cmac -128 -key $128bitkey < file.ext
+<pre>./gosttk -mac cmac -128 -key $128bitkey < file.ext
 </pre>
 #### CMAC-Magma (cipher-based message authentication code):
-<pre>./gosttk -cmac [-old] -key $128bitkey < file.ext
+<pre>./gosttk -mac cmac [-old] -key $128bitkey < file.ext
 </pre>
 #### GOST94-CryptoPro hashsum (list):
 <pre>./gosttk -digest "*.*" -old [-recursive]
@@ -169,13 +169,13 @@ echo $?
 <pre>./gosttk -digest - -old < file.ext
 </pre>
 #### HMAC-GOST94-CryptoPro (hash-based message authentication code):
-<pre>./gosttk -hmac -old -key $256bitkey < file.ext
+<pre>./gosttk -mac hmac -old -key $256bitkey < file.ext
 </pre>
 #### Streebog256/512 hashsum:
 <pre>./gosttk -digest - [-512] < file.ext
 </pre>
 #### HMAC-Streebog256/512:
-<pre>./gosttk -hmac [-512] -key $256bitkey < file.ext
+<pre>./gosttk -mac hmac [-512] -key $256bitkey < file.ext
 </pre>
 #### HKDF (hash-based key derivation function 2):
 <pre>./gosttk -hkdf [-512|-old] -key "pass" -info "AAD" -salt "salt"
