@@ -54,7 +54,7 @@ var (
 	public    = flag.String("pub", "", "Remote's side public key.")
 	random    = flag.Int("rand", 0, "Generate random cryptographic key with a given output bit length.")
 	recursive = flag.Bool("recursive", false, "Process directories recursively. (for DIGEST command only)")
-	salt      = flag.String("salt", "", "Salt. (for PBKDF2 only)")
+	salt      = flag.String("salt", "", "Salt. (for PBKDF2 and HKDF commands)")
 	sig       = flag.String("signature", "", "Input signature. (verification only)")
 	target    = flag.String("digest", "", "File/Wildcard to generate hashsum list. ('-' for STDIN)")
 	vector    = flag.String("iv", "", "Initialization vector. (for non-AEAD symmetric encryption)")
