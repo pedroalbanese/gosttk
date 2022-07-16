@@ -1216,15 +1216,19 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *pbkdf == true && *old == false && *bit == false && *block == false {
-		prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, gost34112012256.New)
-
-		fmt.Println(hex.EncodeToString(prvRaw))
-		os.Exit(0)
-	}
-
-	if *pbkdf == true && *old == false && *bit == false && *block == true {
-		prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 16, gost34112012256.New)
+	if *pbkdf == true {
+		var h func() hash.Hash
+		if *old {
+			g := func() hash.Hash {
+				return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
+			}
+			h = g
+		} else if *old == false && *bit == false {
+			h = gost34112012256.New
+		} else if *bit == true {
+			h = gost34112012512.New
+		}
+		prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, h)
 
 		fmt.Println(hex.EncodeToString(prvRaw))
 		os.Exit(0)
@@ -1266,7 +1270,12 @@ func main() {
 
 func Hkdf(master, salt, info []byte) ([128]byte, error) {
 	var h func() hash.Hash
-	if *bit == false {
+	if *old {
+		g := func() hash.Hash {
+			return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
+		}
+		h = g
+	} else if *old == false && *bit == false {
 		h = gost34112012256.New
 	} else if *bit == true {
 		h = gost34112012512.New
