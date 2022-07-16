@@ -58,7 +58,7 @@ Multi purpose cross-platform cryptography tool for symmetric encryption, cipher-
    - Recursive Hash Digest + Check 
    - CMAC (Cipher-based message authentication code)
    - HMAC (Hash-based message authentication code)
-   - HKDF (Hash-based key derivation function)
+   - HKDF (HMAC-based key derivation function)
    - PBKDF2 (Password-based key derivation function 2)
    - TLS 1.2 (Transport Layer Security)
 
