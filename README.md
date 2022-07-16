@@ -117,7 +117,7 @@ Multi purpose cross-platform cryptography tool for symmetric encryption, cipher-
  -pub string
        Remote's side public key.
  -rand int
-       Generate random cryptographic with a given output bit length.
+       Generate random cryptographic key with a given output bit length.
  -recursive
        Process directories recursively. (for DIGEST command only)
  -salt string
