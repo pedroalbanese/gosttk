@@ -52,7 +52,7 @@ var (
 	pbkdf     = flag.Bool("pbkdf2", false, "Password-based key derivation function 2.")
 	pkey      = flag.String("pkey", "", "Generate keypair, Derive shared secret, Sign and Verify.")
 	public    = flag.String("pub", "", "Remote's side public key.")
-	random    = flag.Int("rand", 0, "Generate random cryptographic with a given output bit length.")
+	random    = flag.Int("rand", 0, "Generate random cryptographic key with a given output bit length.")
 	recursive = flag.Bool("recursive", false, "Process directories recursively. (for DIGEST command only)")
 	salt      = flag.String("salt", "", "Salt. (for PBKDF2 only)")
 	sig       = flag.String("signature", "", "Input signature. (verification only)")
