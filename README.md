@@ -52,7 +52,7 @@ Multi purpose cross-platform cryptography tool for symmetric encryption, cipher-
 ## Features
 
 - Cryptographic Functions:
-   - Symmetric Encryption/Decryption
+   - Symmetric Encryption + AEAD mode
    - Digital Signature (ECDSA equivalent)
    - VKO (выработка ключа общего) shared key negociation (ECDH equivalent)
    - Recursive Hash Digest + Check 
@@ -65,7 +65,7 @@ Multi purpose cross-platform cryptography tool for symmetric encryption, cipher-
 - Non-Cryptographic Functions:
    - GOST R 50739-95 data sanitization method
    - Bin to Hex/Hex to Bin string conversion
-   - Random Art Public key Fingerprint (ssh-keygen equivalent)
+   - Random Art (Public key Fingerprint)
 
 #### TODO:
   - [ ] TLS 1.3
@@ -134,7 +134,7 @@ Multi purpose cross-platform cryptography tool for symmetric encryption, cipher-
 <pre>./gosttk -pkey generate -old [-paramset A|B|C|XA|XB]
 </pre>
 #### Asymmetric GOST R 34.10-2012 256/512-bit keypair generation (default):
-<pre>./gosttk -pkey generate [-paramset A|B|C|D] [-512 -paramset A|B|C]
+<pre>./gosttk -pkey gen [-paramset A|B|C|D] [-512 -paramset A|B|C]
 </pre>
 #### Signature (ECDSA equivalent):
 <pre>./gosttk -pkey sign [-512|-old] -key $prvkey < file.ext > sign.txt
