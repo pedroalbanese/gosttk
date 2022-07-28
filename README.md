@@ -52,7 +52,7 @@ Multi purpose cross-platform cryptography tool for symmetric encryption, cipher-
 ## Features
 
 - Cryptographic Functions:
-   - Symmetric Encryption + AEAD mode
+   - Symmetric Encryption + AEAD Mode
    - Digital Signature (ECDSA equivalent)
    - VKO (выработка ключа общего) shared key negociation (ECDH equivalent)
    - Recursive Hash Digest + Check 
@@ -178,8 +178,8 @@ echo $?
 #### HMAC-Streebog256/512:
 <pre>./gosttk -mac hmac [-512] -key $256bitkey < file.ext
 </pre>
-#### HKDF (HMAC-based key derivation function):
-<pre>./gosttk -hkdf 256 [-512|-old] -key "pass" -info "AAD" -salt "salt"
+#### HKDF (HMAC-based key derivation function 256-bit output):
+<pre>./gosttk -hkdf 256 [-512|-old] -key "IKM" -info "AD" -salt "salt"
 </pre>
 #### PBKDF2 (password-based key derivation function 2):
 <pre>./gosttk -pbkdf2 [-512|-old] -key "pass" -iter 10000 -salt "salt"
@@ -192,7 +192,7 @@ PBKDF2 function can be combined with the CRYPT, HMAC commands:
 </pre>
 
 #### Shred (GOST R 50739-95 data sanitization method, 25 iterations):
-<pre>./gosttk -shred keypair.ini -iter 25
+<pre>./gosttk -shred "keypair.ini" -iter 25
 </pre>
 
 #### Bin to Hex/Hex to Bin:
