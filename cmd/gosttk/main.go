@@ -19,6 +19,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"unsafe"
 
 	"github.com/pedroalbanese/cmac"
 	"github.com/pedroalbanese/gogost/gost28147"
@@ -43,7 +44,7 @@ var (
 	encode    = flag.String("hex", "", "Encode binary string to hex format and vice-versa.")
 	info      = flag.String("info", "", "Associated data, additional info. (for HKDF and AEAD encryption)")
 	iter      = flag.Int("iter", 1, "Iterations. (for SHRED and PBKDF2 only)")
-	kdf       = flag.Int("hkdf", 0, "Hash-based key derivation function with a given output bit length.")
+	kdf       = flag.Int("hkdf", 0, "HMAC-based key derivation function with a given output bit length.")
 	key       = flag.String("key", "", "Private/Public key, password or HMAC key, depending on operation.")
 	mac       = flag.String("mac", "", "Compute hash-based/cipher-based message authentication code.")
 	mode      = flag.String("mode", "MGM", "Mode of operation: MGM, CTR or OFB.")
@@ -75,7 +76,7 @@ func main() {
 		return
 	}
 
-	if *paramset != "" && (*paramset != "A" && *paramset != "B" && *paramset != "C" && *paramset != "D" && *paramset != "XA" && *paramset != "XB") {
+	if *paramset != "" && (strings.ToUpper(*paramset) != "A" && strings.ToUpper(*paramset) != "B" && strings.ToUpper(*paramset) != "C" && strings.ToUpper(*paramset) != "D" && strings.ToUpper(*paramset) != "XA" && strings.ToUpper(*paramset) != "XB" && strings.ToUpper(*paramset) != "EAC" && strings.ToUpper(*paramset) != "Z") {
 		fmt.Fprintln(os.Stderr, "Usage of", os.Args[0]+":")
 		flag.PrintDefaults()
 		os.Exit(1)
@@ -134,7 +135,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *crypt == "enc" && *mode == "MGM" {
+	if *crypt == "enc" && strings.ToUpper(*mode) == "MGM" {
 		var keyHex string
 		var keyRaw []byte
 		if *pbkdf == true && *bit == false {
@@ -172,8 +173,25 @@ func main() {
 		var c cipher.Block
 		var n int
 		if *block == false && *old == true {
-			c = gost28147.NewCipher(key, &gost28147.SboxIdGostR341194CryptoProParamSet)
-			n = 8
+			if strings.ToUpper(*paramset) == "A" {
+				c = gost28147.NewCipher(key, &gost28147.SboxIdGost2814789CryptoProAParamSet)
+				n = 8
+			} else if strings.ToUpper(*paramset) == "B" {
+				c = gost28147.NewCipher(key, &gost28147.SboxIdGost2814789CryptoProBParamSet)
+				n = 8
+			} else if strings.ToUpper(*paramset) == "C" {
+				c = gost28147.NewCipher(key, &gost28147.SboxIdGost2814789CryptoProCParamSet)
+				n = 8
+			} else if strings.ToUpper(*paramset) == "D" {
+				c = gost28147.NewCipher(key, &gost28147.SboxIdGost2814789CryptoProDParamSet)
+				n = 8
+			} else if strings.ToUpper(*paramset) == "EAC" {
+				c = gost28147.NewCipher(key, &gost28147.SboxEACParamSet)
+				n = 8
+			} else if strings.ToUpper(*paramset) == "Z" {
+				c = gost28147.NewCipher(key, &gost28147.SboxIdtc26gost28147paramZ)
+				n = 8
+			}
 		} else if *block == true && *old == false {
 			c = gost3412128.NewCipher(key)
 			n = 16
@@ -190,7 +208,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *crypt == "dec" && *mode == "MGM" {
+	if *crypt == "dec" && strings.ToUpper(*mode) == "MGM" {
 		var keyHex string
 		var keyRaw []byte
 		if *pbkdf == true && *bit == false {
@@ -223,8 +241,25 @@ func main() {
 		var c cipher.Block
 		var n int
 		if *block == false && *old == true {
-			c = gost28147.NewCipher(key, &gost28147.SboxIdGostR341194CryptoProParamSet)
-			n = 8
+			if strings.ToUpper(*paramset) == "A" {
+				c = gost28147.NewCipher(key, &gost28147.SboxIdGost2814789CryptoProAParamSet)
+				n = 8
+			} else if strings.ToUpper(*paramset) == "B" {
+				c = gost28147.NewCipher(key, &gost28147.SboxIdGost2814789CryptoProBParamSet)
+				n = 8
+			} else if strings.ToUpper(*paramset) == "C" {
+				c = gost28147.NewCipher(key, &gost28147.SboxIdGost2814789CryptoProCParamSet)
+				n = 8
+			} else if strings.ToUpper(*paramset) == "D" {
+				c = gost28147.NewCipher(key, &gost28147.SboxIdGost2814789CryptoProDParamSet)
+				n = 8
+			} else if strings.ToUpper(*paramset) == "EAC" {
+				c = gost28147.NewCipher(key, &gost28147.SboxEACParamSet)
+				n = 8
+			} else if strings.ToUpper(*paramset) == "Z" {
+				c = gost28147.NewCipher(key, &gost28147.SboxIdtc26gost28147paramZ)
+				n = 8
+			}
 		} else if *block == true && *old == false {
 			c = gost3412128.NewCipher(key)
 			n = 16
@@ -244,7 +279,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if (*crypt == "enc" || *crypt == "dec") && *block == true && *old == false && (*mode == "OFB" || *mode == "CTR") {
+	if (*crypt == "enc" || *crypt == "dec") && *block == true && *old == false && (strings.ToUpper(*mode) == "OFB" || strings.ToUpper(*mode) == "CTR") {
 		var keyHex string
 		var keyRaw []byte
 		if *pbkdf == true && *bit == false {
@@ -283,9 +318,9 @@ func main() {
 		}
 		ciph := gost3412128.NewCipher(key)
 		var stream cipher.Stream
-		if *mode == "CTR" || *mode == "ctr" {
+		if strings.ToUpper(*mode) == "CTR" {
 			stream = cipher.NewCTR(ciph, iv)
-		} else if *mode == "OFB" || *mode == "ofb" {
+		} else if strings.ToUpper(*mode) == "OFB" {
 			stream = cipher.NewOFB(ciph, iv)
 		}
 		buf := make([]byte, 128*1<<10)
@@ -306,7 +341,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if (*crypt == "enc" || *crypt == "dec") && *block == false && *old == false && (*mode == "OFB" || *mode == "CTR") {
+	if (*crypt == "enc" || *crypt == "dec") && *block == false && *old == false && (strings.ToUpper(*mode) == "OFB" || strings.ToUpper(*mode) == "CTR") {
 		var keyHex string
 		var keyRaw []byte
 		if *pbkdf == true && *bit == false {
@@ -345,9 +380,9 @@ func main() {
 			fmt.Fprintf(os.Stderr, "IV= %x\n", iv)
 		}
 		var stream cipher.Stream
-		if *mode == "CTR" || *mode == "ctr" {
+		if strings.ToUpper(*mode) == "CTR" {
 			stream = cipher.NewCTR(ciph, iv)
-		} else if *mode == "OFB" || *mode == "ofb" {
+		} else if strings.ToUpper(*mode) == "OFB" {
 			stream = cipher.NewOFB(ciph, iv)
 		}
 		buf := make([]byte, 64*1<<10)
@@ -368,7 +403,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if (*crypt == "enc" || *crypt == "dec") && *block == false && *old == true && (*mode == "OFB" || *mode == "CTR") {
+	if (*crypt == "enc" || *crypt == "dec") && *block == false && *old == true && (strings.ToUpper(*mode) == "OFB" || strings.ToUpper(*mode) == "CTR") {
 		var keyHex string
 		var keyRaw []byte
 		if *pbkdf == true {
@@ -398,7 +433,20 @@ func main() {
 				log.Fatal(err)
 			}
 		}
-		ciph := gost28147.NewCipher(key, &gost28147.SboxIdGostR341194CryptoProParamSet)
+		var ciph *gost28147.Cipher
+		if strings.ToUpper(*paramset) == "A" {
+			ciph = gost28147.NewCipher(key, &gost28147.SboxIdGost2814789CryptoProAParamSet)
+		} else if strings.ToUpper(*paramset) == "B" {
+			ciph = gost28147.NewCipher(key, &gost28147.SboxIdGost2814789CryptoProBParamSet)
+		} else if strings.ToUpper(*paramset) == "C" {
+			ciph = gost28147.NewCipher(key, &gost28147.SboxIdGost2814789CryptoProCParamSet)
+		} else if strings.ToUpper(*paramset) == "D" {
+			ciph = gost28147.NewCipher(key, &gost28147.SboxIdGost2814789CryptoProDParamSet)
+		} else if strings.ToUpper(*paramset) == "EAC" {
+			ciph = gost28147.NewCipher(key, &gost28147.SboxEACParamSet)
+		} else if strings.ToUpper(*paramset) == "Z" {
+			ciph = gost28147.NewCipher(key, &gost28147.SboxIdtc26gost28147paramZ)
+		}
 		var iv []byte
 		if *vector != "" {
 			iv, _ = hex.DecodeString(*vector)
@@ -407,9 +455,9 @@ func main() {
 			fmt.Fprintf(os.Stderr, "IV= %x\n", iv)
 		}
 		var stream cipher.Stream
-		if *mode == "CTR" || *mode == "ctr" {
+		if strings.ToUpper(*mode) == "CTR" {
 			stream = cipher.NewCTR(ciph, iv)
-		} else if *mode == "OFB" || *mode == "ofb" {
+		} else if strings.ToUpper(*mode) == "OFB" {
 			stream = cipher.NewOFB(ciph, iv)
 		}
 		buf := make([]byte, 64*1<<10)
@@ -447,6 +495,19 @@ func main() {
 		if _, err = io.Copy(h, os.Stdin); err != nil {
 			log.Fatal(err)
 		}
+		var verify bool
+		if *sig != "" {
+			mac := hex.EncodeToString(h.Sum(nil))
+			if mac != *sig {
+				verify = false
+				fmt.Println(verify)
+				os.Exit(1)
+			} else {
+				verify = true
+				fmt.Println(verify)
+				os.Exit(0)
+			}
+		}
 		fmt.Println(hex.EncodeToString(h.Sum(nil)))
 		os.Exit(0)
 	}
@@ -467,6 +528,19 @@ func main() {
 		h := hmac.New(gost34112012512.New, key)
 		if _, err = io.Copy(h, os.Stdin); err != nil {
 			log.Fatal(err)
+		}
+		var verify bool
+		if *sig != "" {
+			mac := hex.EncodeToString(h.Sum(nil))
+			if mac != *sig {
+				verify = false
+				fmt.Println(verify)
+				os.Exit(1)
+			} else {
+				verify = true
+				fmt.Println(verify)
+				os.Exit(0)
+			}
 		}
 		fmt.Println(hex.EncodeToString(h.Sum(nil)))
 		os.Exit(0)
@@ -495,6 +569,19 @@ func main() {
 		if _, err = io.Copy(h, os.Stdin); err != nil {
 			log.Fatal(err)
 		}
+		var verify bool
+		if *sig != "" {
+			mac := hex.EncodeToString(h.Sum(nil))
+			if mac != *sig {
+				verify = false
+				fmt.Println(verify)
+				os.Exit(1)
+			} else {
+				verify = true
+				fmt.Println(verify)
+				os.Exit(0)
+			}
+		}
 		fmt.Println(hex.EncodeToString(h.Sum(nil)))
 		os.Exit(0)
 	}
@@ -516,8 +603,21 @@ func main() {
 			}
 		}
 		c := gost3412128.NewCipher([]byte(keyHex))
-		h, _ := cmac.New(c)
+		h, _ := cmac.NewWithTagSize(c, 16)
 		io.Copy(h, os.Stdin)
+		var verify bool
+		if *sig != "" {
+			mac := hex.EncodeToString(h.Sum(nil))
+			if mac != *sig {
+				verify = false
+				fmt.Println(verify)
+				os.Exit(1)
+			} else {
+				verify = true
+				fmt.Println(verify)
+				os.Exit(0)
+			}
+		}
 		fmt.Println(hex.EncodeToString(h.Sum(nil)))
 		os.Exit(0)
 	}
@@ -541,6 +641,19 @@ func main() {
 		c := gost341264.NewCipher([]byte(keyHex))
 		h, _ := cmac.New(c)
 		io.Copy(h, os.Stdin)
+		var verify bool
+		if *sig != "" {
+			mac := hex.EncodeToString(h.Sum(nil))
+			if mac != *sig {
+				verify = false
+				fmt.Println(verify)
+				os.Exit(1)
+			} else {
+				verify = true
+				fmt.Println(verify)
+				os.Exit(0)
+			}
+		}
 		fmt.Println(hex.EncodeToString(h.Sum(nil)))
 		os.Exit(0)
 	}
@@ -548,7 +661,7 @@ func main() {
 	if *mac == "cmac" && *block == false && *old == true {
 		var keyHex string
 		var keyRaw []byte
-		if *pbkdf == true {
+		if *pbkdf == true && *old == true {
 			f := func() hash.Hash {
 				return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
 			}
@@ -561,10 +674,110 @@ func main() {
 				os.Exit(1)
 			}
 		}
-		c := gost28147.NewCipher([]byte(keyHex), &gost28147.SboxIdGostR341194CryptoProParamSet)
+		var c *gost28147.Cipher
+		if strings.ToUpper(*paramset) == "A" {
+			c = gost28147.NewCipher([]byte(keyHex), &gost28147.SboxIdGost2814789CryptoProAParamSet)
+		} else if strings.ToUpper(*paramset) == "B" {
+			c = gost28147.NewCipher([]byte(keyHex), &gost28147.SboxIdGost2814789CryptoProBParamSet)
+		} else if strings.ToUpper(*paramset) == "C" {
+			c = gost28147.NewCipher([]byte(keyHex), &gost28147.SboxIdGost2814789CryptoProCParamSet)
+		} else if strings.ToUpper(*paramset) == "D" {
+			c = gost28147.NewCipher([]byte(keyHex), &gost28147.SboxIdGost2814789CryptoProDParamSet)
+		} else if strings.ToUpper(*paramset) == "EAC" {
+			c = gost28147.NewCipher([]byte(keyHex), &gost28147.SboxEACParamSet)
+		} else if strings.ToUpper(*paramset) == "Z" {
+			c = gost28147.NewCipher([]byte(keyHex), &gost28147.SboxIdtc26gost28147paramZ)
+		}
 		var iv [8]byte
 		h, _ := c.NewMAC(8, iv[:])
 		io.Copy(h, os.Stdin)
+		var verify bool
+		if *sig != "" {
+			mac := hex.EncodeToString(h.Sum(nil))
+			if mac != *sig {
+				verify = false
+				fmt.Println(verify)
+				os.Exit(1)
+			} else {
+				verify = true
+				fmt.Println(verify)
+				os.Exit(0)
+			}
+		}
+		fmt.Println(hex.EncodeToString(h.Sum(nil)))
+		os.Exit(0)
+	}
+
+	if *mac == "gost" {
+		var keyHex string
+		var keyRaw []byte
+		if *pbkdf == true && *bit == false {
+			keyRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 16, gost34112012256.New)
+			keyHex = hex.EncodeToString(keyRaw)
+		} else if *pbkdf == true && *bit == true {
+			keyRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 16, gost34112012512.New)
+			keyHex = hex.EncodeToString(keyRaw)
+		} else if *pbkdf == true && *old == true {
+			f := func() hash.Hash {
+				return gost341194.New(&gost28147.SboxIdGostR341194CryptoProParamSet)
+			}
+			keyRaw = pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 16, f)
+			keyHex = hex.EncodeToString(keyRaw)
+		} else if *pbkdf == false && *key != "" {
+			keyHex = *key
+			if len(keyHex) != 256/8 {
+				fmt.Println("Secret key must have 128-bit. (try \"-rand 128\")")
+				os.Exit(1)
+			}
+		} else if *pbkdf == false && *key == "" {
+			keyRaw, _ = hex.DecodeString("00000000000000000000000000000000")
+			keyHex = hex.EncodeToString(keyRaw)
+			fmt.Fprintf(os.Stderr, "Key= %s\n", keyHex)
+		} else {
+			keyHex = *key
+		}
+		var iv [8]byte
+		if *vector == "" {
+			fmt.Fprintf(os.Stderr, "IV= %x\n", iv)
+		} else {
+			raw, err := hex.DecodeString(*vector)
+			if err != nil {
+				log.Fatal(err)
+			}
+			iv = *byte8(raw)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		var c *gost28147.Cipher
+		if strings.ToUpper(*paramset) == "A" {
+			c = gost28147.NewCipher([]byte(keyHex), &gost28147.SboxIdGost2814789CryptoProAParamSet)
+		} else if strings.ToUpper(*paramset) == "B" {
+			c = gost28147.NewCipher([]byte(keyHex), &gost28147.SboxIdGost2814789CryptoProBParamSet)
+		} else if strings.ToUpper(*paramset) == "C" {
+			c = gost28147.NewCipher([]byte(keyHex), &gost28147.SboxIdGost2814789CryptoProCParamSet)
+		} else if strings.ToUpper(*paramset) == "D" {
+			c = gost28147.NewCipher([]byte(keyHex), &gost28147.SboxIdGost2814789CryptoProDParamSet)
+		} else if strings.ToUpper(*paramset) == "EAC" {
+			c = gost28147.NewCipher([]byte(keyHex), &gost28147.SboxEACParamSet)
+		} else if strings.ToUpper(*paramset) == "Z" {
+			c = gost28147.NewCipher([]byte(keyHex), &gost28147.SboxIdtc26gost28147paramZ)
+		}
+		h, _ := c.NewMAC(8, iv[:])
+		io.Copy(h, os.Stdin)
+		var verify bool
+		if *sig != "" {
+			mac := hex.EncodeToString(h.Sum(nil))
+			if mac != *sig {
+				verify = false
+				fmt.Println(verify)
+				os.Exit(1)
+			} else {
+				verify = true
+				fmt.Println(verify)
+				os.Exit(0)
+			}
+		}
 		fmt.Println(hex.EncodeToString(h.Sum(nil)))
 		os.Exit(0)
 	}
@@ -718,21 +931,21 @@ func main() {
 
 		var curve *gost3410.Curve
 		if *bit == false && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "D") {
-			if *paramset == "A" {
+			if strings.ToUpper(*paramset) == "A" {
 				curve = gost3410.CurveIdtc26gost34102012256paramSetA()
-			} else if *bit == false && *paramset == "B" {
+			} else if *bit == false && strings.ToUpper(*paramset) == "B" {
 				curve = gost3410.CurveIdtc26gost34102012256paramSetB()
-			} else if *bit == false && *paramset == "C" {
+			} else if *bit == false && strings.ToUpper(*paramset) == "C" {
 				curve = gost3410.CurveIdtc26gost34102012256paramSetC()
-			} else if *bit == false && *paramset == "D" {
+			} else if *bit == false && strings.ToUpper(*paramset) == "D" {
 				curve = gost3410.CurveIdtc26gost34102012256paramSetD()
 			}
 		} else if *bit == true && (*paramset == "A" || *paramset == "B" || *paramset == "C") {
-			if *paramset == "A" {
+			if strings.ToUpper(*paramset) == "A" {
 				curve = gost3410.CurveIdtc26gost341012512paramSetA()
-			} else if *paramset == "B" {
+			} else if strings.ToUpper(*paramset) == "B" {
 				curve = gost3410.CurveIdtc26gost341012512paramSetB()
-			} else if *paramset == "C" {
+			} else if strings.ToUpper(*paramset) == "C" {
 				curve = gost3410.CurveIdtc26gost34102012512paramSetC()
 			}
 		}
@@ -777,15 +990,15 @@ func main() {
 
 		var curve *gost3410.Curve
 		if *paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB" {
-			if *paramset == "A" {
+			if strings.ToUpper(*paramset) == "A" {
 				curve = gost3410.CurveIdGostR34102001CryptoProAParamSet()
-			} else if *paramset == "B" {
+			} else if strings.ToUpper(*paramset) == "B" {
 				curve = gost3410.CurveIdGostR34102001CryptoProBParamSet()
-			} else if *paramset == "C" {
+			} else if strings.ToUpper(*paramset) == "C" {
 				curve = gost3410.CurveIdGostR34102001CryptoProCParamSet()
-			} else if *paramset == "XA" {
+			} else if strings.ToUpper(*paramset) == "XA" {
 				curve = gost3410.CurveIdGostR34102001CryptoProXchAParamSet()
-			} else if *paramset == "XB" {
+			} else if strings.ToUpper(*paramset) == "XB" {
 				curve = gost3410.CurveIdGostR34102001CryptoProXchBParamSet()
 			}
 		}
@@ -834,13 +1047,13 @@ func main() {
 
 		if *bit == false && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "D") {
 			var curve *gost3410.Curve
-			if *paramset == "A" {
+			if strings.ToUpper(*paramset) == "A" {
 				curve = gost3410.CurveIdtc26gost34102012256paramSetA()
-			} else if *paramset == "B" {
+			} else if strings.ToUpper(*paramset) == "B" {
 				curve = gost3410.CurveIdtc26gost34102012256paramSetB()
-			} else if *paramset == "C" {
+			} else if strings.ToUpper(*paramset) == "C" {
 				curve = gost3410.CurveIdtc26gost34102012256paramSetC()
-			} else if *paramset == "D" {
+			} else if strings.ToUpper(*paramset) == "D" {
 				curve = gost3410.CurveIdtc26gost34102012256paramSetD()
 			}
 
@@ -874,11 +1087,11 @@ func main() {
 
 		if *bit == true && (*paramset == "A" || *paramset == "B" || *paramset == "C") {
 			var curve *gost3410.Curve
-			if *paramset == "A" {
+			if strings.ToUpper(*paramset) == "A" {
 				curve = gost3410.CurveIdtc26gost341012512paramSetA()
-			} else if *paramset == "B" {
+			} else if strings.ToUpper(*paramset) == "B" {
 				curve = gost3410.CurveIdtc26gost341012512paramSetB()
-			} else if *paramset == "C" {
+			} else if strings.ToUpper(*paramset) == "C" {
 				curve = gost3410.CurveIdtc26gost34102012512paramSetC()
 			}
 
@@ -913,15 +1126,15 @@ func main() {
 
 	if (*pkey == "generate" || *pkey == "gen") && *old == true && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "XA" || *paramset == "XB") {
 		var curve *gost3410.Curve
-		if *paramset == "A" {
+		if strings.ToUpper(*paramset) == "A" {
 			curve = gost3410.CurveIdGostR34102001CryptoProAParamSet()
-		} else if *paramset == "B" {
+		} else if strings.ToUpper(*paramset) == "B" {
 			curve = gost3410.CurveIdGostR34102001CryptoProBParamSet()
-		} else if *paramset == "C" {
+		} else if strings.ToUpper(*paramset) == "C" {
 			curve = gost3410.CurveIdGostR34102001CryptoProCParamSet()
-		} else if *paramset == "XA" {
+		} else if strings.ToUpper(*paramset) == "XA" {
 			curve = gost3410.CurveIdGostR34102001CryptoProXchAParamSet()
-		} else if *paramset == "XB" {
+		} else if strings.ToUpper(*paramset) == "XB" {
 			curve = gost3410.CurveIdGostR34102001CryptoProXchBParamSet()
 		}
 
@@ -991,13 +1204,13 @@ func main() {
 			}
 			dgst := hasher.Sum(nil)
 			var curve *gost3410.Curve
-			if *paramset == "A" {
+			if strings.ToUpper(*paramset) == "A" {
 				curve = gost3410.CurveIdtc26gost34102012256paramSetA()
-			} else if *paramset == "B" {
+			} else if strings.ToUpper(*paramset) == "B" {
 				curve = gost3410.CurveIdtc26gost34102012256paramSetB()
-			} else if *paramset == "C" {
+			} else if strings.ToUpper(*paramset) == "C" {
 				curve = gost3410.CurveIdtc26gost34102012256paramSetC()
-			} else if *paramset == "D" {
+			} else if strings.ToUpper(*paramset) == "D" {
 				curve = gost3410.CurveIdtc26gost34102012256paramSetD()
 			}
 			prvRaw, err = hex.DecodeString(*key)
@@ -1029,13 +1242,13 @@ func main() {
 			}
 			dgst := hasher.Sum(nil)
 			var curve *gost3410.Curve
-			if *paramset == "A" {
+			if strings.ToUpper(*paramset) == "A" {
 				curve = gost3410.CurveIdtc26gost34102012256paramSetA()
-			} else if *paramset == "B" {
+			} else if strings.ToUpper(*paramset) == "B" {
 				curve = gost3410.CurveIdtc26gost34102012256paramSetB()
-			} else if *paramset == "C" {
+			} else if strings.ToUpper(*paramset) == "C" {
 				curve = gost3410.CurveIdtc26gost34102012256paramSetC()
-			} else if *paramset == "D" {
+			} else if strings.ToUpper(*paramset) == "D" {
 				curve = gost3410.CurveIdtc26gost34102012256paramSetD()
 			}
 			pubRaw, err = hex.DecodeString(*key)
@@ -1069,11 +1282,11 @@ func main() {
 			}
 			dgst := hasher.Sum(nil)
 			var curve *gost3410.Curve
-			if *paramset == "A" {
+			if strings.ToUpper(*paramset) == "A" {
 				curve = gost3410.CurveIdtc26gost341012512paramSetA()
-			} else if *paramset == "B" {
+			} else if strings.ToUpper(*paramset) == "B" {
 				curve = gost3410.CurveIdtc26gost341012512paramSetB()
-			} else if *paramset == "C" {
+			} else if strings.ToUpper(*paramset) == "C" {
 				curve = gost3410.CurveIdtc26gost34102012512paramSetC()
 			}
 			prvRaw, err = hex.DecodeString(*key)
@@ -1105,11 +1318,11 @@ func main() {
 			}
 			dgst := hasher.Sum(nil)
 			var curve *gost3410.Curve
-			if *paramset == "A" {
+			if strings.ToUpper(*paramset) == "A" {
 				curve = gost3410.CurveIdtc26gost341012512paramSetA()
-			} else if *paramset == "B" {
+			} else if strings.ToUpper(*paramset) == "B" {
 				curve = gost3410.CurveIdtc26gost341012512paramSetB()
-			} else if *paramset == "C" {
+			} else if strings.ToUpper(*paramset) == "C" {
 				curve = gost3410.CurveIdtc26gost34102012512paramSetC()
 			}
 			pubRaw, err = hex.DecodeString(*key)
@@ -1142,15 +1355,15 @@ func main() {
 			}
 			dgst := hasher.Sum(nil)
 			var curve *gost3410.Curve
-			if *paramset == "A" {
+			if strings.ToUpper(*paramset) == "A" {
 				curve = gost3410.CurveIdGostR34102001CryptoProAParamSet()
-			} else if *paramset == "B" {
+			} else if strings.ToUpper(*paramset) == "B" {
 				curve = gost3410.CurveIdGostR34102001CryptoProBParamSet()
-			} else if *paramset == "C" {
+			} else if strings.ToUpper(*paramset) == "C" {
 				curve = gost3410.CurveIdGostR34102001CryptoProCParamSet()
-			} else if *paramset == "XA" {
+			} else if strings.ToUpper(*paramset) == "XA" {
 				curve = gost3410.CurveIdGostR34102001CryptoProXchAParamSet()
-			} else if *paramset == "XB" {
+			} else if strings.ToUpper(*paramset) == "XB" {
 				curve = gost3410.CurveIdGostR34102001CryptoProXchBParamSet()
 			}
 			prvRaw, err = hex.DecodeString(*key)
@@ -1182,15 +1395,15 @@ func main() {
 			}
 			dgst := hasher.Sum(nil)
 			var curve *gost3410.Curve
-			if *paramset == "A" {
+			if strings.ToUpper(*paramset) == "A" {
 				curve = gost3410.CurveIdGostR34102001CryptoProAParamSet()
-			} else if *paramset == "B" {
+			} else if strings.ToUpper(*paramset) == "B" {
 				curve = gost3410.CurveIdGostR34102001CryptoProBParamSet()
-			} else if *paramset == "C" {
+			} else if strings.ToUpper(*paramset) == "C" {
 				curve = gost3410.CurveIdGostR34102001CryptoProCParamSet()
-			} else if *paramset == "XA" {
+			} else if strings.ToUpper(*paramset) == "XA" {
 				curve = gost3410.CurveIdGostR34102001CryptoProXchAParamSet()
-			} else if *paramset == "XB" {
+			} else if strings.ToUpper(*paramset) == "XB" {
 				curve = gost3410.CurveIdGostR34102001CryptoProXchBParamSet()
 			}
 			pubRaw, err = hex.DecodeString(*key)
@@ -1286,4 +1499,11 @@ func Hkdf(master, salt, info []byte) ([128]byte, error) {
 	var result [128]byte
 	copy(result[:], key)
 	return result, err
+}
+
+func byte8(s []byte) (a *[8]byte) {
+	if len(a) <= len(s) {
+		a = (*[len(a)]byte)(unsafe.Pointer(&s[0]))
+	}
+	return a
 }
