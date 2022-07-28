@@ -6,7 +6,7 @@
 [![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/pedroalbanese/gosttk)](https://golang.org)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/pedroalbanese/gosttk)](https://github.com/pedroalbanese/gosttk/releases)
 
-Multi purpose cross-platform cryptography tool for symmetric encryption, cipher-based message authentication code (CMAC), recursive hash digest, hash-based message authentication code (HMAC), digital signature, shared key agreement (VKO) and PBKDF2 function for embedded systems. 
+Multi-purpose cross-platform cryptography tool for symmetric encryption, cipher-based message authentication code (CMAC), recursive hash digest, hash-based message authentication code (HMAC), digital signature, shared key agreement (VKO) and PBKDF2 function for embedded systems. 
 
 **GOST refers to a set of technical standards maintained by the Euro-Asian Council for Standardization, Metrology and Certification (EASC), a regional standards organization operating under the auspices of the Commonwealth of Independent States (CIS).**
 
@@ -196,11 +196,11 @@ PBKDF2 function can be combined with the CRYPT, HMAC commands:
 </pre>
 
 #### Bin to Hex/Hex to Bin:
-<pre>echo somestring|./gosttk -hex enc
-echo hexstring|./gosttk -hex dec
+<pre>./gosttk -hex enc < File.ext > File.hex
+./gosttk -hex dec < File.hex > File.ext
 </pre>
 
-#### TLS Layer TCP/IP Dump/Send:
+#### TLS Layer (TCP/IP):
 <pre>./gostls -tcp ip > PubIP.txt
 ./gostls -tcp dump [-pub "8081"] > Pubkey.txt
 ./gostls -tcp send [-pub "127.0.0.1:8081"] < Pubkey.txt
@@ -217,5 +217,5 @@ echo hexstring|./gosttk -hex dec
 
 This project is licensed under the ISC License.
 
-##### Military Grade Reliability. Copyright (c) 2020-2022 ALBANESE Research Lab.
+##### Military-Grade Reliability. Copyright (c) 2020-2022 ALBANESE Research Lab.
 
