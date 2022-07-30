@@ -31,9 +31,10 @@ import (
 	"github.com/pedroalbanese/gogost/gost341264"
 	"github.com/pedroalbanese/gogost/mgm"
 	"github.com/pedroalbanese/gost-shred"
-	"github.com/pedroalbanese/gosttk"
 	"github.com/pedroalbanese/randomart"
 )
+
+const Version = "1.2.5"
 
 var (
 	bit       = flag.Bool("512", false, "Bit length: 256 or 512. (default 256)")
@@ -72,7 +73,7 @@ func main() {
 	}
 
 	if *version {
-		fmt.Println(gosttk.Version)
+		fmt.Println(Version)
 		return
 	}
 
