@@ -205,7 +205,7 @@ echo $?
 PBKDF2 function can be combined with the CRYPT, HMAC commands:
 ```sh
 ./gosttk -crypt enc -128 -pbkdf2 -512 -key "pass" < plaintext.ext > ciphertext.ext
-./gosttk -hmac [-512] -pbkdf2 -key "pass" -salt "salt" -iter 10000 < file.ext
+./gosttk -mac hmac [-512] -pbkdf2 -key "pass" -salt "salt" -iter 10000 < file.ext
 ```
 
 #### Shred (GOST R 50739-95 data sanitization method, 25 iterations):
