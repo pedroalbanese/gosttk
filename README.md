@@ -135,7 +135,7 @@ Multi-purpose cross-platform cryptography tool for symmetric encryption, cipher-
 ./gosttk -pkey generate -old [-paramset A|B|C|XA|XB]
 ```
 #### Asymmetric GOST R 34.10-2012 256/512-bit keypair generation (default):
-```sh
+```bash
 ./gosttk -pkey gen [-paramset A|B|C|D] [-512 -paramset A|B|C]
 ```
 #### Signature (ECDSA equivalent):
