@@ -30,6 +30,9 @@ Multi-purpose cross-platform cryptography tool for symmetric encryption, cipher-
    - GOST R 34.12-2015 Magma (default)
    - GOST R 34.12-2015 Kuznechik (Grasshopper)
 
+- Supported Paramsets:
+   - GOST 28147-89: A, B, C, D, EAC, Z
+
 - Modes of Operation:
    - MGM: Multilinear Galois Mode (AEAD)
    - CTR: Counter Mode (a.k.a. CNT)
