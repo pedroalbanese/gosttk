@@ -131,87 +131,109 @@ Multi-purpose cross-platform cryptography tool for symmetric encryption, cipher-
        Print version information.</pre>
 ## Examples
 #### Asymmetric GOST R 34.10-2001 256-bit keypair generation (INI format):
-<pre>./gosttk -pkey generate -old [-paramset A|B|C|XA|XB]
-</pre>
+```sh
+./gosttk -pkey generate -old [-paramset A|B|C|XA|XB]
+```
 #### Asymmetric GOST R 34.10-2012 256/512-bit keypair generation (default):
-<pre>./gosttk -pkey gen [-paramset A|B|C|D] [-512 -paramset A|B|C]
-</pre>
+```sh
+./gosttk -pkey gen [-paramset A|B|C|D] [-512 -paramset A|B|C]
+```
 #### Signature (ECDSA equivalent):
-<pre>./gosttk -pkey sign [-512|-old] -key $prvkey < file.ext > sign.txt
+```sh
+./gosttk -pkey sign [-512|-old] -key $prvkey < file.ext > sign.txt
 sign=$(cat sign.txt)
 ./gosttk -pkey verify [-512|-old] -key $pubkey -signature $sign < file.ext
 echo $?
-</pre>
+```
 #### VKO: Shared key negociation (ECDH equivalent):
-<pre>./gosttk -pkey derive [-512|-old] -key $prvkey -pub $pubkey
-</pre>
+```sh
+./gosttk -pkey derive [-512|-old] -key $prvkey -pub $pubkey
+```
 #### Encryption/decryption with Magma (GOST R 34.12-2015) block cipher (default):
-<pre>./gosttk -crypt enc -key $shared < plaintext.ext > ciphertext.ext
+```sh
+./gosttk -crypt enc -key $shared < plaintext.ext > ciphertext.ext
 ./gosttk -crypt dec -key $shared < ciphertext.ext > plaintext.ext
-</pre>
+```
 #### Encryption/decryption with Kuznyechik (GOST R 34.12-2015) block cipher:
-<pre>./gosttk -crypt enc -128 -key $shared < plaintext.ext > ciphertext.ext
+```sh
+./gosttk -crypt enc -128 -key $shared < plaintext.ext > ciphertext.ext
 ./gosttk -crypt dec -128 -key $shared < ciphertext.ext > plaintext.ext
-</pre>
+```
 #### Encryption/decryption with GOST 28147-89 CryptoPro block cipher:
-<pre>./gosttk -crypt enc -old -key $shared < plaintext.ext > ciphertext.ext
+```sh
+./gosttk -crypt enc -old -key $shared < plaintext.ext > ciphertext.ext
 ./gosttk -crypt dec -old -key $shared < ciphertext.ext > plaintext.ext
-</pre>
+```
 #### CMAC-Kuznechik (cipher-based message authentication code):
-<pre>./gosttk -mac cmac -128 -key $128bitkey < file.ext
-</pre>
+```sh
+./gosttk -mac cmac -128 -key $128bitkey < file.ext
+```
 #### CMAC-Magma (cipher-based message authentication code):
-<pre>./gosttk -mac cmac [-old] -key $128bitkey < file.ext
-</pre>
+```sh
+./gosttk -mac cmac [-old] -key $128bitkey < file.ext
+```
 #### GOST94-CryptoPro hashsum (list):
-<pre>./gosttk -digest "*.*" -old [-recursive]
-</pre>
+```sh
+./gosttk -digest "*.*" -old [-recursive]
+```
 #### GOST94-CryptoPro hashsum (single):
-<pre>./gosttk -digest - -old < file.ext
-</pre>
+```sh
+./gosttk -digest - -old < file.ext
+```
 #### HMAC-GOST94-CryptoPro (hash-based message authentication code):
-<pre>./gosttk -mac hmac -old -key $256bitkey < file.ext
-</pre>
+```sh
+./gosttk -mac hmac -old -key $256bitkey < file.ext
+```
 #### Streebog256/512 hashsum:
-<pre>./gosttk -digest - [-512] < file.ext
-</pre>
+```sh
+./gosttk -digest - [-512] < file.ext
+```
 #### HMAC-Streebog256/512:
-<pre>./gosttk -mac hmac [-512] -key $256bitkey < file.ext
-</pre>
+```sh
+./gosttk -mac hmac [-512] -key $256bitkey < file.ext
+```
 #### HKDF (HMAC-based key derivation function 256-bit output):
-<pre>./gosttk -hkdf 256 [-512|-old] -key "IKM" -info "AD" -salt "salt"
-</pre>
+```sh
+./gosttk -hkdf 256 [-512|-old] -key "IKM" -info "AD" -salt "salt"
+```
 #### PBKDF2 (password-based key derivation function 2):
-<pre>./gosttk -pbkdf2 [-512|-old] -key "pass" -iter 10000 -salt "salt"
-</pre>
+```sh
+./gosttk -pbkdf2 [-512|-old] -key "pass" -iter 10000 -salt "salt"
+```
 
 #### Note:
 PBKDF2 function can be combined with the CRYPT, HMAC commands:
-<pre>./gosttk -crypt enc -128 -pbkdf2 -512 -key "pass" < plaintext.ext > ciphertext.ext
+```sh
+./gosttk -crypt enc -128 -pbkdf2 -512 -key "pass" < plaintext.ext > ciphertext.ext
 ./gosttk -hmac [-512] -pbkdf2 -key "pass" -salt "salt" -iter 10000 < file.ext
-</pre>
+```
 
 #### Shred (GOST R 50739-95 data sanitization method, 25 iterations):
-<pre>./gosttk -shred "keypair.ini" -iter 25
-</pre>
+```sh
+./gosttk -shred "keypair.ini" -iter 25
+```
 
 #### Bin to Hex/Hex to Bin:
-<pre>./gosttk -hex enc < File.ext > File.hex
+```sh
+./gosttk -hex enc < File.ext > File.hex
 ./gosttk -hex dec < File.hex > File.ext
-</pre>
+```
 
 #### TLS Layer (TCP/IP):
-<pre>./gostls -tcp ip > PubIP.txt
-./gostls -tcp dump [-pub "8081"] > Pubkey.txt
-./gostls -tcp send [-pub "127.0.0.1:8081"] < Pubkey.txt
+```sh
+./gostls -tcp ip > PubIP.txt
+./gostls -tcp dump [-pub "8081"] > Token.jwt
+./gostls -tcp send [-pub "127.0.0.1:8081"] < Token.jwt
 
 ./gostls -tcp listen [-pub "8081"]
 ./gostls -tcp dial [-pub "127.0.0.1:8081"]
-</pre>
+```
 
 #### Random Art (Public Key Fingerprint):
-<pre>./gosttk -key $pubkey
-</pre>
+```sh
+./gosttk -key $pubkey
+./gosttk -key - < Pubkey.txt
+```
 
 ## License
 
