@@ -188,7 +188,7 @@ echo $?
 #### HMAC-GOST94-CryptoPro (hash-based message authentication code):
 ```sh
 ./gosttk -mac hmac -old -key $256bitkey < file.ext
-./gosttk -mac hmac -old -key $256bitkey -signature $256bitkey < file.ext
+./gosttk -mac hmac -old -key $256bitkey -signature $256bitmac < file.ext
 ```
 #### Streebog256/512 hashsum:
 ```sh
@@ -197,7 +197,7 @@ echo $?
 #### HMAC-Streebog256/512:
 ```sh
 ./gosttk -mac hmac [-512] -key $256bitkey < file.ext
-./gosttk -mac hmac [-512] -key $256bitkey -signature $256bitkey < file.ext
+./gosttk -mac hmac [-512] -key $256bitkey -signature $256bitmac < file.ext
 ```
 #### HKDF (HMAC-based key derivation function 256-bit output):
 ```sh
