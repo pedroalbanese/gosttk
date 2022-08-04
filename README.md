@@ -175,7 +175,7 @@ echo $?
 #### CMAC-Magma (cipher-based message authentication code):
 ```sh
 ./gosttk -mac cmac [-old] -key $128bitkey < file.ext
-./gosttk -mac cmac -128 -key $128bitkey -signature &64bitkey < file.ext
+./gosttk -mac cmac [-old] -key $128bitkey -signature &64bitkey < file.ext
 ```
 #### GOST94-CryptoPro hashsum (list):
 ```sh
