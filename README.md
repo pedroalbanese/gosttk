@@ -170,10 +170,12 @@ echo $?
 #### CMAC-Kuznechik (cipher-based message authentication code):
 ```sh
 ./gosttk -mac cmac -128 -key $128bitkey < file.ext
+./gosttk -mac cmac -128 -key $128bitkey -signature &128bitkey < file.ext
 ```
 #### CMAC-Magma (cipher-based message authentication code):
 ```sh
 ./gosttk -mac cmac [-old] -key $128bitkey < file.ext
+./gosttk -mac cmac -128 -key $128bitkey -signature &64bitkey < file.ext
 ```
 #### GOST94-CryptoPro hashsum (list):
 ```sh
@@ -186,6 +188,7 @@ echo $?
 #### HMAC-GOST94-CryptoPro (hash-based message authentication code):
 ```sh
 ./gosttk -mac hmac -old -key $256bitkey < file.ext
+./gosttk -mac hmac -old -key $256bitkey -signature $256bitkey < file.ext
 ```
 #### Streebog256/512 hashsum:
 ```sh
@@ -194,6 +197,7 @@ echo $?
 #### HMAC-Streebog256/512:
 ```sh
 ./gosttk -mac hmac [-512] -key $256bitkey < file.ext
+./gosttk -mac hmac [-512] -key $256bitkey -signature $256bitkey < file.ext
 ```
 #### HKDF (HMAC-based key derivation function 256-bit output):
 ```sh
