@@ -35,6 +35,7 @@ Multi-purpose cross-platform cryptography tool for symmetric encryption, cipher-
 
 - Modes of Operation:
    - MGM: Multilinear Galois Mode (AEAD)
+   - CFB: Cipher Feedback Mode (8-bit)
    - CTR: Counter Mode (a.k.a. CNT)
    - OFB: Output Feedback Mode
 
