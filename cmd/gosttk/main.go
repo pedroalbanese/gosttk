@@ -21,6 +21,7 @@ import (
 	"strings"
 	"unsafe"
 
+	"github.com/pedroalbanese/cfb8"
 	"github.com/pedroalbanese/cmac"
 	"github.com/pedroalbanese/gogost/gost28147"
 	"github.com/pedroalbanese/gogost/gost3410"
@@ -280,7 +281,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if (*crypt == "enc" || *crypt == "dec") && *block == true && *old == false && (strings.ToUpper(*mode) == "OFB" || strings.ToUpper(*mode) == "CTR") {
+	if (*crypt == "enc" || *crypt == "dec") && *block == true && *old == false && (strings.ToUpper(*mode) == "OFB" || strings.ToUpper(*mode) == "CTR" || strings.ToUpper(*mode) == "CFB8") {
 		var keyHex string
 		var keyRaw []byte
 		if *pbkdf == true && *bit == false {
@@ -323,7 +324,12 @@ func main() {
 			stream = cipher.NewCTR(ciph, iv)
 		} else if strings.ToUpper(*mode) == "OFB" {
 			stream = cipher.NewOFB(ciph, iv)
+		} else if *crypt == "enc" && strings.ToUpper(*mode) == "CFB8" {
+			stream = CFB8.NewCFB8Encrypt(ciph, iv)
+		} else if *crypt == "dec" && strings.ToUpper(*mode) == "CFB8" {
+			stream = CFB8.NewCFB8Decrypt(ciph, iv)
 		}
+
 		buf := make([]byte, 128*1<<10)
 		var n int
 		for {
@@ -342,7 +348,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if (*crypt == "enc" || *crypt == "dec") && *block == false && *old == false && (strings.ToUpper(*mode) == "OFB" || strings.ToUpper(*mode) == "CTR") {
+	if (*crypt == "enc" || *crypt == "dec") && *block == false && *old == false && (strings.ToUpper(*mode) == "OFB" || strings.ToUpper(*mode) == "CTR" || strings.ToUpper(*mode) == "CFB8") {
 		var keyHex string
 		var keyRaw []byte
 		if *pbkdf == true && *bit == false {
@@ -385,6 +391,10 @@ func main() {
 			stream = cipher.NewCTR(ciph, iv)
 		} else if strings.ToUpper(*mode) == "OFB" {
 			stream = cipher.NewOFB(ciph, iv)
+		} else if *crypt == "enc" && strings.ToUpper(*mode) == "CFB8" {
+			stream = CFB8.NewCFB8Encrypt(ciph, iv)
+		} else if *crypt == "dec" && strings.ToUpper(*mode) == "CFB8" {
+			stream = CFB8.NewCFB8Decrypt(ciph, iv)
 		}
 		buf := make([]byte, 64*1<<10)
 		var n int
@@ -404,7 +414,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if (*crypt == "enc" || *crypt == "dec") && *block == false && *old == true && (strings.ToUpper(*mode) == "OFB" || strings.ToUpper(*mode) == "CTR") {
+	if (*crypt == "enc" || *crypt == "dec") && *block == false && *old == true && (strings.ToUpper(*mode) == "OFB" || strings.ToUpper(*mode) == "CTR" || strings.ToUpper(*mode) == "CFB8") {
 		var keyHex string
 		var keyRaw []byte
 		if *pbkdf == true {
@@ -460,6 +470,10 @@ func main() {
 			stream = cipher.NewCTR(ciph, iv)
 		} else if strings.ToUpper(*mode) == "OFB" {
 			stream = cipher.NewOFB(ciph, iv)
+		} else if *crypt == "enc" && strings.ToUpper(*mode) == "CFB8" {
+			stream = CFB8.NewCFB8Encrypt(ciph, iv)
+		} else if *crypt == "dec" && strings.ToUpper(*mode) == "CFB8" {
+			stream = CFB8.NewCFB8Decrypt(ciph, iv)
 		}
 		buf := make([]byte, 64*1<<10)
 		var n int
