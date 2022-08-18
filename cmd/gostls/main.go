@@ -24,7 +24,7 @@ import (
 
 var (
 	tcpip = flag.String("tcp", "", "Encrypted TCP/IP Transfer Protocol. [listen|dump|ip|send|dial]")
-	pub   = flag.String("pub", "", "Remote's side IP address / local port.")
+	pub   = flag.String("pub", "", "Remote's side Public IP address / local port.")
 )
 
 func handleConnection(c net.Conn) {
@@ -151,7 +151,7 @@ func main() {
 				fmt.Println(err)
 				os.Exit(3)
 			}
-			fmt.Print("Received: ", string(message))
+			log.Print("Rcv: ", string(message))
 
 			newmessage := strings.ToUpper(message)
 			conn.Write([]byte(newmessage + "\n"))
@@ -173,7 +173,6 @@ func main() {
 		}
 		certs := conn.ConnectionState().PeerCertificates
 		for _, cert := range certs {
-			fmt.Printf("Issuer Name: %s\n", cert.Issuer)
 			fmt.Printf("Expiry: %s \n", cert.NotAfter.Format("Monday, 02-Jan-06 15:04:05 MST"))
 			fmt.Printf("Common Name: %s \n", cert.Issuer.CommonName)
 			fmt.Printf("IP Address: %s \n", cert.IPAddresses)
@@ -208,7 +207,6 @@ func main() {
 		}
 		certs := conn.ConnectionState().PeerCertificates
 		for _, cert := range certs {
-			fmt.Printf("Issuer Name: %s\n", cert.Issuer)
 			fmt.Printf("Expiry: %s \n", cert.NotAfter.Format("Monday, 02-Jan-06 15:04:05 MST"))
 			fmt.Printf("Common Name: %s \n", cert.Issuer.CommonName)
 			fmt.Printf("IP Address: %s \n", cert.IPAddresses)
