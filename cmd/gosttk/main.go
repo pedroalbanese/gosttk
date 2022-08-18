@@ -1489,6 +1489,115 @@ func main() {
 		os.Exit(0)
 	}
 
+	if *pkey == "text" {
+		var curve *gost3410.Curve
+		var oid string
+		if *old == true && (strings.ToUpper(*paramset) == "A" || strings.ToUpper(*paramset) == "B" || strings.ToUpper(*paramset) == "C" || strings.ToUpper(*paramset) == "XA" || strings.ToUpper(*paramset) == "XB") {
+			oid = "GOST R 34.10-2001"
+			if strings.ToUpper(*paramset) == "A" {
+				curve = gost3410.CurveIdGostR34102001CryptoProAParamSet()
+			} else if strings.ToUpper(*paramset) == "B" {
+				curve = gost3410.CurveIdGostR34102001CryptoProBParamSet()
+			} else if strings.ToUpper(*paramset) == "C" {
+				curve = gost3410.CurveIdGostR34102001CryptoProCParamSet()
+			} else if strings.ToUpper(*paramset) == "XA" {
+				curve = gost3410.CurveIdGostR34102001CryptoProXchAParamSet()
+			} else if strings.ToUpper(*paramset) == "XB" {
+				curve = gost3410.CurveIdGostR34102001CryptoProXchBParamSet()
+			}
+		} else if *old == false && *bit == false && (strings.ToUpper(*paramset) == "A" || strings.ToUpper(*paramset) == "B" || strings.ToUpper(*paramset) == "C" || strings.ToUpper(*paramset) == "D") {
+			oid = "GOST R 34.10-2012_256"
+			if strings.ToUpper(*paramset) == "A" {
+				curve = gost3410.CurveIdtc26gost34102012256paramSetA()
+			} else if *bit == false && strings.ToUpper(*paramset) == "B" {
+				curve = gost3410.CurveIdtc26gost34102012256paramSetB()
+			} else if *bit == false && strings.ToUpper(*paramset) == "C" {
+				curve = gost3410.CurveIdtc26gost34102012256paramSetC()
+			} else if *bit == false && strings.ToUpper(*paramset) == "D" {
+				curve = gost3410.CurveIdtc26gost34102012256paramSetD()
+			}
+		} else if *old == false && *bit == true && (strings.ToUpper(*paramset) == "A" || strings.ToUpper(*paramset) == "B" || strings.ToUpper(*paramset) == "C") {
+			oid = "GOST R 34.10-2012_512"
+			if strings.ToUpper(*paramset) == "A" {
+				curve = gost3410.CurveIdtc26gost341012512paramSetA()
+			} else if strings.ToUpper(*paramset) == "B" {
+				curve = gost3410.CurveIdtc26gost341012512paramSetB()
+			} else if strings.ToUpper(*paramset) == "C" {
+				curve = gost3410.CurveIdtc26gost34102012512paramSetC()
+			}
+		}
+		if *key == "-" {
+			data, _ := ioutil.ReadAll(os.Stdin)
+			b := strings.TrimSuffix(string(data), "\r\n")
+			b = strings.TrimSuffix(b, "\n")
+			prvRaw, err := hex.DecodeString(b)
+			if err != nil {
+				log.Fatal(err)
+			}
+			privatekey, err := gost3410.NewPrivateKey(curve, prvRaw)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			pubkey, err := privatekey.PublicKey()
+			if err != nil {
+				log.Fatal(err)
+			}
+			pubRaw := pubkey.Raw()
+
+			fmt.Println("Private Key:")
+			fmt.Println(" K:", strings.ToUpper(hex.EncodeToString(prvRaw)))
+			print(" ", len(hex.EncodeToString(prvRaw))/2, " bytes ", len(hex.EncodeToString(prvRaw))*4, " bits\n")
+			splitx := SplitSubN(hex.EncodeToString(prvRaw), 2)
+			for _, chunk := range split(strings.Trim(fmt.Sprint(splitx), "[]"), 60) {
+				fmt.Printf("  %-10s  \n", strings.ToUpper(chunk))
+			}
+			fmt.Println("Public Key:")
+			fmt.Println(" X:", pubkey.X)
+			fmt.Println(" Y:", pubkey.Y)
+
+			print(" ", len(hex.EncodeToString(pubRaw))/2, " bytes ", len(hex.EncodeToString(pubRaw))*4, " bits\n")
+			splitz := SplitSubN(hex.EncodeToString(pubRaw), 2)
+			for _, chunk := range split(strings.Trim(fmt.Sprint(splitz), "[]"), 60) {
+				fmt.Printf("  %-10s  \n", strings.ToUpper(chunk))
+			}
+			fmt.Println("OID:", strings.ToUpper(oid), "ParamSet:", strings.ToUpper(*paramset))
+		} else if *key != "-" {
+			prvRaw, err := hex.DecodeString(*key)
+			if err != nil {
+				log.Fatal(err)
+			}
+			privatekey, err := gost3410.NewPrivateKey(curve, prvRaw)
+			if err != nil {
+				log.Fatal(err)
+			}
+			pubkey, err := privatekey.PublicKey()
+			if err != nil {
+				log.Fatal(err)
+			}
+			pubRaw := pubkey.Raw()
+
+			fmt.Println("Private Key:")
+
+			fmt.Println(" K:", strings.ToUpper(hex.EncodeToString(prvRaw)))
+			print(" ", len(*key)/2, " bytes ", len(*key)*4, " bits\n")
+			splitx := SplitSubN(*key, 2)
+			for _, chunk := range split(strings.Trim(fmt.Sprint(splitx), "[]"), 60) {
+				fmt.Printf("  %-10s  \n", strings.ToUpper(chunk))
+			}
+			fmt.Println("Public Key:")
+			fmt.Println(" X:", pubkey.X)
+			fmt.Println(" Y:", pubkey.Y)
+			print(" ", len(hex.EncodeToString(pubRaw))/2, " bytes ", len(hex.EncodeToString(pubRaw))*4, " bits\n")
+			splitz := SplitSubN(hex.EncodeToString(pubRaw), 2)
+			for _, chunk := range split(strings.Trim(fmt.Sprint(splitz), "[]"), 60) {
+				fmt.Printf("  %-10s  \n", strings.ToUpper(chunk))
+			}
+			fmt.Println("OID:", strings.ToUpper(oid), "ParamSet:", strings.ToUpper(*paramset))
+		}
+		os.Exit(0)
+	}
+
 	if *key == "-" {
 		fmt.Println(randomart.FromFile(os.Stdin))
 	} else {
@@ -1521,4 +1630,35 @@ func byte8(s []byte) (a *[8]byte) {
 		a = (*[len(a)]byte)(unsafe.Pointer(&s[0]))
 	}
 	return a
+}
+
+func SplitSubN(s string, n int) []string {
+	sub := ""
+	subs := []string{}
+
+	runes := bytes.Runes([]byte(s))
+	l := len(runes)
+	for i, r := range runes {
+		sub = sub + string(r)
+		if (i+1)%n == 0 {
+			subs = append(subs, sub)
+			sub = ""
+		} else if (i + 1) == l {
+			subs = append(subs, sub)
+		}
+	}
+
+	return subs
+}
+
+func split(s string, size int) []string {
+	ss := make([]string, 0, len(s)/size+1)
+	for len(s) > 0 {
+		if len(s) < size {
+			size = len(s)
+		}
+		ss, s = append(ss, s[:size]), s[size:]
+
+	}
+	return ss
 }
