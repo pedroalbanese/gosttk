@@ -29,7 +29,6 @@ var (
 
 func handleConnection(c net.Conn) {
 	log.Printf("Client(TLS) %v connected via secure channel.", c.RemoteAddr())
-	log.Printf("Connection from %v closed.", c.RemoteAddr())
 }
 
 func main() {
@@ -144,6 +143,7 @@ func main() {
 		defer ln.Close()
 
 		fmt.Println("Connection accepted")
+		go handleConnection(conn)
 
 		for {
 			message, err := bufio.NewReader(conn).ReadString('\n')
