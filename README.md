@@ -225,6 +225,7 @@ PBKDF2 function can be combined with the CRYPT, HMAC commands:
 ```sh
 ./gosttk -hex enc < File.ext > File.hex
 ./gosttk -hex dec < File.hex > File.ext
+./gosttk -hex dump < File.ext
 ```
 
 #### TLS Layer (TCP/IP):
