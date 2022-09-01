@@ -35,7 +35,7 @@ import (
 	"github.com/pedroalbanese/randomart"
 )
 
-const Version = "1.2.5"
+const Version = "1.2.6"
 
 var (
 	bit       = flag.Bool("512", false, "Bit length: 256 or 512. (default 256)")
