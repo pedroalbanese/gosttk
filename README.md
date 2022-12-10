@@ -228,16 +228,6 @@ PBKDF2 function can be combined with the CRYPT, HMAC commands:
 ./gosttk -hex dump < File.ext
 ```
 
-#### TLS Layer (TCP/IP):
-```sh
-./gostls -tcp ip > PubIP.txt
-./gostls -tcp dump [-pub "8081"] > Token.jwt
-./gostls -tcp send [-pub "127.0.0.1:8081"] < Token.jwt
-
-./gostls -tcp listen [-pub "8081"]
-./gostls -tcp dial [-pub "127.0.0.1:8081"]
-```
-
 #### Random Art (Public Key Fingerprint):
 ```sh
 ./gosttk -key $pubkey
