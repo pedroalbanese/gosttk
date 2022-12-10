@@ -1,4 +1,4 @@
-# GOST Engine (GOSTLS)
+# GOST TLS
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](https://github.com/pedroalbanese/engine/blob/master/LICENSE.md) 
 [![GoDoc](https://godoc.org/github.com/pedroalbanese/engine?status.png)](http://godoc.org/github.com/pedroalbanese/engine)
 [![GitHub downloads](https://img.shields.io/github/downloads/pedroalbanese/engine/total.svg?logo=github&logoColor=white)](https://github.com/pedroalbanese/engine/releases)
