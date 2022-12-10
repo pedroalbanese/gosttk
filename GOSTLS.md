@@ -58,38 +58,38 @@ Non-cryptographic Functions:
 ## Examples
 #### Asymmetric GOST2012 keypair generation:
 ```sh
-./engine -pkey keygen [-512] [-paramset B] [-pwd "pass"]
+./gostls -pkey keygen [-512] [-paramset B] [-pwd "pass"]
 ```
 #### Parse keys info:
 ```sh
-./engine -pkey [text|modulus] [-pwd "pass"] -key private.pem
-./engine -pkey [text|modulus] -key public.pem
-./engine -pkey randomart -key public.pem
+./gostls -pkey [text|modulus] [-pwd "pass"] -key private.pem
+./gostls -pkey [text|modulus] -key public.pem
+./gostls -pkey randomart -key public.pem
 ```
 #### Digital signature:
 ```sh
-./engine -pkey sign -key private.pem [-pwd "pass"] < file.ext > sign.txt
+./gostls -pkey sign -key private.pem [-pwd "pass"] < file.ext > sign.txt
 sign=$(cat sign.txt|awk '{print $2}')
-./engine -pkey verify -key public.pem -signature $sign < file.ext
+./gostls -pkey verify -key public.pem -signature $sign < file.ext
 echo $?
 ```
 #### VKO Shared key agreement:
 ```sh
-./engine -pkey derive -key private.pem -public peerkey.pem
+./gostls -pkey derive -key private.pem -public peerkey.pem
 ```
 #### Generate Certificate:
 ```sh
-./engine -pkey certgen -key private.pem [-pwd "pass"] [-cert "output.ext"]
+./gostls -pkey certgen -key private.pem [-pwd "pass"] [-cert "output.ext"]
 ```
 #### Parse Certificate info:
 ```sh
-./engine -pkey [text|modulus] -cert certificate.pem
+./gostls -pkey [text|modulus] -cert certificate.pem
 ```
 #### TLS Layer (TCP/IP):
 ```sh
-./engine -tcp ip > PubIP.txt
-./engine -tcp server -cert certificate.pem -key private.pem [-ipport "8081"]
-./engine -tcp client -cert certificate.pem -key private.pem [-ipport "127.0.0.1:8081"]
+./gostls -tcp ip > PubIP.txt
+./gostls -tcp server -cert certificate.pem -key private.pem [-ipport "8081"]
+./gostls -tcp client -cert certificate.pem -key private.pem [-ipport "127.0.0.1:8081"]
 ```
 
 ## License
