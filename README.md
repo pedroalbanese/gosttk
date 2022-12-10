@@ -237,7 +237,7 @@ PBKDF2 function can be combined with the CRYPT, HMAC commands:
 # GOST TLS
 Cross-platform hybrid cryptography tool for shared key agreement (VKO), digital signature and TLS 1.2 for small or embedded systems. 
 
-## Command-line Security Suite
+## Algorithms
 
   - GOST R 34.10-2012 public key signature function (RFC 7091)
   - VKO GOST R 34.10-2012 key agreement function (RFC 7836)
