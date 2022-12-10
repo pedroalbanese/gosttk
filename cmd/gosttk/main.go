@@ -35,7 +35,7 @@ import (
 	"github.com/pedroalbanese/randomart"
 )
 
-const Version = "1.2.6"
+const Version = "1.2.7-Alpha"
 
 var (
 	bit       = flag.Bool("512", false, "Bit length: 256 or 512. (default 256)")
@@ -49,7 +49,7 @@ var (
 	kdf       = flag.Int("hkdf", 0, "HMAC-based key derivation function with a given output bit length.")
 	key       = flag.String("key", "", "Private/Public key, password or HMAC key, depending on operation.")
 	mac       = flag.String("mac", "", "Compute hash-based/cipher-based message authentication code.")
-	mode      = flag.String("mode", "MGM", "Mode of operation: MGM, CTR or OFB.")
+	mode      = flag.String("mode", "MGM", "Mode of operation: MGM, CFB8, CTR or OFB.")
 	old       = flag.Bool("old", false, "Use old roll of algorithms.")
 	paramset  = flag.String("paramset", "A", "Elliptic curve ParamSet: A, B, C, D, XA, XB.")
 	pbkdf     = flag.Bool("pbkdf2", false, "Password-based key derivation function 2.")
