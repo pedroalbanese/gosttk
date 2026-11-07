@@ -66,13 +66,13 @@ var (
 	mac       = flag.String("mac", "", "Compute hash-based/cipher-based message authentication code.")
 	mode      = flag.String("mode", "MGM", "Mode of operation: MGM, CFB8, CTR or OFB.")
 	old       = flag.Bool("old", false, "Use legacy GOST R 34.11-94 hash.")
-	paramset  = flag.String("paramset", "A", "Elliptic curve ParamSet: A, B, C, D.")
+	paramset  = flag.String("paramset", "A", "Elliptic curve ParamSet: A, B, C, D. (for gost89: A, B, C, D, Z)")
 	pbkdf     = flag.Bool("pbkdf2", false, "Password-based key derivation function 2.")
 	pkey      = flag.String("pkey", "", "Generate keypair, Derive shared secret (vko), Sign and Verify.")
 	priv      = flag.String("private", "Private.pem", "Private key path. (for keypair generation)")
 	pub       = flag.String("public", "Public.pem", "Public key path. (for keypair generation)")
 	public    = flag.String("pub", "", "Remote's side public key.")
-	pwd       = flag.String("pwd", "", "Password. (for Private key PEM encryption)")
+	pwd       = flag.String("pass", "", "Password. (for Private key PEM encryption)")
 	random    = flag.Int("rand", 0, "Generate random cryptographic key with a given output bit length.")
 	recursive = flag.Bool("recursive", false, "Process directories recursively. (for DIGEST command only)")
 	salt      = flag.String("salt", "", "Salt. (for PBKDF2 and HKDF commands)")
@@ -110,6 +110,21 @@ func hashFactory() func() hash.Hash {
 	return gost34112012256.New
 }
 
+func gost89Sbox() *gost28147.Sbox {
+	switch strings.ToUpper(*paramset) {
+	case "Z":
+		return &gost28147.SboxIdtc26gost28147paramZ
+	case "B":
+		return &gost28147.SboxIdGost2814789CryptoProBParamSet
+	case "C":
+		return &gost28147.SboxIdGost2814789CryptoProCParamSet
+	case "D":
+		return &gost28147.SboxIdGost2814789CryptoProDParamSet
+	default:
+		return &gost28147.SboxIdGost2814789CryptoProAParamSet
+	}
+}
+
 func main() {
 	flag.Parse()
 
@@ -124,7 +139,7 @@ func main() {
 		return
 	}
 
-	if *paramset != "" && (strings.ToUpper(*paramset) != "A" && strings.ToUpper(*paramset) != "B" && strings.ToUpper(*paramset) != "C" && strings.ToUpper(*paramset) != "D") {
+	if *paramset != "" && (strings.ToUpper(*paramset) != "A" && strings.ToUpper(*paramset) != "B" && strings.ToUpper(*paramset) != "C" && strings.ToUpper(*paramset) != "D" && strings.ToUpper(*paramset) != "Z") {
 		fmt.Fprintln(os.Stderr, "Usage of", os.Args[0]+":")
 		flag.PrintDefaults()
 		os.Exit(1)
@@ -234,7 +249,7 @@ func main() {
 		var n int
 		switch strings.ToLower(*cipherSel) {
 		case "gost89":
-			c = gost28147.NewCipher(key, &gost28147.SboxIdGost2814789CryptoProAParamSet)
+			c = gost28147.NewCipher(key, gost89Sbox())
 			n = 8
 		case "magma":
 			c = gost341264.NewCipher(key)
@@ -329,7 +344,7 @@ func main() {
 		var ciph cipher.Block
 		switch strings.ToLower(*cipherSel) {
 		case "gost89":
-			ciph = gost28147.NewCipher(key, &gost28147.SboxIdGost2814789CryptoProAParamSet)
+			ciph = gost28147.NewCipher(key, gost89Sbox())
 		case "magma":
 			ciph = gost341264.NewCipher(key)
 		case "kuznyechik":
@@ -428,7 +443,7 @@ func main() {
 		var tagSize int
 		switch strings.ToLower(*cipherSel) {
 		case "gost89":
-			c = gost28147.NewCipher([]byte(keyHex), &gost28147.SboxIdGost2814789CryptoProAParamSet)
+			c = gost28147.NewCipher([]byte(keyHex), gost89Sbox())
 			tagSize = 8
 		case "magma":
 			c = gost341264.NewCipher([]byte(keyHex))
@@ -495,7 +510,9 @@ func main() {
 			}
 		}
 		var c *gost28147.Cipher
-		if strings.ToUpper(*paramset) == "A" {
+		if strings.ToUpper(*paramset) == "Z" {
+			c = gost28147.NewCipher([]byte(keyHex), &gost28147.SboxIdtc26gost28147paramZ)
+		} else if strings.ToUpper(*paramset) == "A" {
 			c = gost28147.NewCipher([]byte(keyHex), &gost28147.SboxIdGost2814789CryptoProAParamSet)
 		} else if strings.ToUpper(*paramset) == "B" {
 			c = gost28147.NewCipher([]byte(keyHex), &gost28147.SboxIdGost2814789CryptoProBParamSet)
@@ -692,6 +709,9 @@ func main() {
 				curve = gost3410.CurveIdtc26gost341012512paramSetB()
 			}
 			gost341012PrivRaw = make([]byte, 64)
+		}
+		if curve == nil {
+			log.Fatalf("paramset %q invalid for GOST R 34.10-2012 (use A, B, C or D)", *paramset)
 		}
 		if _, err = io.ReadFull(rand.Reader, gost341012PrivRaw); err != nil {
 			log.Fatalf("Failed to read random for GOST private key: %s", err)
