@@ -6,9 +6,9 @@
 [![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/pedroalbanese/gosttk)](https://golang.org)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/pedroalbanese/gosttk)](https://github.com/pedroalbanese/gosttk/releases)
 
-Multi-purpose cross-platform cryptography tool for symmetric encryption, cipher-based message authentication code (CMAC), recursive hash digest, hash-based message authentication code (HMAC), digital signature, shared key agreement (VKO), PBKDF2/HKDF functions, PEM key/certificate management, RandomArt fingerprints, and TLS 1.3 (RFC 9367) for embedded systems.
+Multi-purpose cross-platform cryptography tool for symmetric encryption, cipher-based message authentication code (CMAC), recursive hash digest, hash-based message authentication code (HMAC), digital signature, shared key agreement (VKO), PBKDF2/HKDF functions, PEM key/certificate management, RandomArt fingerprints, and **TLS 1.3** (RFC 9367) for embedded systems.
 
-GOST refers to a set of technical standards maintained by the Euro-Asian Council for Standardization, Metrology and Certification (EASC), a regional standards organization operating under the auspices of the Commonwealth of Independent States (CIS).
+**GOST refers to a set of technical standards maintained by the Euro-Asian Council for Standardization, Metrology and Certification (EASC), a regional standards organization operating under the auspices of the Commonwealth of Independent States (CIS).**
 
 #### GOST is GOvernment STandard of Russian Federation (and Soviet Union):
 * GOST 28147-89 64-bit block cipher (RFC 5830)
@@ -21,17 +21,17 @@ GOST refers to a set of technical standards maintained by the Euro-Asian Council
 * MGM AEAD mode for 64 and 128 bit ciphers (RFC 9058)
 * GOST cipher suites for TLS 1.3 (RFC 9367)
 
-Note: GOST R 34.10-2001 (RFC 5832) and VKO GOST R 34.10-2001 (RFC 4357) were removed. The -old flag now refers only to the legacy GOST R 34.11-94 hash function. GOST R 50739-95 data sanitization (-shred) was removed.
+> **Note:** GOST R 34.10-2001 (RFC 5832) and VKO GOST R 34.10-2001 (RFC 4357) were **removed**. The `-old` flag now refers **only** to the legacy GOST R 34.11-94 hash function. GOST R 50739-95 data sanitization (`-shred`) was **removed**.
 
 ## Algorithms
 
 #### Symmetric:
-- Block Ciphers (selectable with -cipher):
-   - gost89 — GOST 28147-89 CryptoPro (64-bit)
-   - magma — GOST R 34.12-2015 Magma (64-bit)
-   - kuznyechik — GOST R 34.12-2015 Kuznyechik (128-bit, default)
+- Block Ciphers (selectable with `-cipher`):
+   - `gost89` — GOST 28147-89 CryptoPro (64-bit)
+   - `magma` — GOST R 34.12-2015 Magma (64-bit)
+   - `kuznyechik` — GOST R 34.12-2015 Kuznyechik (128-bit, **default**)
 
-- Supported ParamSets (for gost89):
+- Supported ParamSets (for `gost89`):
    - GOST 28147-89 CryptoPro: A, B, C, D
 
 - Modes of Operation:
@@ -41,7 +41,7 @@ Note: GOST R 34.10-2001 (RFC 5832) and VKO GOST R 34.10-2001 (RFC 4357) were rem
    - CFB8: Cipher Feedback Mode (8-bit)
 
 - Message Digest Algorithms:
-   - GOST R 34.11-94 CryptoPro 256-bit (-old)
+   - GOST R 34.11-94 CryptoPro 256-bit (`-old`)
    - GOST R 34.11-2012 Streebog 256/512-bit (default)
 
 #### Asymmetric:
@@ -63,12 +63,12 @@ Note: GOST R 34.10-2001 (RFC 5832) and VKO GOST R 34.10-2001 (RFC 4357) were rem
    - HMAC (Hash-based message authentication code)
    - HKDF (HMAC-based key derivation function)
    - PBKDF2 (Password-based key derivation function 2)
-   - TLS 1.3 with GOST cipher suites (RFC 9367), via tls.GOSTInstall()
+   - **TLS 1.3** with GOST cipher suites (RFC 9367), via `tls.GOSTInstall()`
 
 - Non-Cryptographic Functions:
    - PEM key/certificate management (encrypted private keys via Kuznyechik-CBC)
    - Bin to Hex / Hex to Bin string conversion
-   - Random Art (Public key fingerprint, only in keygen and -pkey randomart)
+   - Random Art (Public key fingerprint, only in `keygen` and `-pkey randomart`)
 
 #### TODO:
   - [x] TLS 1.3
@@ -85,7 +85,7 @@ Note: GOST R 34.10-2001 (RFC 5832) and VKO GOST R 34.10-2001 (RFC 4357) were rem
 
 ## Usage
 
- -512
+<pre> -512
        Bit length: 256 or 512. (default 256)
  -cipher string
        Symmetric cipher: gost89, magma or kuznyechik. (default "kuznyechik")
@@ -143,95 +143,133 @@ Note: GOST R 34.10-2001 (RFC 5832) and VKO GOST R 34.10-2001 (RFC 4357) were rem
  -public string
        Public key path. (for keypair generation) (default "Public.pem")
  -tcp string
-       Encrypted TCP/IP Transfer Protocol. [server|ip|client]
+       Encrypted TCP/IP Transfer Protocol. [server|ip|client]</pre>
 
 ## Examples
 
 #### Asymmetric GOST R 34.10-2012 256/512-bit keypair generation (PEM):
-./gosttk -pkey keygen [-512] [-paramset A|B|C|D] [-pwd "pass"] [-private Private.pem] [-public Public.pem]
-
+```bash
+./gosttk -pkey keygen [-512] [-paramset A|B|C|D] [-pwd "pass"] \
+  [-private Private.pem] [-public Public.pem]
+```
 RandomArt of the generated public key is printed to stdout.
 
 #### Parse keys info:
+```bash
 ./gosttk -pkey text      -key private.pem [-pwd "pass"]
 ./gosttk -pkey text      -key public.pem
 ./gosttk -pkey modulus   -key private.pem [-pwd "pass"]
 ./gosttk -pkey randomart -key public.pem
+```
 
 #### Digital signature (ECDSA equivalent):
+```bash
 ./gosttk -pkey sign   [-512] -key private.pem [-pwd "pass"] < file.ext > sign.txt
 sign=$(cat sign.txt | awk '{print $2}')
 ./gosttk -pkey verify [-512] -key public.pem -signature $sign < file.ext
 echo $?
+```
 
 #### VKO: shared key negotiation (ECDH equivalent):
+```bash
 ./gosttk -pkey derive [-512] -key private.pem -pub peerkey.pem
 # or the alias:
 ./gosttk -pkey vko    [-512] -key private.pem -pub peerkey.pem
+```
 
 #### Generate certificate (self-signed, PEM):
+```bash
 ./gosttk -pkey certgen -key private.pem [-pwd "pass"] [-cert "Certificate.pem"]
+```
 
 #### Parse certificate info:
+```bash
 ./gosttk -pkey text    -cert certificate.pem
 ./gosttk -pkey modulus -cert certificate.pem
+```
 
 #### Symmetric encryption — default cipher (Kuznyechik, MGM):
+```bash
 ./gosttk -crypt enc -key $shared < plaintext.ext > ciphertext.ext
 ./gosttk -crypt dec -key $shared < ciphertext.ext > plaintext.ext
+```
 
 #### Symmetric encryption — Magma:
+```bash
 ./gosttk -crypt enc -cipher magma -key $shared < plaintext.ext > ciphertext.ext
 ./gosttk -crypt dec -cipher magma -key $shared < ciphertext.ext > plaintext.ext
+```
 
 #### Symmetric encryption — GOST 28147-89:
+```bash
 ./gosttk -crypt enc -cipher gost89 -paramset A -key $shared < plaintext.ext > ciphertext.ext
 ./gosttk -crypt dec -cipher gost89 -paramset A -key $shared < ciphertext.ext > plaintext.ext
+```
 
 #### Symmetric encryption — non-AEAD modes (CTR / OFB / CFB8):
+```bash
 ./gosttk -crypt enc -mode CTR  -cipher kuznyechik -key $shared -iv $iv < plaintext.ext > ciphertext.ext
 ./gosttk -crypt enc -mode OFB  -cipher magma       -key $shared -iv $iv < plaintext.ext > ciphertext.ext
 ./gosttk -crypt enc -mode CFB8 -cipher gost89      -key $shared -iv $iv < plaintext.ext > ciphertext.ext
+```
 
 #### CMAC (cipher-based message authentication code):
+```bash
 ./gosttk -mac cmac -cipher kuznyechik -key $128bitkey < file.ext
 ./gosttk -mac cmac -cipher kuznyechik -key $128bitkey -signature $128bitmac < file.ext
 ./gosttk -mac cmac -cipher magma      -key $128bitkey < file.ext
 ./gosttk -mac cmac -cipher gost89     -key $128bitkey -signature $64bitmac < file.ext
+```
 
-#### HMAC — Streebog (default) or GOST R 34.11-94 (-old):
+#### HMAC — Streebog (default) or GOST R 34.11-94 (`-old`):
+```bash
 ./gosttk -mac hmac [-512]     -key $256bitkey < file.ext
 ./gosttk -mac hmac -old       -key $256bitkey < file.ext
 ./gosttk -mac hmac [-512|-old] -key $256bitkey -signature $mac < file.ext
+```
 
 #### Digest (recursive hashsum list / single file):
+```bash
 ./gosttk -digest "*.*" [-recursive] [-512|-old]
 ./gosttk -digest -     [-512|-old] < file.ext
+```
 
 #### Check hashsum file:
+```bash
 ./gosttk -check hashsum.txt [-512|-old]
+```
 
 #### HKDF (HMAC-based key derivation function):
+```bash
 ./gosttk -hkdf 256 [-512|-old] -key "IKM" -info "AD" -salt "salt"
+```
 
 #### PBKDF2 (password-based key derivation function 2):
+```bash
 ./gosttk -pbkdf2 [-512|-old] -key "pass" -iter 10000 -salt "salt"
+```
 
 #### PBKDF2 combined with CRYPT / HMAC:
+```bash
 ./gosttk -crypt enc -cipher kuznyechik -pbkdf2 -512 -key "pass" < plaintext.ext > ciphertext.ext
 ./gosttk -mac hmac [-512] -pbkdf2 -key "pass" -salt "salt" -iter 10000 < file.ext
+```
 
 #### Bin to Hex / Hex to Bin / Dump:
+```bash
 ./gosttk -hex enc  < File.ext > File.hex
 ./gosttk -hex dec  < File.hex > File.ext
 ./gosttk -hex dump < File.ext
+```
 
 #### Random Art (public key fingerprint):
+```bash
 ./gosttk -pkey randomart -key public.pem
+```
 
 ## TLS 1.3
 
-Cross-platform hybrid cryptography tool for shared key agreement (VKO), digital signature, PEM key/certificate management, and TLS 1.3 with GOST cipher suites (RFC 9367) for small or embedded systems. The TLS layer uses tls.GOSTInstall() from the patched crypto/tls in the local toolchain; keys and certificates are always in PEM format.
+Cross-platform hybrid cryptography tool for shared key agreement (VKO), digital signature, PEM key/certificate management, and **TLS 1.3** with GOST cipher suites (RFC 9367) for small or embedded systems. The TLS layer uses `tls.GOSTInstall()` from the patched `crypto/tls` in the local toolchain; keys and certificates are always in PEM format.
 
 ## Algorithms
 
@@ -256,11 +294,11 @@ Cryptographic Functions:
 Non-cryptographic Functions:
 
    * Privacy-Enhanced Mail (PEM format, encrypted with Kuznyechik-CBC)
-   * RandomArt (OpenSSH-like, in keygen and -pkey randomart)
+   * RandomArt (OpenSSH-like, in `keygen` and `-pkey randomart`)
 
 ## Usage
 
- -512
+<pre> -512
        Key length: 256 or 512. (default 256)
  -cert string
        Certificate name. (default "Certificate.pem")
@@ -284,44 +322,57 @@ Non-cryptographic Functions:
  -signature string
        Input signature. (verification only)
  -tcp string
-       Encrypted TCP/IP Transfer Protocol. [server|ip|client]
+       Encrypted TCP/IP Transfer Protocol. [server|ip|client]</pre>
 
 ## Examples
 
 #### Asymmetric GOST 2012 keypair generation:
+```bash
 ./gosttk -pkey keygen [-512] [-paramset B] [-pwd "pass"]
-
+```
 RandomArt of the generated public key is printed to stdout.
 
 #### Parse keys info:
+```bash
 ./gosttk -pkey [text|modulus] [-pwd "pass"] -key private.pem
 ./gosttk -pkey [text|modulus] -key public.pem
 ./gosttk -pkey randomart -key public.pem
+```
 
 #### Digital signature:
+```bash
 ./gosttk -pkey sign   -key private.pem [-pwd "pass"] < file.ext > sign.txt
 sign=$(cat sign.txt | awk '{print $2}')
 ./gosttk -pkey verify -key public.pem -signature $sign < file.ext
 echo $?
+```
 
 #### VKO shared key agreement:
+```bash
 ./gosttk -pkey derive -key private.pem -pub peerkey.pem
 # or:
 ./gosttk -pkey vko    -key private.pem -pub peerkey.pem
+```
 
 #### Generate certificate:
+```bash
 ./gosttk -pkey certgen -key private.pem [-pwd "pass"] [-cert "output.ext"]
+```
 
 #### Parse certificate info:
+```bash
 ./gosttk -pkey [text|modulus] -cert certificate.pem
+```
 
 #### TLS 1.3 layer (TCP/IP):
+```bash
 ./gosttk -tcp ip > PubIP.txt
 ./gosttk -tcp server -cert certificate.pem -key private.pem [-ipport "8081"]
 ./gosttk -tcp client -cert certificate.pem -key private.pem [-ipport "127.0.0.1:8081"]
+```
 
 ## License
 
 This project is licensed under the ISC License.
 
-##### Military-Grade Reliability. Copyright (c) 2020-2027 ALBANESE Research Lab.
+##### Military-Grade Reliability. Copyright (c) 2020-2022 ALBANESE Research Lab.
