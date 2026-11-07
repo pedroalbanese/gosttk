@@ -267,109 +267,13 @@ echo $?
 ./gosttk -pkey randomart -key public.pem
 ```
 
-## TLS 1.3
-
-Cross-platform hybrid cryptography tool for shared key agreement (VKO), digital signature, PEM key/certificate management, and **TLS 1.3** with GOST cipher suites (RFC 9367) for small or embedded systems. The TLS layer uses `tls.GOSTInstall()` from the patched `crypto/tls` in the local toolchain; keys and certificates are always in PEM format.
-
-## Algorithms
-
-  - GOST R 34.10-2012 public key signature function (RFC 7091)
-  - VKO GOST R 34.10-2012 key agreement function (RFC 7836)
-  - GOST R 34.11-2012 Streebog hash function 256/512-bit (RFC 6986)
-  - GOST R 34.12-2015 128-bit block cipher Kuznyechik (RFC 7801)
-  - GOST R 34.12-2015 64-bit block cipher Magma (RFC 8891)
-  - GOST cipher suites for TLS 1.3 (RFC 9367)
-
-### Supported ParamSets:
-  - GOST R 34.10-2012 256-bit: A, B, C, D
-  - GOST R 34.10-2012 512-bit: A, B
-
-## Features
-Cryptographic Functions:
-
-   * Digital Signature (ECDSA-like)
-   * VKO Shared Key Agreement (ECDH)
-   * TLS 1.3 (Transport Layer Security, default)
-
-Non-cryptographic Functions:
-
-   * Privacy-Enhanced Mail (PEM format, encrypted with Kuznyechik-CBC)
-   * RandomArt (OpenSSH-like, in `keygen` and `-pkey randomart`)
-
-## Usage
-
-<pre> -512
-       Key length: 256 or 512. (default 256)
- -cert string
-       Certificate name. (default "Certificate.pem")
- -ipport string
-       Local Port/remote's side Public IP:Port.
- -key string
-       Private/Public key, depending on operation.
- -paramset string
-       Elliptic curve ParamSet: A, B, C, D. (default "A")
- -pkey string
-       Generate keypair, Derive shared secret (vko), Sign and Verify, Certificate generation, Key/cert inspection.
-       [keygen|certgen|derive|vko|sign|verify|text|modulus|randomart]
- -private string
-       Private key path. (for keypair generation) (default "Private.pem")
- -public string
-       Public key path. (for keypair generation) (default "Public.pem")
- -pub string
-       Remote's side public key. (for derive/vko)
- -pwd string
-       Password. (for Private key PEM encryption)
- -signature string
-       Input signature. (verification only)
- -tcp string
-       Encrypted TCP/IP Transfer Protocol. [server|ip|client]</pre>
-
-## Examples
-
-#### Asymmetric GOST 2012 keypair generation:
-```bash
-./gosttk -pkey keygen [-512] [-paramset B] [-pwd "pass"]
-```
-RandomArt of the generated public key is printed to stdout.
-
-#### Parse keys info:
-```bash
-./gosttk -pkey [text|modulus] [-pwd "pass"] -key private.pem
-./gosttk -pkey [text|modulus] -key public.pem
-./gosttk -pkey randomart -key public.pem
-```
-
-#### Digital signature:
-```bash
-./gosttk -pkey sign   -key private.pem [-pwd "pass"] < file.ext > sign.txt
-sign=$(cat sign.txt | awk '{print $2}')
-./gosttk -pkey verify -key public.pem -signature $sign < file.ext
-echo $?
-```
-
-#### VKO shared key agreement:
-```bash
-./gosttk -pkey derive -key private.pem -pub peerkey.pem
-# or:
-./gosttk -pkey vko    -key private.pem -pub peerkey.pem
-```
-
-#### Generate certificate:
-```bash
-./gosttk -pkey certgen -key private.pem [-pwd "pass"] [-cert "output.ext"]
-```
-
-#### Parse certificate info:
-```bash
-./gosttk -pkey [text|modulus] -cert certificate.pem
-```
-
-#### TLS 1.3 layer (TCP/IP):
+#### TLS 1.3 layer (TCP/IP, GOST cipher suites):
 ```bash
 ./gosttk -tcp ip > PubIP.txt
 ./gosttk -tcp server -cert certificate.pem -key private.pem [-ipport "8081"]
 ./gosttk -tcp client -cert certificate.pem -key private.pem [-ipport "127.0.0.1:8081"]
 ```
+The TLS layer uses `tls.GOSTInstall()` from the patched `crypto/tls` in the local toolchain; keys and certificates are always in PEM format.
 
 ## License
 
