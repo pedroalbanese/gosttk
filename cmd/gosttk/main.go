@@ -1,7 +1,18 @@
 // SPDX-License-Identifier: ISC
 //
-// gosttk.go — Unified gosttk + gostls.
-// TLS 1.3 with GOST cipher suites as default.
+// Copyright (c) 2026 Pedro F. Albanese <pedroalbanese@hotmail.com>
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+// WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+// MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+// ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+// WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+// ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+// OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 package main
 
@@ -10,6 +21,7 @@ import (
 	"bytes"
 	"crypto/cipher"
 	"crypto/hmac"
+	"crypto/md5"
 	"crypto/rand"
 	"crypto/sha1"
 	"crypto/tls"
@@ -29,9 +41,9 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
-	"unsafe"
 
 	"golang.org/x/crypto/hkdf"
 	"golang.org/x/crypto/pbkdf2"
@@ -48,10 +60,11 @@ import (
 	"github.com/pedroalbanese/gogost/gost3412128"
 	"github.com/pedroalbanese/gogost/gost341264"
 	"github.com/pedroalbanese/gogost/mgm"
+	"github.com/pedroalbanese/gopass"
 	"github.com/pedroalbanese/randomart"
 )
 
-const Version = "1.2.8"
+const Version = "1.2.9"
 
 var (
 	bit       = flag.Bool("512", false, "Bit length: 256 or 512. (default 256)")
@@ -62,16 +75,14 @@ var (
 	info      = flag.String("info", "", "Associated data, additional info. (for HKDF and AEAD encryption)")
 	iter      = flag.Int("iter", 1, "Iterations. (for PBKDF2 only)")
 	kdf       = flag.Int("hkdf", 0, "HMAC-based key derivation function with a given output bit length.")
-	key       = flag.String("key", "", "Private/Public key, password or HMAC key, depending on operation.")
+	key       = flag.String("key", "", "Private key path (in) or private key output path (keygen).")
 	mac       = flag.String("mac", "", "Compute hash-based/cipher-based message authentication code.")
 	mode      = flag.String("mode", "MGM", "Mode of operation: MGM, CFB8, CTR or OFB.")
 	old       = flag.Bool("old", false, "Use legacy GOST R 34.11-94 hash.")
 	paramset  = flag.String("paramset", "A", "Elliptic curve ParamSet: A, B, C, D. (for gost89: A, B, C, D, Z)")
 	pbkdf     = flag.Bool("pbkdf2", false, "Password-based key derivation function 2.")
 	pkey      = flag.String("pkey", "", "Generate keypair, Derive shared secret (vko), Sign and Verify.")
-	priv      = flag.String("private", "Private.pem", "Private key path. (for keypair generation)")
-	pub       = flag.String("public", "Public.pem", "Public key path. (for keypair generation)")
-	public    = flag.String("pub", "", "Remote's side public key.")
+	pub       = flag.String("pub", "", "Public key path (in for derive/vko, out for keygen).")
 	pwd       = flag.String("pass", "", "Password. (for Private key PEM encryption)")
 	random    = flag.Int("rand", 0, "Generate random cryptographic key with a given output bit length.")
 	recursive = flag.Bool("recursive", false, "Process directories recursively. (for DIGEST command only)")
@@ -83,6 +94,15 @@ var (
 	cert      = flag.String("cert", "Certificate.pem", "Certificate name.")
 	vector    = flag.String("iv", "", "Initialization vector. (for non-AEAD symmetric encryption)")
 	version   = flag.Bool("version", false, "Print version information.")
+	root      = flag.String("root", "", "Root CA Certificate path.")
+	crl       = flag.String("crl", "", "Certificate Revocation List path.")
+	subj      = flag.String("subj", "", "Subject: Identity. (Example: \"/CN=/OU=/O=/ST=/L=/C=/emailAddress=\")")
+	days      = flag.Int("days", 0, "Defines the validity of the certificate from the date of creation.")
+	isca      = flag.Bool("isca", false, "The requested CSR is for a Certificate Authority (CA).")
+)
+
+var (
+	name, number, country, province, locality, organization, organizationunit, street, email, postalcode string
 )
 
 var (
@@ -94,8 +114,224 @@ var (
 	oidStepCertificateAuthority = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 37476, 9000, 64, 2}
 )
 
+// ===========================================================================
+// PEM encryption (RFC 1423) — GOST only
+// ===========================================================================
+
+type PEMCipher int
+
+const (
+	_ PEMCipher = iota
+	PEMCipherGOST
+)
+
+type rfc1423Algo struct {
+	cipher     PEMCipher
+	name       string
+	cipherFunc func(key []byte) (cipher.Block, error)
+	keySize    int
+	blockSize  int
+}
+
+var rfc1423Algos = []rfc1423Algo{{
+	cipher: PEMCipherGOST,
+	name:   "KUZNECHIK-CBC",
+	cipherFunc: func(key []byte) (cipher.Block, error) {
+		if len(key) != gost3412128.KeySize {
+			return nil, errors.New("x509: invalid Kuznyechik key size")
+		}
+		return gost3412128.NewCipher(key), nil
+	},
+	keySize:   gost3412128.KeySize,
+	blockSize: gost3412128.BlockSize,
+},
+}
+
+func (c rfc1423Algo) deriveKey(password, salt []byte) []byte {
+	hash := md5.New()
+	out := make([]byte, c.keySize)
+	var digest []byte
+
+	for i := 0; i < len(out); i += len(digest) {
+		hash.Reset()
+		hash.Write(digest)
+		hash.Write(password)
+		hash.Write(salt)
+		digest = hash.Sum(digest[:0])
+		copy(out[i:], digest)
+	}
+	return out
+}
+
+func IsEncryptedPEMBlock(b *pem.Block) bool {
+	_, ok := b.Headers["DEK-Info"]
+	return ok
+}
+
+var IncorrectPasswordError = errors.New("x509: decryption password incorrect")
+
+func DecryptPEMBlock(b *pem.Block, password []byte) ([]byte, error) {
+	dek, ok := b.Headers["DEK-Info"]
+	if !ok {
+		return nil, errors.New("x509: no DEK-Info header in block")
+	}
+
+	idx := strings.Index(dek, ",")
+	if idx == -1 {
+		return nil, errors.New("x509: malformed DEK-Info header")
+	}
+
+	mode, hexIV := dek[:idx], dek[idx+1:]
+	ciph := cipherByName(mode)
+	if ciph == nil {
+		return nil, errors.New("x509: unknown encryption mode")
+	}
+	iv, err := hex.DecodeString(hexIV)
+	if err != nil {
+		return nil, err
+	}
+	if len(iv) != ciph.blockSize {
+		return nil, errors.New("x509: incorrect IV size")
+	}
+
+	key := ciph.deriveKey(password, iv[:8])
+	block, err := ciph.cipherFunc(key)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(b.Bytes)%block.BlockSize() != 0 {
+		return nil, errors.New("x509: encrypted PEM data is not a multiple of the block size")
+	}
+
+	data := make([]byte, len(b.Bytes))
+	dec := cipher.NewCBCDecrypter(block, iv)
+	dec.CryptBlocks(data, b.Bytes)
+
+	dlen := len(data)
+	if dlen == 0 || dlen%ciph.blockSize != 0 {
+		return nil, errors.New("x509: invalid padding")
+	}
+	last := int(data[dlen-1])
+	if dlen < last {
+		return nil, IncorrectPasswordError
+	}
+	if last == 0 || last > ciph.blockSize {
+		return nil, IncorrectPasswordError
+	}
+	for _, val := range data[dlen-last:] {
+		if int(val) != last {
+			return nil, IncorrectPasswordError
+		}
+	}
+	return data[:dlen-last], nil
+}
+
+func EncryptPEMBlock(rand io.Reader, blockType string, data, password []byte, alg PEMCipher) (*pem.Block, error) {
+	ciph := cipherByKey(alg)
+	if ciph == nil {
+		return nil, errors.New("x509: unknown encryption mode")
+	}
+	iv := make([]byte, ciph.blockSize)
+	if _, err := io.ReadFull(rand, iv); err != nil {
+		return nil, errors.New("x509: cannot generate IV: " + err.Error())
+	}
+	key := ciph.deriveKey(password, iv[:8])
+	block, err := ciph.cipherFunc(key)
+	if err != nil {
+		return nil, err
+	}
+	enc := cipher.NewCBCEncrypter(block, iv)
+	pad := ciph.blockSize - len(data)%ciph.blockSize
+	encrypted := make([]byte, len(data), len(data)+pad)
+	copy(encrypted, data)
+	for i := 0; i < pad; i++ {
+		encrypted = append(encrypted, byte(pad))
+	}
+	enc.CryptBlocks(encrypted, encrypted)
+
+	return &pem.Block{
+		Type: blockType,
+		Headers: map[string]string{
+			"Proc-Type": "4,ENCRYPTED",
+			"DEK-Info":  ciph.name + "," + hex.EncodeToString(iv),
+		},
+		Bytes: encrypted,
+	}, nil
+}
+
+func cipherByName(name string) *rfc1423Algo {
+	for i := range rfc1423Algos {
+		alg := &rfc1423Algos[i]
+		if alg.name == name {
+			return alg
+		}
+	}
+	return nil
+}
+
+func cipherByKey(key PEMCipher) *rfc1423Algo {
+	for i := range rfc1423Algos {
+		alg := &rfc1423Algos[i]
+		if alg.cipher == key {
+			return alg
+		}
+	}
+	return nil
+}
+
+// ===========================================================================
+// General helpers
+// ===========================================================================
+
 func handleConnection(c net.Conn) {
 	log.Printf("Client(TLS) %v connected via secure channel.", c.RemoteAddr())
+}
+
+// stdinIsPipeOrFile reports whether os.Stdin is a pipe or regular file
+// (data can be read). Returns false for a terminal.
+func stdinIsPipeOrFile() bool {
+	fi, err := os.Stdin.Stat()
+	if err != nil {
+		return false
+	}
+	mode := fi.Mode()
+	return mode&os.ModeCharDevice == 0 || mode.IsRegular()
+}
+
+// openInput returns an io.Reader from STDIN when it's a pipe/file,
+// otherwise from the first positional argument (flag.Arg(0)), otherwise
+// logs a fatal error.
+func openInput() io.Reader {
+	if stdinIsPipeOrFile() {
+		return os.Stdin
+	}
+	if flag.Arg(0) != "" {
+		f, err := os.Open(flag.Arg(0))
+		if err != nil {
+			log.Fatal(err)
+		}
+		return f
+	}
+	log.Fatal("no input: pipe data via STDIN or pass a file as the first positional argument")
+	return nil
+}
+
+// readPassword reads a password using gopass.
+// If masked is true, asterisks are echoed ('***'); otherwise nothing is echoed.
+// The prompt itself must be printed by the caller.
+func readPassword(masked bool) string {
+	var pw []byte
+	var err error
+	if masked {
+		pw, err = gopass.GetPasswdMasked()
+	} else {
+		pw, err = gopass.GetPasswd()
+	}
+	if err != nil {
+		log.Fatal(err)
+	}
+	return string(pw)
 }
 
 func hashFactory() func() hash.Hash {
@@ -125,6 +361,10 @@ func gost89Sbox() *gost28147.Sbox {
 	}
 }
 
+// ===========================================================================
+// main
+// ===========================================================================
+
 func main() {
 	flag.Parse()
 
@@ -135,7 +375,7 @@ func main() {
 	}
 
 	if *version {
-		fmt.Println(Version)
+		fmt.Printf("GOST Toolkit v%s 07 Nov 2026\n", Version)
 		return
 	}
 
@@ -146,21 +386,22 @@ func main() {
 	}
 
 	if *random != 0 && (*random == 64 || *random == 128 || *random == 256 || *random == 512) {
-		var key []byte
+		var keyRaw []byte
 		var err error
-		key = make([]byte, *random/8)
-		_, err = io.ReadFull(rand.Reader, key)
+		keyRaw = make([]byte, *random/8)
+		_, err = io.ReadFull(rand.Reader, keyRaw)
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println(hex.EncodeToString(key))
+		fmt.Println(hex.EncodeToString(keyRaw))
 		os.Exit(0)
 	} else if *random != 0 && (*random != 64 && *random != 128 && *random != 256 && *random != 512) {
 		log.Fatal("RAND must have 64/128/256/512-bit.")
 	}
 
 	if *encode == "enc" || *encode == "encode" {
-		b, err := ioutil.ReadAll(os.Stdin)
+		in := openInput()
+		b, err := ioutil.ReadAll(in)
 		if len(b) == 0 {
 			os.Exit(0)
 		}
@@ -174,10 +415,9 @@ func main() {
 	}
 
 	if *encode == "dec" || *encode == "decode" {
-		var err error
+		in := openInput()
 		buf := bytes.NewBuffer(nil)
-		data := os.Stdin
-		io.Copy(buf, data)
+		io.Copy(buf, in)
 		b := strings.TrimSuffix(string(buf.Bytes()), "\r\n")
 		b = strings.TrimSuffix(string(b), "\n")
 		if len(b) == 0 {
@@ -186,12 +426,11 @@ func main() {
 		if len(b) < 2 {
 			os.Exit(0)
 		}
-		if (len(b)%2 != 0) || (err != nil) {
-			log.Fatal(err)
+		if len(b)%2 != 0 {
+			log.Fatal("invalid hex string: odd length")
 		}
 		o := make([]byte, hex.DecodedLen(len(b)))
-		_, err = hex.Decode(o, []byte(b))
-		if err != nil {
+		if _, err := hex.Decode(o, []byte(b)); err != nil {
 			log.Fatal(err)
 		}
 		os.Stdout.Write(o)
@@ -199,9 +438,9 @@ func main() {
 	}
 
 	if *encode == "dump" {
+		in := openInput()
 		buf := bytes.NewBuffer(nil)
-		data := os.Stdin
-		io.Copy(buf, data)
+		io.Copy(buf, in)
 		b := strings.TrimSuffix(string(buf.Bytes()), "\r\n")
 		b = strings.TrimSuffix(string(b), "\n")
 		dump := hex.Dump([]byte(b))
@@ -221,41 +460,41 @@ func main() {
 		} else {
 			keyHex = *key
 		}
-		var key []byte
+		var keyBytes []byte
 		var err error
 		if keyHex == "" {
-			key = make([]byte, 32)
-			_, err = io.ReadFull(rand.Reader, key)
+			keyBytes = make([]byte, 32)
+			_, err = io.ReadFull(rand.Reader, keyBytes)
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Fprintln(os.Stderr, "Key=", hex.EncodeToString(key))
+			fmt.Fprintln(os.Stderr, "Key=", hex.EncodeToString(keyBytes))
 		} else {
-			key, err = hex.DecodeString(keyHex)
+			keyBytes, err = hex.DecodeString(keyHex)
 			if err != nil {
 				log.Fatal(err)
 			}
-			if len(key) != 32 {
-				log.Fatal(err)
+			if len(keyBytes) != 32 {
+				log.Fatal("MGM requires a 32-byte (256-bit) key")
 			}
 		}
 
+		in := openInput()
 		buf := bytes.NewBuffer(nil)
-		data := os.Stdin
-		io.Copy(buf, data)
+		io.Copy(buf, in)
 		msg := buf.Bytes()
 
 		var c cipher.Block
 		var n int
 		switch strings.ToLower(*cipherSel) {
 		case "gost89":
-			c = gost28147.NewCipher(key, gost89Sbox())
+			c = gost28147.NewCipher(keyBytes, gost89Sbox())
 			n = 8
 		case "magma":
-			c = gost341264.NewCipher(key)
+			c = gost341264.NewCipher(keyBytes)
 			n = 8
 		case "kuznyechik":
-			c = gost3412128.NewCipher(key)
+			c = gost3412128.NewCipher(keyBytes)
 			n = 16
 		default:
 			log.Fatalf("invalid cipher: %s (use gost89, magma or kuznyechik)", *cipherSel)
@@ -322,21 +561,21 @@ func main() {
 			log.Fatalf("invalid cipher: %s (use gost89, magma or kuznyechik)", *cipherSel)
 		}
 
-		var key []byte
+		var keyBytes []byte
 		var err error
 		if keyHex == "" {
-			key = make([]byte, keySize)
-			_, err = io.ReadFull(rand.Reader, key)
+			keyBytes = make([]byte, keySize)
+			_, err = io.ReadFull(rand.Reader, keyBytes)
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Fprintln(os.Stderr, "Key=", hex.EncodeToString(key))
+			fmt.Fprintln(os.Stderr, "Key=", hex.EncodeToString(keyBytes))
 		} else {
-			key, err = hex.DecodeString(keyHex)
+			keyBytes, err = hex.DecodeString(keyHex)
 			if err != nil {
 				log.Fatal(err)
 			}
-			if len(key) != keySize {
+			if len(keyBytes) != keySize {
 				log.Fatalf("key must be %d bytes for %s", keySize, *cipherSel)
 			}
 		}
@@ -344,11 +583,11 @@ func main() {
 		var ciph cipher.Block
 		switch strings.ToLower(*cipherSel) {
 		case "gost89":
-			ciph = gost28147.NewCipher(key, gost89Sbox())
+			ciph = gost28147.NewCipher(keyBytes, gost89Sbox())
 		case "magma":
-			ciph = gost341264.NewCipher(key)
+			ciph = gost341264.NewCipher(keyBytes)
 		case "kuznyechik":
-			ciph = gost3412128.NewCipher(key)
+			ciph = gost3412128.NewCipher(keyBytes)
 		}
 
 		var iv []byte
@@ -370,10 +609,11 @@ func main() {
 			stream = cfb8.NewCFB8Decrypt(ciph, iv)
 		}
 
+		in := openInput()
 		buf := make([]byte, 64*1<<10)
 		var n int
 		for {
-			n, err = os.Stdin.Read(buf)
+			n, err = in.Read(buf)
 			if err != nil && err != io.EOF {
 				log.Fatal(err)
 			}
@@ -397,12 +637,13 @@ func main() {
 		} else {
 			keyHex = *key
 		}
-		key, err := hex.DecodeString(keyHex)
+		keyBytes, err := hex.DecodeString(keyHex)
 		if err != nil {
 			log.Fatal(err)
 		}
-		h := hmac.New(hashFactory(), key)
-		if _, err = io.Copy(h, os.Stdin); err != nil {
+		h := hmac.New(hashFactory(), keyBytes)
+		in := openInput()
+		if _, err = io.Copy(h, in); err != nil {
 			log.Fatal(err)
 		}
 		var verify bool
@@ -456,7 +697,8 @@ func main() {
 		}
 
 		h, _ := cmac.NewWithTagSize(c, tagSize)
-		io.Copy(h, os.Stdin)
+		in := openInput()
+		io.Copy(h, in)
 		var verify bool
 		if *sig != "" {
 			mac := hex.EncodeToString(h.Sum(nil))
@@ -504,10 +746,7 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			iv = *byte8(raw)
-			if err != nil {
-				log.Fatal(err)
-			}
+			copy(iv[:], raw)
 		}
 		var c *gost28147.Cipher
 		if strings.ToUpper(*paramset) == "Z" {
@@ -522,7 +761,8 @@ func main() {
 			c = gost28147.NewCipher([]byte(keyHex), &gost28147.SboxIdGost2814789CryptoProDParamSet)
 		}
 		h, _ := c.NewMAC(8, iv[:])
-		io.Copy(h, os.Stdin)
+		in := openInput()
+		io.Copy(h, in)
 		var verify bool
 		if *sig != "" {
 			mac := hex.EncodeToString(h.Sum(nil))
@@ -542,7 +782,8 @@ func main() {
 
 	if *target == "-" {
 		h := hashFactory()()
-		io.Copy(h, os.Stdin)
+		in := openInput()
+		io.Copy(h, in)
 		fmt.Println(hex.EncodeToString(h.Sum(nil)))
 		os.Exit(0)
 	}
@@ -552,7 +793,6 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-
 		for _, match := range files {
 			h := hashFactory()()
 			f, err := os.Open(match)
@@ -567,6 +807,7 @@ func main() {
 				}
 				fmt.Println(hex.EncodeToString(h.Sum(nil)), "*"+f.Name())
 			}
+			f.Close()
 		}
 		os.Exit(0)
 	}
@@ -595,6 +836,7 @@ func main() {
 						if _, err := io.Copy(h, f); err != nil {
 							log.Fatal(err)
 						}
+						f.Close()
 						fmt.Println(hex.EncodeToString(h.Sum(nil)), "*"+f.Name())
 					}
 				}
@@ -620,17 +862,14 @@ func main() {
 		scanner := bufio.NewScanner(file)
 		scanner.Split(bufio.ScanLines)
 		var txtlines []string
-
 		for scanner.Scan() {
 			txtlines = append(txtlines, scanner.Text())
 		}
-
 		var exit int
 		for _, eachline := range txtlines {
 			lines := strings.Split(string(eachline), " *")
 			if strings.Contains(string(eachline), " *") {
 				h := hashFactory()()
-
 				_, err := os.Stat(lines[1])
 				if err == nil {
 					f, err := os.Open(lines[1])
@@ -639,7 +878,6 @@ func main() {
 					}
 					io.Copy(h, f)
 					f.Close()
-
 					if hex.EncodeToString(h.Sum(nil)) == lines[0] {
 						fmt.Println(lines[1]+"\t", "OK")
 					} else {
@@ -657,38 +895,53 @@ func main() {
 
 	var err error
 
+	// -----------------------------------------------------------------
+	// keygen: prompt password with masking ('***')
+	// -----------------------------------------------------------------
 	if *pkey == "keygen" && *pwd == "" {
-		scanner := bufio.NewScanner(os.Stdin)
-		print("Password: ")
-		scanner.Scan()
-		*pwd = scanner.Text()
+		fmt.Print("Password: ")
+		*pwd = readPassword(true)
 	}
 
-	if (*pkey == "certgen" || *pkey == "keygen" || *pkey == "text" || *pkey == "modulus" || *tcpip == "server" || *tcpip == "client" || *pkey == "derive" || *pkey == "vko") && *key != "" && *pwd == "" {
+	// Prompt for password only on existing input key files (silent read).
+	if (*pkey == "certgen" || *pkey == "text" || *pkey == "modulus" || *tcpip == "server" || *tcpip == "client" || *pkey == "derive" || *pkey == "vko" || *pkey == "req" || *pkey == "x509" || *pkey == "crl" || *pkey == "sign") && *key != "" && *pwd == "" {
 		file, err := os.Open(*key)
 		if err != nil {
-			log.Println(err)
+			log.Fatal(err)
 		}
 		info, err := file.Stat()
 		if err != nil {
-			log.Println(err)
+			file.Close()
+			log.Fatal(err)
 		}
 		buf := make([]byte, info.Size())
-		file.Read(buf)
+		if _, err := file.Read(buf); err != nil {
+			file.Close()
+			log.Fatal(err)
+		}
+		file.Close()
 		var block *pem.Block
 		block, _ = pem.Decode(buf)
 		if block == nil {
-			errors.New("no valid private key found")
+			log.Fatal("no valid private key found")
 		}
 		if IsEncryptedPEMBlock(block) {
-			scanner := bufio.NewScanner(os.Stdin)
-			print("Password: ")
-			scanner.Scan()
-			*pwd = scanner.Text()
+			fmt.Print("Password: ")
+			*pwd = readPassword(false)
 		}
 	}
 
+	// -----------------------------------------------------------------
+	// keygen
+	// -----------------------------------------------------------------
 	if *pkey == "keygen" {
+		if *key == "" {
+			*key = "Private.pem"
+		}
+		if *pub == "" {
+			*pub = "Public.pem"
+		}
+
 		var gost341012PrivRaw []byte
 		var curve *gost3410.Curve
 		if *bit == false && (*paramset == "A" || *paramset == "B" || *paramset == "C" || *paramset == "D") {
@@ -716,10 +969,7 @@ func main() {
 		if _, err = io.ReadFull(rand.Reader, gost341012PrivRaw); err != nil {
 			log.Fatalf("Failed to read random for GOST private key: %s", err)
 		}
-		gost341012256Priv, err := gost3410.NewPrivateKey(
-			curve,
-			gost341012PrivRaw,
-		)
+		gost341012256Priv, err := gost3410.NewPrivateKey(curve, gost341012PrivRaw)
 		if err != nil {
 			log.Fatalf("Failed to create GOST private key: %s", err)
 		}
@@ -729,11 +979,8 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		block := &pem.Block{
-			Type:  "PRIVATE KEY",
-			Bytes: privateStream,
-		}
-		file, err := os.Create(*priv)
+		block := &pem.Block{Type: "GOST PRIVATE KEY", Bytes: privateStream}
+		file, err := os.Create(*key)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -752,14 +999,12 @@ func main() {
 				log.Fatal(err)
 			}
 		}
+		file.Close()
 		publicStream, err := x509.MarshalPKIXPublicKey(gost341012256Pub)
 		if err != nil {
 			log.Fatal(err)
 		}
-		pubblock := &pem.Block{
-			Type:  "PUBLIC KEY",
-			Bytes: publicStream,
-		}
+		pubblock := &pem.Block{Type: "PUBLIC KEY", Bytes: publicStream}
 		pubPEM := pem.EncodeToMemory(pubblock)
 		pubfile, err := os.Create(*pub)
 		if err != nil {
@@ -769,26 +1014,31 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		pubfile.Close()
 		fmt.Println(randomart.FromString(strings.ReplaceAll(string(pubPEM), "\r\n", "\n")))
 		os.Exit(0)
 	}
 
+	// -----------------------------------------------------------------
+	// derive / vko
+	// -----------------------------------------------------------------
 	if *pkey == "derive" || *pkey == "vko" {
 		var privPEM []byte
 		file, err := os.Open(*key)
 		if err != nil {
-			log.Println(err)
+			log.Fatal(err)
 		}
 		info, err := file.Stat()
 		if err != nil {
-			log.Println(err)
+			log.Fatal(err)
 		}
 		buf := make([]byte, info.Size())
 		file.Read(buf)
+		file.Close()
 		var block *pem.Block
 		block, _ = pem.Decode(buf)
 		if block == nil {
-			errors.New("no valid private key found")
+			log.Fatal("no valid private key found")
 		}
 		var privKeyBytes []byte
 		if IsEncryptedPEMBlock(block) {
@@ -796,17 +1046,20 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			privPEM = pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: privKeyBytes})
+			privPEM = pem.EncodeToMemory(&pem.Block{Type: "GOST PRIVATE KEY", Bytes: privKeyBytes})
 		} else {
 			privPEM = buf
 		}
 		var privateKeyPemBlock, _ = pem.Decode([]byte(privPEM))
 		var privKey, _ = x509.ParsePKCS8PrivateKey(privateKeyPemBlock.Bytes)
 		if err != nil {
-			log.Println(err)
+			log.Fatal(err)
 		}
 		privateKey := privKey.(*gost3410.PrivateKey)
 
+		if *pub == "" {
+			log.Fatal("-pub is required (remote's public key path)")
+		}
 		file, err = os.Open(*pub)
 		if err != nil {
 			log.Fatal(err)
@@ -817,6 +1070,7 @@ func main() {
 		}
 		buf = make([]byte, info.Size())
 		file.Read(buf)
+		file.Close()
 		block, _ = pem.Decode(buf)
 		publicInterface, err := x509.ParsePKIXPublicKey(block.Bytes)
 		if err != nil {
@@ -832,26 +1086,31 @@ func main() {
 		os.Exit(0)
 	}
 
+	// -----------------------------------------------------------------
+	// sign
+	// -----------------------------------------------------------------
 	if *pkey == "sign" {
 		var privPEM []byte
 		h := hashFactory()()
-		if _, err := io.Copy(h, os.Stdin); err != nil {
+		in := openInput()
+		if _, err := io.Copy(h, in); err != nil {
 			log.Fatal(err)
 		}
 		file, err := os.Open(*key)
 		if err != nil {
-			log.Println(err)
+			log.Fatal(err)
 		}
 		info, err := file.Stat()
 		if err != nil {
-			log.Println(err)
+			log.Fatal(err)
 		}
 		buf := make([]byte, info.Size())
 		file.Read(buf)
+		file.Close()
 		var block *pem.Block
 		block, _ = pem.Decode(buf)
 		if block == nil {
-			errors.New("no valid private key found")
+			log.Fatal("no valid private key found")
 		}
 		var privKeyBytes []byte
 		if IsEncryptedPEMBlock(block) {
@@ -859,14 +1118,14 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			privPEM = pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: privKeyBytes})
+			privPEM = pem.EncodeToMemory(&pem.Block{Type: "GOST PRIVATE KEY", Bytes: privKeyBytes})
 		} else {
 			privPEM = buf
 		}
 		var privateKeyPemBlock, _ = pem.Decode([]byte(privPEM))
 		var privKey, _ = x509.ParsePKCS8PrivateKey(privateKeyPemBlock.Bytes)
 		if err != nil {
-			log.Println(err)
+			log.Fatal(err)
 		}
 		gostKey := privKey.(*gost3410.PrivateKey)
 		signature, err := gostKey.Sign(rand.Reader, h.Sum(nil), nil)
@@ -877,9 +1136,13 @@ func main() {
 		os.Exit(0)
 	}
 
+	// -----------------------------------------------------------------
+	// verify
+	// -----------------------------------------------------------------
 	if *pkey == "verify" {
 		h := hashFactory()()
-		if _, err := io.Copy(h, os.Stdin); err != nil {
+		in := openInput()
+		if _, err := io.Copy(h, in); err != nil {
 			log.Fatal(err)
 		}
 		file, err := os.Open(*key)
@@ -892,6 +1155,7 @@ func main() {
 		}
 		buf := make([]byte, info.Size())
 		file.Read(buf)
+		file.Close()
 		block, _ := pem.Decode(buf)
 		publicInterface, err := x509.ParsePKIXPublicKey(block.Bytes)
 		if err != nil {
@@ -916,24 +1180,31 @@ func main() {
 	var PEM string
 	var b []byte
 	if *pkey == "text" || *pkey == "modulus" || *pkey == "info" || *pkey == "randomart" {
-		if *key != "" {
+		switch {
+		case *crl != "":
+			b, err = ioutil.ReadFile(*crl)
+		case *key != "":
 			b, err = ioutil.ReadFile(*key)
-			if err != nil {
-				log.Fatal(err)
-			}
-		} else if *key == "" {
+		default:
 			b, err = ioutil.ReadFile(*cert)
-			if err != nil {
-				log.Fatal(err)
-			}
 		}
-		s := string(b)
-		if strings.Contains(s, "PRIVATE") {
-			PEM = "Private"
-		} else if strings.Contains(s, "PUBLIC") {
-			PEM = "Public"
-		} else if strings.Contains(s, "CERTIFICATE") {
-			PEM = "Certificate"
+		if err != nil {
+			log.Fatal(err)
+		}
+		block, _ := pem.Decode(b)
+		if block != nil {
+			switch block.Type {
+			case "GOST PRIVATE KEY", "PRIVATE KEY":
+				PEM = "Private"
+			case "PUBLIC KEY":
+				PEM = "Public"
+			case "CERTIFICATE REQUEST":
+				PEM = "CertificateRequest"
+			case "X509 CRL", "CRL":
+				PEM = "CRL"
+			case "CERTIFICATE":
+				PEM = "Certificate"
+			}
 		}
 	}
 
@@ -948,6 +1219,7 @@ func main() {
 		}
 		buf := make([]byte, info.Size())
 		file.Read(buf)
+		file.Close()
 		fmt.Println(randomart.FromString(strings.ReplaceAll(string(buf), "\r\n", "\n")))
 	}
 
@@ -962,28 +1234,24 @@ func main() {
 		}
 		buf := make([]byte, info.Size())
 		file.Read(buf)
+		file.Close()
 		block, _ := pem.Decode(buf)
 		publicInterface, err := x509.ParsePKIXPublicKey(block.Bytes)
 		if err != nil {
 			log.Fatal(err)
 		}
-
 		if *pkey == "modulus" {
 			var publicKey = publicInterface.(*gost3410.PublicKey)
 			fmt.Printf("Public.X=%X\n", publicKey.X)
 			fmt.Printf("Public.Y=%X\n", publicKey.Y)
 			os.Exit(0)
 		}
-
 		publicKey := publicInterface.(*gost3410.PublicKey)
 		derBytes, err := x509.MarshalPKIXPublicKey(publicKey)
 		if err != nil {
-			log.Println(err)
+			log.Fatal(err)
 		}
-		block = &pem.Block{
-			Type:  "PUBLIC KEY",
-			Bytes: derBytes,
-		}
+		block = &pem.Block{Type: "PUBLIC KEY", Bytes: derBytes}
 		public := pem.EncodeToMemory(block)
 		fmt.Printf(string(public))
 		fmt.Printf("Public key:\n")
@@ -996,18 +1264,19 @@ func main() {
 		var privPEM []byte
 		file, err := os.Open(*key)
 		if err != nil {
-			log.Println(err)
+			log.Fatal(err)
 		}
 		info, err := file.Stat()
 		if err != nil {
-			log.Println(err)
+			log.Fatal(err)
 		}
 		buf := make([]byte, info.Size())
 		file.Read(buf)
+		file.Close()
 		var block *pem.Block
 		block, _ = pem.Decode(buf)
 		if block == nil {
-			errors.New("no valid private key found")
+			log.Fatal("no valid private key found")
 		}
 		var privKeyBytes []byte
 		if IsEncryptedPEMBlock(block) {
@@ -1015,14 +1284,14 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			privPEM = pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: privKeyBytes})
+			privPEM = pem.EncodeToMemory(&pem.Block{Type: "GOST PRIVATE KEY", Bytes: privKeyBytes})
 		} else {
 			privPEM = buf
 		}
 		var privateKeyPemBlock, _ = pem.Decode([]byte(privPEM))
 		var privKey, _ = x509.ParsePKCS8PrivateKey(privateKeyPemBlock.Bytes)
 		if err != nil {
-			log.Println(err)
+			log.Fatal(err)
 		}
 		gostKey := privKey.(*gost3410.PrivateKey)
 		pubKey := gostKey.Public()
@@ -1039,68 +1308,101 @@ func main() {
 		}
 		p := fmt.Sprintf("%X", gostKey.Raw())
 		fmt.Println("Private key:", p)
-
 		fmt.Printf("Public key: \n")
 		var publicKey = pubKey.(*gost3410.PublicKey)
 		fmt.Printf("   X:%X\n", publicKey.X)
 		fmt.Printf("   Y:%X\n", publicKey.Y)
-
 		var spki struct {
 			Algorithm        pkix.AlgorithmIdentifier
 			SubjectPublicKey asn1.BitString
 		}
 		_, err = asn1.Unmarshal(derBytes, &spki)
 		if err != nil {
-			log.Println(err)
+			log.Fatal(err)
 		}
 		skid := sha1.Sum(spki.SubjectPublicKey.Bytes)
 		fmt.Printf("\nSKID: %x \n", skid)
 		os.Exit(0)
 	}
 
-	if (*pkey == "modulus" || *pkey == "text" || *pkey == "info") && *cert != "" {
+	// -----------------------------------------------------------------
+	// text of CRL (must run BEFORE certificate block)
+	// -----------------------------------------------------------------
+	if *pkey == "text" && PEM == "CRL" {
+		pemData, err := ioutil.ReadFile(*crl)
+		if err != nil {
+			log.Fatal("Failed to read the CRL file:", err)
+		}
+		pemBlock, _ := pem.Decode(pemData)
+		if pemBlock == nil {
+			log.Fatal("Failed to decode the PEM block")
+		}
+		revocationList, err := x509.ParseRevocationList(pemBlock.Bytes)
+		if err != nil {
+			log.Fatal("Failed to parse the CRL:", err)
+		}
+		crlParsed, err := x509.ParseDERCRL(pemBlock.Bytes)
+		if err != nil {
+			log.Fatal("Failed to parse the CRL:", err)
+		}
+		fmt.Println("CRL:")
+		fmt.Println("    Data:")
+		fmt.Printf("        Number             : %d (%X)\n", revocationList.Number, revocationList.Number)
+		fmt.Println("        Last Update        :", crlParsed.TBSCertList.ThisUpdate)
+		fmt.Println("        Next Update        :", crlParsed.TBSCertList.NextUpdate)
+		fmt.Println("        Issuer")
+		fmt.Println("            ", crlParsed.TBSCertList.Issuer)
+		fmt.Printf("        Authority Key ID   : %x\n", getAuthorityKeyIdentifierFromCRL(revocationList))
+		fmt.Println("    Signature Algorithm:", revocationList.SignatureAlgorithm)
+		fmt.Println("    Revoked Certificates:")
+		for _, revokedCert := range revocationList.RevokedCertificates {
+			fmt.Printf("    - Serial Number: %X\n", revokedCert.SerialNumber)
+			fmt.Println("      Revocation Time:", revokedCert.RevocationTime)
+		}
+		os.Exit(0)
+	}
+
+	// -----------------------------------------------------------------
+	// text of Certificate
+	// -----------------------------------------------------------------
+	if (*pkey == "modulus" || *pkey == "text" || *pkey == "info") && PEM == "Certificate" {
 		var certPEM []byte
 		file, err := os.Open(*cert)
 		if err != nil {
-			log.Println(err)
+			log.Fatal(err)
 		}
 		info, err := file.Stat()
 		if err != nil {
-			log.Println(err)
+			log.Fatal(err)
 		}
 		buf := make([]byte, info.Size())
 		file.Read(buf)
+		file.Close()
 		certPEM = buf
 		var certPemBlock, _ = pem.Decode([]byte(certPEM))
 		var certa, _ = x509.ParseCertificate(certPemBlock.Bytes)
-
 		if *pkey == "modulus" {
 			var certaPublicKey = certa.PublicKey.(*gost3410.PublicKey)
 			fmt.Printf("Public.X=%X\n", certaPublicKey.X)
 			fmt.Printf("Public.Y=%X\n", certaPublicKey.Y)
 			os.Exit(0)
 		}
-
 		var buf2 bytes.Buffer
 		buf2.Grow(4096)
-
 		buf2.WriteString(fmt.Sprintf("Certificate:\n"))
 		buf2.WriteString(fmt.Sprintf("%4sData:\n", ""))
 		printVersion(certa.Version, &buf2)
 		buf2.WriteString(fmt.Sprintf("%8sSerial Number : %x\n", "", certa.SerialNumber))
 		buf2.WriteString(fmt.Sprintf("%8sCommonName    : %s \n", "", certa.Issuer.CommonName))
 		buf2.WriteString(fmt.Sprintf("%8sEmailAddresses: %s \n", "", certa.EmailAddresses))
-		buf2.WriteString(fmt.Sprintf("%8sIP Address    : %s \n", "", certa.IPAddresses))
-		buf2.WriteString(fmt.Sprintf("%8sDNSNames      : %s \n", "", certa.DNSNames))
 		buf2.WriteString(fmt.Sprintf("%8sIsCA          : %v \n", "", certa.IsCA))
-
 		buf2.WriteString(fmt.Sprintf("%8sIssuer\n            ", ""))
 		printName(certa.Issuer.Names, &buf2)
-
+		buf2.WriteString(fmt.Sprintf("%8sSubject\n            ", ""))
+		printName(certa.Subject.Names, &buf2)
 		buf2.WriteString(fmt.Sprintf("%8sValidity\n", ""))
 		buf2.WriteString(fmt.Sprintf("%12sNot Before: %s\n", "", certa.NotBefore.Format("Jan 2 15:04:05 2006 MST")))
 		buf2.WriteString(fmt.Sprintf("%12sNot After : %s\n", "", certa.NotAfter.Format("Jan 2 15:04:05 2006 MST")))
-
 		var certaPublicKey = certa.PublicKey.(*gost3410.PublicKey)
 		x := certaPublicKey.X.Bytes()
 		c := []byte{}
@@ -1118,15 +1420,22 @@ func main() {
 		for _, chunk := range split(strings.Trim(fmt.Sprint(splitz), "[]"), 45) {
 			buf2.WriteString(fmt.Sprintf("            %-10s            \n", strings.ReplaceAll(chunk, " ", ":")))
 		}
-
 		buf2.WriteString(fmt.Sprintf("%8sSubjectKeyId  : %x \n", "", certa.SubjectKeyId))
 		buf2.WriteString(fmt.Sprintf("%8sAuthorityKeyId: %x \n", "", certa.AuthorityKeyId))
-
 		printSignature(certa.SignatureAlgorithm, certa.Signature, &buf2)
 		fmt.Print(buf2.String())
-		os.Exit(0)
+		ok := time.Now().Before(certa.NotAfter)
+		fmt.Println("IsValid:", ok)
+		if ok {
+			os.Exit(0)
+		} else {
+			os.Exit(1)
+		}
 	}
 
+	// -----------------------------------------------------------------
+	// certgen (self-signed or CA-signed via -root)
+	// -----------------------------------------------------------------
 	if *pkey == "certgen" {
 		file, err := os.Open(*key)
 		if err != nil {
@@ -1138,12 +1447,14 @@ func main() {
 		}
 		buf := make([]byte, info.Size())
 		file.Read(buf)
+		file.Close()
 
 		var priv interface{}
-
 		var block *pem.Block
 		block, _ = pem.Decode(buf)
-
+		if block == nil {
+			log.Fatal("no valid private key found")
+		}
 		var privKeyBytes []byte
 		if IsEncryptedPEMBlock(block) {
 			privKeyBytes, err = DecryptPEMBlock(block, []byte(*pwd))
@@ -1160,69 +1471,68 @@ func main() {
 				log.Fatal(err)
 			}
 		}
-
 		gost341012256Priv := priv.(*gost3410.PrivateKey)
 		gost341012256Pub := gost341012256Priv.Public()
 
 		keyUsage := x509.KeyUsageDigitalSignature
-
 		serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 160)
 		serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 		if err != nil {
 			log.Fatalf("Failed to generate serial number: %v", err)
 		}
 
-		consensus := externalip.DefaultConsensus(nil, nil)
-		ip, _ := consensus.ExternalIP()
+		var validity string
+		if *days > 0 {
+			validity = fmt.Sprintf("%d", *days)
+		} else {
+			fmt.Print("Validity (in Days): ")
+			fmt.Scanln(&validity)
+		}
+		intVar, err := strconv.Atoi(validity)
+		if err != nil {
+			log.Fatal(err)
+		}
+		NotAfter := time.Now().AddDate(0, 0, intVar)
 
-		Mins := 1200
-		NotAfter := time.Now().Local().Add(time.Minute * time.Duration(Mins))
-
-		scanner := bufio.NewScanner(os.Stdin)
-
-		fmt.Print("CommonName: ")
-		scanner.Scan()
-		name := scanner.Text()
-
-		fmt.Print("Country: ")
-		scanner.Scan()
-		country := scanner.Text()
-
-		fmt.Print("State/Province: ")
-		scanner.Scan()
-		province := scanner.Text()
-
-		fmt.Print("Locality: ")
-		scanner.Scan()
-		locality := scanner.Text()
-
-		fmt.Print("Organization: ")
-		scanner.Scan()
-		organization := scanner.Text()
-
-		fmt.Print("OrganizationUnit: ")
-		scanner.Scan()
-		organizationunit := scanner.Text()
-
-		fmt.Print("Email: ")
-		scanner.Scan()
-		email := scanner.Text()
-
-		fmt.Print("StreetAddress: ")
-		scanner.Scan()
-		street := scanner.Text()
-
-		fmt.Print("PostalCode: ")
-		scanner.Scan()
-		postalcode := scanner.Text()
-
-		fmt.Print("SerialNumber: ")
-		scanner.Scan()
-		number := scanner.Text()
-
-		fmt.Print("AuthorityKeyId: ")
-		scanner.Scan()
-		authority, _ := hex.DecodeString(scanner.Text())
+		if *subj == "" {
+			scanner := bufio.NewScanner(os.Stdin)
+			println("You are about to be asked to enter information \nthat will be incorporated into your certificate.")
+			print("CommonName: ")
+			scanner.Scan()
+			name = scanner.Text()
+			print("Country: ")
+			scanner.Scan()
+			country = scanner.Text()
+			print("State/Province: ")
+			scanner.Scan()
+			province = scanner.Text()
+			print("Locality: ")
+			scanner.Scan()
+			locality = scanner.Text()
+			print("Organization: ")
+			scanner.Scan()
+			organization = scanner.Text()
+			print("OrganizationUnit: ")
+			scanner.Scan()
+			organizationunit = scanner.Text()
+			print("Email: ")
+			scanner.Scan()
+			email = scanner.Text()
+			print("StreetAddress: ")
+			scanner.Scan()
+			street = scanner.Text()
+			print("PostalCode: ")
+			scanner.Scan()
+			postalcode = scanner.Text()
+			print("SerialNumber: ")
+			scanner.Scan()
+			number = scanner.Text()
+		} else {
+			name, number, country, province, locality, organization, organizationunit, street, email, postalcode, err = parseSubjectString(*subj)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 
 		template := x509.Certificate{
 			SerialNumber: serialNumber,
@@ -1237,49 +1547,620 @@ func main() {
 				StreetAddress:      []string{street},
 				PostalCode:         []string{postalcode},
 			},
-			EmailAddresses: []string{email},
-
-			NotBefore: time.Now(),
-			NotAfter:  NotAfter,
-
+			EmailAddresses:        []string{email},
+			NotBefore:             time.Now(),
+			NotAfter:              NotAfter,
 			KeyUsage:              keyUsage,
 			ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 			BasicConstraintsValid: true,
-			IsCA:                  true,
-			AuthorityKeyId:        authority,
-
-			PermittedDNSDomainsCritical: true,
-			DNSNames:                    []string{ip.String()},
-			IPAddresses:                 []net.IP{net.IPv4(127, 0, 0, 1).To4(), net.ParseIP("2001:4860:0:2001::68")},
+			IsCA:                  *isca,
+		}
+		if *isca {
+			template.IsCA = true
+			template.KeyUsage |= x509.KeyUsageCertSign | x509.KeyUsageCRLSign
 		}
 
-		template.IsCA = true
-		template.KeyUsage |= x509.KeyUsageCertSign
-
-		derBytes, err := x509.CreateCertificate(
-			rand.Reader,
-			&template, &template,
-			gost341012256Pub, &gost3410.PrivateKeyReverseDigest{Prv: gost341012256Priv},
-		)
-		if err != nil {
-			log.Println(err)
+		var derBytes []byte
+		if *root != "" {
+			caData, err := ioutil.ReadFile(*root)
+			if err != nil {
+				log.Fatal(err)
+			}
+			caBlock, _ := pem.Decode(caData)
+			caCRT, err := x509.ParseCertificate(caBlock.Bytes)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if !caCRT.BasicConstraintsValid || !caCRT.IsCA {
+				log.Fatal("root certificate is not a valid CA")
+			}
+			hasher := gost34112012256.New()
+			if _, err = hasher.Write(caCRT.PublicKey.(*gost3410.PublicKey).Raw()); err != nil {
+				log.Fatal(err)
+			}
+			akid := hasher.Sum(nil)[:20]
+			template.AuthorityKeyId = akid
+			template.Issuer = caCRT.Subject
+			derBytes, err = x509.CreateCertificate(
+				rand.Reader,
+				&template, caCRT,
+				gost341012256Pub, &gost3410.PrivateKeyReverseDigest{Prv: gost341012256Priv},
+			)
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			hasher := gost34112012256.New()
+			if _, err = hasher.Write(gost341012256Pub.(*gost3410.PublicKey).Raw()); err != nil {
+				log.Fatal(err)
+			}
+			skid := hasher.Sum(nil)[:20]
+			template.SubjectKeyId = skid
+			template.AuthorityKeyId = skid
+			derBytes, err = x509.CreateCertificate(
+				rand.Reader,
+				&template, &template,
+				gost341012256Pub, &gost3410.PrivateKeyReverseDigest{Prv: gost341012256Priv},
+			)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
-
 		certfile, err := os.Create(*cert)
 		if err != nil {
-			log.Println(err)
+			log.Fatal(err)
 		}
 		pem.Encode(certfile, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
+		certfile.Close()
 		os.Exit(0)
 	}
 
-	// --- gostls: TLS 1.3 (server/client/ip) ---
+	// -----------------------------------------------------------------
+	// req (CSR)
+	// -----------------------------------------------------------------
+	if *pkey == "req" && *key != "" {
+		file, err := os.Open(*key)
+		if err != nil {
+			log.Fatal(err)
+		}
+		info, err := file.Stat()
+		if err != nil {
+			log.Fatal(err)
+		}
+		buf := make([]byte, info.Size())
+		file.Read(buf)
+		file.Close()
+		var block *pem.Block
+		block, _ = pem.Decode(buf)
+		if block == nil {
+			log.Fatal("no valid private key found")
+		}
+		var priva interface{}
+		var privKeyBytes []byte
+		if IsEncryptedPEMBlock(block) {
+			privKeyBytes, err = DecryptPEMBlock(block, []byte(*pwd))
+			if err != nil {
+				log.Fatal(err)
+			}
+			priva, err = x509.ParsePKCS8PrivateKey(privKeyBytes)
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			priva, err = x509.ParsePKCS8PrivateKey(block.Bytes)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		if *subj == "" {
+			println("You are about to be asked to enter information \nthat will be incorporated into your certificate.")
+			scanner := bufio.NewScanner(os.Stdin)
+			print("CommonName: ")
+			scanner.Scan()
+			name = scanner.Text()
+			print("Country: ")
+			scanner.Scan()
+			country = scanner.Text()
+			print("State/Province: ")
+			scanner.Scan()
+			province = scanner.Text()
+			print("Locality: ")
+			scanner.Scan()
+			locality = scanner.Text()
+			print("Organization: ")
+			scanner.Scan()
+			organization = scanner.Text()
+			print("OrganizationUnit: ")
+			scanner.Scan()
+			organizationunit = scanner.Text()
+			print("Email: ")
+			scanner.Scan()
+			email = scanner.Text()
+			print("StreetAddress: ")
+			scanner.Scan()
+			street = scanner.Text()
+			print("PostalCode: ")
+			scanner.Scan()
+			postalcode = scanner.Text()
+			print("SerialNumber: ")
+			scanner.Scan()
+			number = scanner.Text()
+		} else {
+			name, number, country, province, locality, organization, organizationunit, street, email, postalcode, err = parseSubjectString(*subj)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		var sigalg x509.SignatureAlgorithm
+		if *bit {
+			sigalg = x509.GOST512
+		} else {
+			sigalg = x509.GOST256
+		}
+		emailAddress := email
+		subjName := pkix.Name{
+			CommonName:         name,
+			SerialNumber:       number,
+			Country:            []string{country},
+			Province:           []string{province},
+			Locality:           []string{locality},
+			Organization:       []string{organization},
+			OrganizationalUnit: []string{organizationunit},
+			StreetAddress:      []string{street},
+			PostalCode:         []string{postalcode},
+		}
+		rawSubj := subjName.ToRDNSequence()
+		rawSubj = append(rawSubj, []pkix.AttributeTypeAndValue{
+			{Type: oidEmailAddress, Value: emailAddress},
+		})
+		asn1Subj, _ := asn1.Marshal(rawSubj)
+		template := x509.CertificateRequest{
+			RawSubject:         asn1Subj,
+			EmailAddresses:     []string{emailAddress},
+			SignatureAlgorithm: sigalg,
+		}
+		var output *os.File
+		if *cert == "" {
+			output = os.Stdout
+		} else {
+			file, err := os.Create(*cert)
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer file.Close()
+			output = file
+		}
+		csrBytes, _ := x509.CreateCertificateRequest(rand.Reader, &template, &gost3410.PrivateKeyReverseDigest{Prv: priva.(*gost3410.PrivateKey)})
+		pem.Encode(output, &pem.Block{Type: "CERTIFICATE REQUEST", Bytes: csrBytes})
+		os.Exit(0)
+	}
+
+	// -----------------------------------------------------------------
+	// x509 (sign CSR with CA)
+	// -----------------------------------------------------------------
+	if *pkey == "x509" && *key != "" && *root != "" && *cert != "" {
+		caPublicKeyFile, err := ioutil.ReadFile(*root)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pemBlock, _ := pem.Decode(caPublicKeyFile)
+		if pemBlock == nil {
+			log.Fatal("pem.Decode failed")
+		}
+		caCRT, err := x509.ParseCertificate(pemBlock.Bytes)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if !caCRT.BasicConstraintsValid || !caCRT.IsCA {
+			log.Fatal("root certificate is not a valid CA")
+		}
+		caPrivateKeyFile, err := ioutil.ReadFile(*key)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pemBlock, _ = pem.Decode(caPrivateKeyFile)
+		if pemBlock == nil {
+			log.Fatal("pem.Decode failed")
+		}
+		var der []byte
+		if IsEncryptedPEMBlock(pemBlock) {
+			der, err = DecryptPEMBlock(pemBlock, []byte(*pwd))
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			der = pemBlock.Bytes
+		}
+		clientCSRFile, err := ioutil.ReadFile(*cert)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pemBlock, _ = pem.Decode(clientCSRFile)
+		if pemBlock == nil {
+			log.Fatal("pem.Decode failed")
+		}
+		clientCSR, err := x509.ParseCertificateRequest(pemBlock.Bytes)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err = clientCSR.CheckSignature(); err != nil {
+			log.Fatal(err)
+		}
+		var validity string
+		if *days > 0 {
+			validity = fmt.Sprintf("%d", *days)
+		} else {
+			println("Digital certificates are valid for up to three years:")
+			fmt.Print("Validity (in Days): ")
+			fmt.Scanln(&validity)
+		}
+		intVar, err := strconv.Atoi(validity)
+		if err != nil {
+			log.Fatal(err)
+		}
+		NotAfter := time.Now().AddDate(0, 0, intVar)
+		hasher := gost34112012256.New()
+		if _, err = hasher.Write(clientCSR.PublicKey.(*gost3410.PublicKey).Raw()); err != nil {
+			log.Fatal(err)
+		}
+		spki := hasher.Sum(nil)[:20]
+		hasher = gost34112012256.New()
+		if _, err = hasher.Write(caCRT.PublicKey.(*gost3410.PublicKey).Raw()); err != nil {
+			log.Fatal(err)
+		}
+		akid := hasher.Sum(nil)[:20]
+		serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 160)
+		serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+		if err != nil {
+			log.Fatalf("Failed to generate serial number: %v", err)
+		}
+		clientCRTTemplate := x509.Certificate{
+			Signature:             clientCSR.Signature,
+			SignatureAlgorithm:    clientCSR.SignatureAlgorithm,
+			PublicKeyAlgorithm:    clientCSR.PublicKeyAlgorithm,
+			PublicKey:             clientCSR.PublicKey,
+			SerialNumber:          serialNumber,
+			Issuer:                caCRT.Subject,
+			Subject:               clientCSR.Subject,
+			SubjectKeyId:          spki,
+			EmailAddresses:        clientCSR.EmailAddresses,
+			NotBefore:             time.Now(),
+			NotAfter:              NotAfter,
+			AuthorityKeyId:        akid,
+			BasicConstraintsValid: *isca,
+			IsCA:                  *isca,
+			KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageContentCommitment | x509.KeyUsageKeyEncipherment | x509.KeyUsageDataEncipherment | x509.KeyUsageKeyAgreement | x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
+			ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		}
+		caPrivateKey, err := x509.ParsePKCS8PrivateKey(der)
+		if err != nil {
+			log.Fatal(err)
+		}
+		clientCRTRaw, err := x509.CreateCertificate(rand.Reader, &clientCRTTemplate, caCRT, clientCSR.PublicKey, &gost3410.PrivateKeyReverseDigest{Prv: caPrivateKey.(*gost3410.PrivateKey)})
+		if err != nil {
+			log.Fatal(err)
+		}
+		var output *os.File
+		if len(flag.Args()) == 0 || flag.Arg(0) == "" {
+			output = os.Stdout
+		} else {
+			file, err := os.Create(flag.Arg(0))
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer file.Close()
+			output = file
+		}
+		pem.Encode(output, &pem.Block{Type: "CERTIFICATE", Bytes: clientCRTRaw})
+		os.Exit(0)
+	}
+
+	// -----------------------------------------------------------------
+	// crl (generate CRL)
+	// -----------------------------------------------------------------
+	if *pkey == "crl" && *key != "" && *cert != "" {
+		revokedCerts := make([]pkix.RevokedCertificate, 0)
+		var inputfile io.Reader = os.Stdin
+		if len(flag.Args()) > 0 {
+			f, err := os.Open(flag.Arg(0))
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer f.Close()
+			inputfile = f
+		}
+		scanner := bufio.NewScanner(inputfile)
+		existingSerialNumbers := make(map[string]bool)
+		for scanner.Scan() {
+			serialStr := strings.TrimSpace(scanner.Text())
+			serialNumber, success := new(big.Int).SetString(serialStr, 16)
+			if !success {
+				log.Fatalf("Invalid serial number: %s", serialStr)
+			}
+			serialKey := serialNumber.String()
+			if existingSerialNumbers[serialKey] {
+				continue
+			}
+			revocationTime := time.Now()
+			revokedCert := pkix.RevokedCertificate{
+				SerialNumber:   serialNumber,
+				RevocationTime: revocationTime,
+			}
+			revokedCerts = append(revokedCerts, revokedCert)
+			existingSerialNumbers[serialKey] = true
+		}
+		if err := scanner.Err(); err != nil {
+			log.Fatal("Failed to read serials list:", err)
+		}
+		if *crl != "" {
+			existingCRLData, err := ioutil.ReadFile(*crl)
+			if err != nil {
+				log.Fatal("Failed to read the existing CRL file:", err)
+			}
+			existingCRLBlock, _ := pem.Decode(existingCRLData)
+			if existingCRLBlock == nil {
+				log.Fatal("Failed to decode the PEM block of the existing CRL")
+			}
+			existingCRL, err := x509.ParseRevocationList(existingCRLBlock.Bytes)
+			if err != nil {
+				log.Fatal("Failed to parse the existing CRL:", err)
+			}
+			for _, revokedCert := range existingCRL.RevokedCertificates {
+				serialKey := revokedCert.SerialNumber.String()
+				if existingSerialNumbers[serialKey] {
+					continue
+				}
+				revokedCerts = append(revokedCerts, revokedCert)
+				existingSerialNumbers[serialKey] = true
+			}
+		}
+		desiredLength := 80
+		randomNumber, err := rand.Int(rand.Reader, new(big.Int).Exp(big.NewInt(2), big.NewInt(int64(desiredLength)), nil))
+		if err != nil {
+			log.Fatal("Failed to generate a random number:", err)
+		}
+		issuanceTime := time.Now()
+		nextUpdateTime := time.Now().Add(time.Hour * 24 * 365)
+		revocationListTemplate := &x509.RevocationList{
+			RevokedCertificates: revokedCerts,
+			Number:              randomNumber,
+			ThisUpdate:          issuanceTime,
+			NextUpdate:          nextUpdateTime,
+		}
+		issuerKeyPEM, err := os.ReadFile(*key)
+		if err != nil {
+			log.Fatal("Failed to read private key file:", err)
+		}
+		issuerCertPEM, err := os.ReadFile(*cert)
+		if err != nil {
+			log.Fatal("Failed to read certificate file:", err)
+		}
+		keyBlock, _ := pem.Decode(issuerKeyPEM)
+		var decryptedKeyBytes []byte
+		if IsEncryptedPEMBlock(keyBlock) {
+			decryptedKeyBytes, err = DecryptPEMBlock(keyBlock, []byte(*pwd))
+			if err != nil {
+				log.Fatal("Failed to decrypt private key:", err)
+			}
+			keyBlock.Bytes = decryptedKeyBytes
+		}
+		issuerKey, err := x509.ParsePKCS8PrivateKey(keyBlock.Bytes)
+		if err != nil {
+			log.Fatal("Failed to parse private key:", err)
+		}
+		certBlock, _ := pem.Decode(issuerCertPEM)
+		if certBlock == nil {
+			log.Fatal("Failed to decode certificate")
+		}
+		issuerCert, err := x509.ParseCertificate(certBlock.Bytes)
+		if err != nil {
+			log.Fatal("Failed to parse certificate:", err)
+		}
+		crlBytes, err := x509.CreateRevocationList(rand.Reader, revocationListTemplate, issuerCert, &gost3410.PrivateKeyReverseDigest{Prv: issuerKey.(*gost3410.PrivateKey)})
+		if err != nil {
+			log.Fatal("Failed to create new CRL:", err)
+		}
+		pemBlock := &pem.Block{Type: "X509 CRL", Bytes: crlBytes}
+		var output *os.File
+		if len(flag.Args()) < 2 {
+			output = os.Stdout
+		} else {
+			file, err := os.Create(flag.Arg(1))
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer file.Close()
+			output = file
+		}
+		pem.Encode(output, pemBlock)
+		os.Exit(0)
+	}
+
+	// -----------------------------------------------------------------
+	// validate (certificate against CRL)
+	// -----------------------------------------------------------------
+	if *pkey == "validate" {
+		crlBytes, err := ioutil.ReadFile(*crl)
+		if err != nil {
+			log.Fatal("Failed to read CRL file:", err)
+		}
+		pemBlock, _ := pem.Decode(crlBytes)
+		if pemBlock == nil {
+			log.Fatal("Failed to decode CRL PEM block")
+		}
+		revocationList, err := x509.ParseRevocationList(pemBlock.Bytes)
+		if err != nil {
+			log.Fatal("Failed to parse CRL:", err)
+		}
+		certBytes, err := ioutil.ReadFile(*cert)
+		if err != nil {
+			log.Fatal("Failed to read certificate file:", err)
+		}
+		pemBlock, _ = pem.Decode(certBytes)
+		if pemBlock == nil {
+			log.Fatal("Failed to decode certificate PEM block")
+		}
+		cert, err := x509.ParseCertificate(pemBlock.Bytes)
+		if err != nil {
+			log.Fatal("Failed to parse certificate:", err)
+		}
+		isRevoked := false
+		var revocationTime time.Time
+		for _, revokedCert := range revocationList.RevokedCertificates {
+			if revokedCert.SerialNumber.Cmp(cert.SerialNumber) == 0 {
+				isRevoked = true
+				revocationTime = revokedCert.RevocationTime
+				break
+			}
+		}
+		if isRevoked {
+			fmt.Println("The certificate is revoked")
+			fmt.Println("Revocation Time:", revocationTime)
+			os.Exit(1)
+		} else {
+			fmt.Println("The certificate is not revoked")
+			os.Exit(0)
+		}
+	}
+
+	// -----------------------------------------------------------------
+	// check (verify certificate or CRL signature)
+	// -----------------------------------------------------------------
+	if *pkey == "check" && *crl == "" {
+		certPEM, err := ioutil.ReadFile(*cert)
+		if err != nil {
+			log.Fatal(err)
+		}
+		certPemBlock, _ := pem.Decode(certPEM)
+		certa, err := x509.ParseCertificate(certPemBlock.Bytes)
+		if err != nil {
+			log.Fatal(err)
+		}
+		keyPEM, err := ioutil.ReadFile(*key)
+		if err != nil {
+			log.Fatal(err)
+		}
+		keyBlock, _ := pem.Decode(keyPEM)
+		publicKey, err := x509.ParsePKIXPublicKey(keyBlock.Bytes)
+		if err != nil {
+			log.Fatal(err)
+		}
+		h := gost34112012256.New()
+		if certa.SignatureAlgorithm == x509.GOST512 {
+			h = gost34112012512.New()
+		}
+		h.Write(certa.RawTBSCertificate)
+		hashData := h.Sum(nil)
+		reverseBytes(hashData)
+		isValid, err := publicKey.(*gost3410.PublicKey).VerifyDigest(hashData, certa.Signature)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("Verified:", isValid)
+		if isValid {
+			os.Exit(0)
+		} else {
+			os.Exit(1)
+		}
+	}
+
+	if *pkey == "check" && *crl != "" {
+		crlBytes, err := ioutil.ReadFile(*crl)
+		if err != nil {
+			log.Fatal("Failed to read CRL file:", err)
+		}
+		pemBlock, _ := pem.Decode(crlBytes)
+		if pemBlock == nil {
+			log.Fatal("Failed to decode CRL PEM block")
+		}
+		revocationList, err := x509.ParseRevocationList(pemBlock.Bytes)
+		if err != nil {
+			log.Fatal("Failed to parse CRL:", err)
+		}
+		crlParsed, err := x509.ParseDERCRL(pemBlock.Bytes)
+		if err != nil {
+			log.Fatal("Failed to parse CRL:", err)
+		}
+		issuerCertBytes, err := ioutil.ReadFile(*cert)
+		if err != nil {
+			log.Fatal("Failed to read issuer's certificate file:", err)
+		}
+		issuerCertBlock, _ := pem.Decode(issuerCertBytes)
+		if issuerCertBlock == nil {
+			log.Fatal("Failed to decode PEM block of issuer's certificate")
+		}
+		issuerCert, err := x509.ParseCertificate(issuerCertBlock.Bytes)
+		if err != nil {
+			log.Fatal("Failed to parse issuer's certificate:", err)
+		}
+		err = issuerCert.CheckCRLSignature(crlParsed)
+		if err != nil {
+			fmt.Println("Verified: false:", err)
+			os.Exit(1)
+		}
+		fmt.Println("Verified: true")
+		_ = revocationList
+		os.Exit(0)
+	}
+
+	// -----------------------------------------------------------------
+	// text of CSR
+	// -----------------------------------------------------------------
+	if (*pkey == "text" || *pkey == "modulus") && PEM == "CertificateRequest" {
+		certPEM, err := ioutil.ReadFile(*cert)
+		if err != nil {
+			log.Fatal(err)
+		}
+		certPemBlock, _ := pem.Decode(certPEM)
+		certa, err := x509.ParseCertificateRequest(certPemBlock.Bytes)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if *pkey == "modulus" {
+			var certaPublicKey = certa.PublicKey.(*gost3410.PublicKey)
+			fmt.Printf("Public.X=%X\n", certaPublicKey.X)
+			fmt.Printf("Public.Y=%X\n", certaPublicKey.Y)
+			os.Exit(0)
+		}
+		var certaPublicKey = certa.PublicKey.(*gost3410.PublicKey)
+		var buf2 bytes.Buffer
+		buf2.Grow(4096)
+		buf2.WriteString(fmt.Sprintf("Certificate Request:\n"))
+		buf2.WriteString(fmt.Sprintf("%4sData:\n", ""))
+		printVersion(certa.Version, &buf2)
+		buf2.WriteString(fmt.Sprintf("%8sCommonName    : %s \n", "", certa.Subject.CommonName))
+		buf2.WriteString(fmt.Sprintf("%8sEmailAddresses: %s \n", "", certa.EmailAddresses))
+		buf2.WriteString(fmt.Sprintf("%8sCurve         : %s \n", "", certa.PublicKey.(*gost3410.PublicKey).C.Name))
+		buf2.WriteString(fmt.Sprintf("%8sSubject\n            ", ""))
+		printName(certa.Subject.Names, &buf2)
+		x := certaPublicKey.X.Bytes()
+		c := []byte{}
+		c = append(c, x...)
+		buf2.WriteString(fmt.Sprintf("%8sPub.X\n", ""))
+		splitz := SplitSubN(hex.EncodeToString(c), 2)
+		for _, chunk := range split(strings.Trim(fmt.Sprint(splitz), "[]"), 45) {
+			buf2.WriteString(fmt.Sprintf("            %-10s            \n", strings.ReplaceAll(chunk, " ", ":")))
+		}
+		y := certaPublicKey.Y.Bytes()
+		c = []byte{}
+		c = append(c, y...)
+		buf2.WriteString(fmt.Sprintf("%8sPub.Y\n", ""))
+		splitz = SplitSubN(hex.EncodeToString(c), 2)
+		for _, chunk := range split(strings.Trim(fmt.Sprint(splitz), "[]"), 45) {
+			buf2.WriteString(fmt.Sprintf("            %-10s            \n", strings.ReplaceAll(chunk, " ", ":")))
+		}
+		printSignature(certa.SignatureAlgorithm, certa.Signature, &buf2)
+		fmt.Print(buf2.String())
+		os.Exit(0)
+	}
+
+	// -----------------------------------------------------------------
+	// TLS 1.3 (server/client/ip)
+	// -----------------------------------------------------------------
 	if *tcpip == "server" || *tcpip == "client" {
 		var certPEM []byte
 		var privPEM []byte
-
 		tls.GOSTInstall()
-
 		if *key == "" {
 			var priv interface{}
 			var err error
@@ -1295,22 +2176,15 @@ func main() {
 				log.Fatalf("Failed to create GOST private key: %s", err)
 			}
 			private := priv.(*gost3410.PrivateKey)
-			public := private.Public()
-
+			publicKey := private.Public()
 			keyUsage := x509.KeyUsageDigitalSignature
-
 			serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 			serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 			if err != nil {
 				log.Fatalf("Failed to generate serial number: %v", err)
 			}
-
-			consensus := externalip.DefaultConsensus(nil, nil)
-			ip, _ := consensus.ExternalIP()
-
 			Mins := 12
 			NotAfter := time.Now().Local().Add(time.Minute * time.Duration(Mins))
-
 			template := x509.Certificate{
 				SerialNumber: serialNumber,
 				Subject: pkix.Name{
@@ -1321,78 +2195,66 @@ func main() {
 					Organization:       []string{""},
 					OrganizationalUnit: []string{""},
 				},
-				EmailAddresses: []string{"pedroalbanese@hotmail.com"},
-
-				NotBefore: time.Now(),
-				NotAfter:  NotAfter,
-
+				EmailAddresses:        []string{"pedroalbanese@hotmail.com"},
+				NotBefore:             time.Now(),
+				NotAfter:              NotAfter,
 				KeyUsage:              keyUsage,
 				ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 				BasicConstraintsValid: true,
 				IsCA:                  true,
-
-				PermittedDNSDomainsCritical: true,
-				DNSNames:                    []string{ip.String()},
-				IPAddresses:                 []net.IP{net.IPv4(127, 0, 0, 1).To4(), net.ParseIP("2001:4860:0:2001::68")},
 			}
-
 			template.IsCA = true
 			template.KeyUsage |= x509.KeyUsageCertSign
-
-			derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, public, &gost3410.PrivateKeyReverseDigest{Prv: private})
+			derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, publicKey, &gost3410.PrivateKeyReverseDigest{Prv: private})
 			if err != nil {
 				log.Fatalf("Failed to create certificate: %v", err)
 			}
-
 			certPEM = pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
 			privBytes, err := x509.MarshalPKCS8PrivateKey(priv)
 			if err != nil {
 				log.Fatalf("Unable to marshal private key: %v", err)
 			}
-			privPEM = pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: privBytes})
+			privPEM = pem.EncodeToMemory(&pem.Block{Type: "GOST PRIVATE KEY", Bytes: privBytes})
 		} else {
 			file, err := os.Open(*key)
 			if err != nil {
-				log.Println(err)
+				log.Fatal(err)
 			}
 			info, err := file.Stat()
 			if err != nil {
-				log.Println(err)
+				log.Fatal(err)
 			}
 			buf := make([]byte, info.Size())
 			file.Read(buf)
-
+			file.Close()
 			var block *pem.Block
 			block, _ = pem.Decode(buf)
-
 			if block == nil {
-				errors.New("no valid private key found")
+				log.Fatal("no valid private key found")
 			}
-
 			var privKeyBytes []byte
 			if IsEncryptedPEMBlock(block) {
 				privKeyBytes, err = DecryptPEMBlock(block, []byte(*pwd))
 				if err != nil {
-					log.Println(err)
+					log.Fatal(err)
 				}
-				privPEM = pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: privKeyBytes})
+				privPEM = pem.EncodeToMemory(&pem.Block{Type: "GOST PRIVATE KEY", Bytes: privKeyBytes})
 			} else {
 				privPEM = buf
 			}
-
 			file, err = os.Open(*cert)
 			if err != nil {
-				log.Println(err)
+				log.Fatal(err)
 			}
 			info, err = file.Stat()
 			if err != nil {
-				log.Println(err)
+				log.Fatal(err)
 			}
 			buf = make([]byte, info.Size())
 			file.Read(buf)
+			file.Close()
 			certPEM = buf
 		}
-
 		if *tcpip == "server" {
 			cert, err := tls.X509KeyPair(certPEM, privPEM)
 			if err != nil {
@@ -1400,25 +2262,20 @@ func main() {
 			}
 			cfg := tls.Config{Certificates: []tls.Certificate{cert}, ClientAuth: tls.RequireAnyClientCert, MinVersion: tls.VersionTLS13, MaxVersion: tls.VersionTLS13}
 			cfg.Rand = rand.Reader
-
 			port := "8081"
 			if *iport != "" {
 				port = *iport
 			}
-
 			ln, err := tls.Listen("tcp", ":"+port, &cfg)
 			if err != nil {
 				log.Fatal(err)
 			}
-
 			fmt.Fprintln(os.Stderr, "Server(TLS) up and listening on port "+port)
-
 			conn, err := ln.Accept()
 			if err != nil {
 				log.Println(err)
 			}
 			defer ln.Close()
-
 			tlscon := conn.(*tls.Conn)
 			err = tlscon.Handshake()
 			if err != nil {
@@ -1427,7 +2284,6 @@ func main() {
 				log.Print("server: conn: Handshake completed")
 			}
 			state := tlscon.ConnectionState()
-
 			for _, v := range state.PeerCertificates {
 				derBytes, err := x509.MarshalPKIXPublicKey(v.PublicKey)
 				if err != nil {
@@ -1436,10 +2292,8 @@ func main() {
 				pubPEM := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: derBytes})
 				fmt.Printf("%s\n", pubPEM)
 			}
-
 			go handleConnection(conn)
 			fmt.Println("Connection accepted")
-
 			for {
 				message, err := bufio.NewReader(conn).ReadString('\n')
 				if err != nil {
@@ -1447,7 +2301,6 @@ func main() {
 					os.Exit(3)
 				}
 				fmt.Print("Client response: " + string(message))
-
 				reader := bufio.NewReader(os.Stdin)
 				fmt.Print("Text to be sent: ")
 				text, err := reader.ReadString('\n')
@@ -1458,19 +2311,16 @@ func main() {
 				fmt.Fprintf(conn, text+"\n")
 			}
 		}
-
 		if *tcpip == "client" {
 			cert, err := tls.X509KeyPair(certPEM, privPEM)
 			if err != nil {
 				log.Fatal(err)
 			}
 			cfg := tls.Config{Certificates: []tls.Certificate{cert}, InsecureSkipVerify: true, MinVersion: tls.VersionTLS13, MaxVersion: tls.VersionTLS13}
-
 			ipport := "127.0.0.1:8081"
 			if *iport != "" {
 				ipport = *iport
 			}
-
 			conn, err := tls.Dial("tcp", ipport, &cfg)
 			if err != nil {
 				log.Fatal(err)
@@ -1480,13 +2330,11 @@ func main() {
 				fmt.Printf("Issuer Name: %s\n", cert.Issuer)
 				fmt.Printf("Expiry: %s \n", cert.NotAfter.Format("Monday, 02-Jan-06 15:04:05 MST"))
 				fmt.Printf("Common Name: %s \n", cert.Issuer.CommonName)
-				fmt.Printf("IP Address: %s \n", cert.IPAddresses)
 			}
 			if err != nil {
 				log.Fatal(err)
 			}
 			defer conn.Close()
-
 			var b bytes.Buffer
 			for _, cert := range conn.ConnectionState().PeerCertificates {
 				err := pem.Encode(&b, &pem.Block{
@@ -1498,7 +2346,6 @@ func main() {
 				}
 			}
 			fmt.Println(b.String())
-
 			for {
 				reader := bufio.NewReader(os.Stdin)
 				fmt.Print("Text to be sent: ")
@@ -1508,7 +2355,6 @@ func main() {
 					os.Exit(3)
 				}
 				fmt.Fprintf(conn, text+"\n")
-
 				message, err := bufio.NewReader(conn).ReadString('\n')
 				if err != nil {
 					fmt.Println(err)
@@ -1527,6 +2373,9 @@ func main() {
 		os.Exit(0)
 	}
 
+	// -----------------------------------------------------------------
+	// text (key in hex)
+	// -----------------------------------------------------------------
 	if *pkey == "text" {
 		var curve *gost3410.Curve
 		var oid string
@@ -1563,13 +2412,11 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-
 			pubkey, err := privatekey.PublicKey()
 			if err != nil {
 				log.Fatal(err)
 			}
 			pubRaw := pubkey.Raw()
-
 			fmt.Println("Private Key:")
 			fmt.Println(" K:", strings.ToUpper(hex.EncodeToString(prvRaw)))
 			print(" ", len(hex.EncodeToString(prvRaw))/2, " bytes ", len(hex.EncodeToString(prvRaw))*4, " bits\n")
@@ -1580,7 +2427,6 @@ func main() {
 			fmt.Println("Public Key:")
 			fmt.Println(" X:", pubkey.X)
 			fmt.Println(" Y:", pubkey.Y)
-
 			print(" ", len(hex.EncodeToString(pubRaw))/2, " bytes ", len(hex.EncodeToString(pubRaw))*4, " bits\n")
 			splitz := SplitSubN(hex.EncodeToString(pubRaw), 2)
 			for _, chunk := range split(strings.Trim(fmt.Sprint(splitz), "[]"), 60) {
@@ -1601,9 +2447,7 @@ func main() {
 				log.Fatal(err)
 			}
 			pubRaw := pubkey.Raw()
-
 			fmt.Println("Private Key:")
-
 			fmt.Println(" K:", strings.ToUpper(hex.EncodeToString(prvRaw)))
 			print(" ", len(*key)/2, " bytes ", len(*key)*4, " bits\n")
 			splitx := SplitSubN(*key, 2)
@@ -1625,7 +2469,6 @@ func main() {
 
 	if *pbkdf == true {
 		prvRaw := pbkdf2.Key([]byte(*key), []byte(*salt), *iter, 32, hashFactory())
-
 		fmt.Println(hex.EncodeToString(prvRaw))
 		os.Exit(0)
 	}
@@ -1640,9 +2483,12 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Nenhum comando reconhecido.
 	flag.PrintDefaults()
 }
+
+// ===========================================================================
+// Helpers
+// ===========================================================================
 
 func Hkdf(master, salt, info []byte) ([128]byte, error) {
 	hkdf := hkdf.New(hashFactory(), master, salt, info)
@@ -1653,17 +2499,9 @@ func Hkdf(master, salt, info []byte) ([128]byte, error) {
 	return result, err
 }
 
-func byte8(s []byte) (a *[8]byte) {
-	if len(a) <= len(s) {
-		a = (*[len(a)]byte)(unsafe.Pointer(&s[0]))
-	}
-	return a
-}
-
 func SplitSubN(s string, n int) []string {
 	sub := ""
 	subs := []string{}
-
 	runes := bytes.Runes([]byte(s))
 	l := len(runes)
 	for i, r := range runes {
@@ -1675,7 +2513,6 @@ func SplitSubN(s string, n int) []string {
 			subs = append(subs, sub)
 		}
 	}
-
 	return subs
 }
 
@@ -1686,7 +2523,6 @@ func split(s string, size int) []string {
 			size = len(s)
 		}
 		ss, s = append(ss, s[:size]), s[size:]
-
 	}
 	return ss
 }
@@ -1759,4 +2595,76 @@ func printSignature(sigAlgo x509.SignatureAlgorithm, sig []byte, buf *bytes.Buff
 		}
 	}
 	buf.WriteString("\n")
+}
+
+func parseSubjectString(subject string) (name, number, country, province, locality, organization, organizationunit, street, email, postalcode string, err error) {
+	parts := strings.Split(subject, "/")
+	found := false
+	for _, part := range parts {
+		if part == "" {
+			continue
+		}
+		kv := strings.SplitN(part, "=", 2)
+		if len(kv) != 2 {
+			return "", "", "", "", "", "", "", "", "", "", errors.New("invalid subject string format: missing '=' in " + part)
+		}
+		found = true
+		key := kv[0]
+		value := kv[1]
+		switch key {
+		case "C":
+			country = value
+		case "ST":
+			province = value
+		case "L":
+			locality = value
+		case "O":
+			organization = value
+		case "OU":
+			organizationunit = value
+		case "CN":
+			name = value
+		case "emailAddress":
+			email = value
+		case "postalCode":
+			postalcode = value
+		case "STREET":
+			street = value
+		case "serialNumber":
+			number = value
+		default:
+			return "", "", "", "", "", "", "", "", "", "", errors.New("unknown subject attribute: " + key)
+		}
+	}
+	if !found {
+		return "", "", "", "", "", "", "", "", "", "", errors.New("invalid subject string format: empty")
+	}
+	return name, number, country, province, locality, organization, organizationunit, street, email, postalcode, nil
+}
+
+type authorityKeyIdentifier struct {
+	Raw                 asn1.RawContent
+	ID                  []byte `asn1:"optional,tag:0"`
+	KeyIdentifier       []byte `asn1:"optional,tag:1"`
+	AuthorityCertIssuer []byte `asn1:"optional,tag:2"`
+	AuthorityCertSerial []byte `asn1:"optional,tag:3"`
+}
+
+func getAuthorityKeyIdentifierFromCRL(crl *x509.RevocationList) []byte {
+	for _, extension := range crl.Extensions {
+		if extension.Id.Equal(asn1.ObjectIdentifier{2, 5, 29, 35}) {
+			var akid authorityKeyIdentifier
+			_, err := asn1.Unmarshal(extension.Value, &akid)
+			if err == nil {
+				return akid.ID
+			}
+		}
+	}
+	return nil
+}
+
+func reverseBytes(d []byte) {
+	for i, j := 0, len(d)-1; i < j; i, j = i+1, j-1 {
+		d[i], d[j] = d[j], d[i]
+	}
 }
