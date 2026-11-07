@@ -5,7 +5,7 @@
 [![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/pedroalbanese/gosttk)](https://golang.org)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/pedroalbanese/gosttk)](https://github.com/pedroalbanese/gosttk/releases)
 
-Multi-purpose cross-platform cryptography tool for symmetric encryption, cipher-based message authentication code (CMAC), recursive hash digest, hash-based message authentication code (HMAC), digital signature, shared key agreement (VKO), PBKDF2/HKDF functions, PEM key/certificate management, RandomArt fingerprints, X.509 CSR, CRL, and Certificates, and **TLS 1.3** (RFC 9367) for embedded systems.
+Multi-purpose cross-platform cryptography tool for symmetric encryption, cipher-based message authentication code (CMAC), recursive hash digest, hash-based message authentication code (HMAC), digital signature, shared key agreement (VKO), PBKDF2/HKDF functions, PEM key/certificate management, RandomArt fingerprints, X.509 CSR, CRL, and Certificates, and **TLS 1.3** (RFC 9367) for small or embedded systems.
 
 **GOST refers to a set of technical standards maintained by the Euro-Asian Council for Standardization, Metrology and Certification (EASC), a regional standards organization operating under the auspices of the Commonwealth of Independent States (CIS).**
 
@@ -319,8 +319,18 @@ echo $?
 ```
 The TLS layer uses `tls.GOSTInstall()` from the patched `crypto/tls` in the local toolchain; keys and certificates are always in PEM format.
 
+## Contribute
+**Use issues for everything**
+- You can help and get help by:
+  - Reporting doubts and questions
+- You can contribute by:
+  - Reporting issues
+  - Suggesting new features or enhancements
+  - Improve/fix documentation
+
 ## License
 
 This project is licensed under the ISC License.
 
-##### Military-Grade Reliability. Copyright (c) 2020-2022 ALBANESE Research Lab.
+##### Military-Grade Reliability. Copyright (c) 2020-2026 Pedro F. Albanese - ALBANESE Research Lab.
+Todos os direitos de propriedade intelectual sobre este software pertencem ao autor, Pedro F. Albanese. Vide Lei 9.610/98, Art. 7º, inciso XII.
