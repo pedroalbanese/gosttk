@@ -5,7 +5,7 @@
 [![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/pedroalbanese/gosttk)](https://golang.org)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/pedroalbanese/gosttk)](https://github.com/pedroalbanese/gosttk/releases)
 
-Multi-purpose cross-platform cryptography tool for symmetric encryption, cipher-based message authentication code (CMAC), recursive hash digest, hash-based message authentication code (HMAC), digital signature, shared key agreement (VKO), PBKDF2/HKDF functions, PEM key/certificate management, RandomArt fingerprints, and **TLS 1.3** (RFC 9367) for embedded systems.
+Multi-purpose cross-platform cryptography tool for symmetric encryption, cipher-based message authentication code (CMAC), recursive hash digest, hash-based message authentication code (HMAC), digital signature, shared key agreement (VKO), PBKDF2/HKDF functions, PEM key/certificate management, RandomArt fingerprints, X.509 CSR, CRL, and Certificates, and **TLS 1.3** (RFC 9367) for embedded systems.
 
 **GOST refers to a set of technical standards maintained by the Euro-Asian Council for Standardization, Metrology and Certification (EASC), a regional standards organization operating under the auspices of the Commonwealth of Independent States (CIS).**
 
@@ -85,64 +85,70 @@ Multi-purpose cross-platform cryptography tool for symmetric encryption, cipher-
 ## Usage
 
 <pre> -512
-       Bit length: 256 or 512. (default 256)
- -cipher string
-       Symmetric cipher: gost89, magma or kuznyechik. (default "kuznyechik")
- -check string
-       Check hashsum file. ('-' for STDIN)
- -crypt string
-       Encrypt/Decrypt with symmetric ciphers.
- -digest string
-       File/Wildcard to generate hashsum list. ('-' for STDIN)
- -hex string
-       Encode binary string to hex format and vice-versa.
- -hkdf int
-       HMAC-based key derivation function with a given output bit length.
- -info string
-       Associated data, additional info. (for HKDF and AEAD encryption)
- -iter int
-       Iterations. (for PBKDF2 only) (default 1)
- -iv string
-       Initialization vector. (for non-AEAD symmetric encryption)
- -key string
-       Private/Public key, password or HMAC key, depending on operation.
- -mac string
-       Compute hash-based/cipher-based message authentication code.
- -mode string
-       Mode of operation: MGM, CFB8, CTR or OFB. (default "MGM")
- -old
-       Use legacy GOST R 34.11-94 hash (instead of Streebog).
- -paramset string
-       Elliptic curve ParamSet: A, B, C, D. (default "A")
- -pbkdf2
-       Password-based key derivation function 2.
- -pkey string
-       Generate keypair, Derive shared secret (vko), Sign and Verify.
-       [keygen|certgen|derive|vko|sign|verify|text|modulus|randomart]
- -pub string
-       Remote's side public key. (for derive/vko)
- -rand int
-       Generate random cryptographic key with a given output bit length.
- -recursive
-       Process directories recursively. (for DIGEST command only)
- -salt string
-       Salt. (for PBKDF2 and HKDF commands)
- -signature string
-       Input signature. (verification only)
- -version
-       Print version information.
- -cert string
-       Certificate name. (default "Certificate.pem")
- -ipport string
-       Local Port/remote's side Public IP:Port.
- -pwd string
-       Password. (for Private key PEM encryption)
- -private string
-       Private key path. (for keypair generation) (default "Private.pem")
- -public string
-       Public key path. (for keypair generation) (default "Public.pem")
- -tcp string
-       Encrypted TCP/IP Transfer Protocol. [server|ip|client]</pre>
+        Bit length: 256 or 512. (default 256)
+  -cert string
+        Certificate name. (default "Certificate.pem")
+  -check string
+        Check hashsum file. ('-' for STDIN)
+  -cipher string
+        Symmetric cipher: gost89, magma or kuznyechik. (default "kuznyechik")
+  -crl string
+        Certificate Revocation List path.
+  -crypt string
+        Encrypt/Decrypt with symmetric ciphers.
+  -days int
+        Defines the validity of the certificate from the date of creation.
+  -digest string
+        File/Wildcard to generate hashsum list. ('-' for STDIN)
+  -hex string
+        Encode binary string to hex format and vice-versa.
+  -hkdf int
+        HMAC-based key derivation function with a given output bit length.
+  -info string
+        Associated data, additional info. (for HKDF and AEAD encryption)
+  -ipport string
+        Local Port/remote's side Public IP:Port.
+  -isca
+        The requested CSR is for a Certificate Authority (CA).
+  -iter int
+        Iterations. (for PBKDF2 only) (default 1)
+  -iv string
+        Initialization vector. (for non-AEAD symmetric encryption)
+  -key string
+        Private key path (in) or private key output path (keygen).
+  -mac string
+        Compute hash-based/cipher-based message authentication code.
+  -mode string
+        Mode of operation: MGM, CFB8, CTR or OFB. (default "MGM")
+  -old
+        Use legacy GOST R 34.11-94 hash.
+  -paramset string
+        Elliptic curve ParamSet: A, B, C, D. (for gost89: A, B, C, D, Z) (default "A")
+  -pass string
+        Password. (for Private key PEM encryption)
+  -pbkdf2
+        Password-based key derivation function 2.
+  -pkey string
+        Generate keypair, Derive shared secret (vko), Sign and Verify.
+        [keygen|certgen|derive|vko|sign|verify|text|modulus|randomart]
+  -pub string
+        Public key path (in for derive/vko, out for keygen).
+  -rand int
+        Generate random cryptographic key with a given output bit length.
+  -recursive
+        Process directories recursively. (for DIGEST command only)
+  -root string
+        Root CA Certificate path.
+  -salt string
+        Salt. (for PBKDF2 and HKDF commands)
+  -signature string
+        Input signature. (verification only)
+  -subj string
+        Subject: Identity. (Example: "/CN=/OU=/O=/ST=/L=/C=/emailAddress=")
+  -tcp string
+        Encrypted TCP/IP Transfer Protocol. [server|ip|client]
+  -version
+        Print version information.</pre>
 
 ## Examples
 
@@ -178,13 +184,52 @@ echo $?
 
 #### Generate certificate (self-signed, PEM):
 ```bash
-./gosttk -pkey certgen -key private.pem [-pwd "pass"] [-cert "Certificate.pem"]
+./gosttk -pkey certgen -key private.pem [-pass "pass"] [-cert "Certificate.pem"]
 ```
 
 #### Parse certificate info:
 ```bash
 ./gosttk -pkey text    -cert certificate.pem
 ./gosttk -pkey modulus -cert certificate.pem
+```
+
+#### Generate Certificate Signing Request (CSR, PEM):
+```bash
+./gosttk -pkey req -key private.pem -cert "Request.csr" \
+  -subj "/CN=example.com/OU=TI/O=MyOrg/ST=SP/L=SaoPaulo/C=BR/emailAddress=admin@example.com"
+```
+
+#### Sign a CSR with the CA (X.509, PEM):
+```bash
+./gosttk -pkey x509 -root "Certificate.pem" -key ca-private.pem \
+  -cert "Request.csr" [-pass "pass"] [-days 365] "Signed.crt"
+```
+
+#### Generate a Certificate Revocation List (CRL, PEM):
+```bash
+./gosttk -pkey crl -key ca-private.pem -cert "Certificate.pem" [-pass "pass"] \
+  [-crl "CRL.pem"] "serials.txt" "CRL.pem"
+```
+
+#### Parse CRL info:
+```bash
+./gosttk -pkey text -crl "CRL.pem"
+```
+
+#### Validate a certificate against a CRL (revocation check):
+```bash
+./gosttk -pkey validate -cert "Signed.crt" -crl "CRL.pem"
+```
+
+#### Verify a certificate or CRL signature:
+```bash
+./gosttk -pkey check -cert "Signed.crt" -key ca-public.pem
+./gosttk -pkey check -crl  "CRL.pem"    -cert "Certificate.pem"
+```
+
+#### Generate a keypair (private + public, PEM):
+```bash
+./gosttk -pkey keygen -key "Private.pem" -pub "Public.pem" [-pass "pass"] [-paramset A]
 ```
 
 #### Symmetric encryption — default cipher (Kuznyechik, MGM):
