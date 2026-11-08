@@ -23,7 +23,6 @@ import (
 	"crypto/hmac"
 	"crypto/md5"
 	"crypto/rand"
-	"crypto/sha1"
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
@@ -91,7 +90,7 @@ var (
 	recursive = flag.Bool("recursive", false, "Process directories recursively. (for DIGEST command only)")
 	salt      = flag.String("salt", "", "Salt. (for PBKDF2 and HKDF commands)")
 	sig       = flag.String("signature", "", "Input signature. (verification only)")
-	target    = flag.String("digest", "", "File/Wildcard to generate hashsum list. ('-' for STDIN)")
+	digest    = flag.Bool("digest", false, "Generate hashsum list for the given file(s)/wildcard(s). ('-' for STDIN)")
 	tcpip     = flag.String("tcp", "", "Encrypted TCP/IP Transfer Protocol. [server|ip|client]")
 	iport     = flag.String("ipport", "", "Local Port/remote's side Public IP:Port.")
 	cert      = flag.String("cert", "Certificate.pem", "Certificate name.")
@@ -776,70 +775,102 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *target == "-" {
-		h := hashFactory()()
-		in := openInput()
-		io.Copy(h, in)
-		fmt.Println(hex.EncodeToString(h.Sum(nil)))
-		os.Exit(0)
-	}
-
-	if *target != "" && *recursive == false {
-		files, err := filepath.Glob(*target)
-		if err != nil {
-			log.Fatal(err)
-		}
-		for _, match := range files {
+	// -----------------------------------------------------------------
+	// digest (multi-file, wildcards, recursive) — edgetk-compatible
+	// -----------------------------------------------------------------
+	if *digest {
+		// No positional args and no "-" → read STDIN.
+		if len(flag.Args()) == 0 {
 			h := hashFactory()()
-			f, err := os.Open(match)
-			if err != nil {
-				log.Fatal(err)
-			}
-			file, _ := os.Stat(match)
-			if file.IsDir() {
-			} else {
-				if _, err := io.Copy(h, f); err != nil {
-					log.Fatal(err)
-				}
-				fmt.Println(hex.EncodeToString(h.Sum(nil)), "*"+f.Name())
-			}
-			f.Close()
+			io.Copy(h, os.Stdin)
+			fmt.Println(hex.EncodeToString(h.Sum(nil)), "(stdin)")
+			os.Exit(0)
 		}
-		os.Exit(0)
-	}
 
-	if *target != "" && *recursive == true {
-		err := filepath.Walk(filepath.Dir(*target),
-			func(path string, info os.FileInfo, err error) error {
+		// "-" as the only positional arg → read STDIN.
+		if len(flag.Args()) == 1 && flag.Arg(0) == "-" {
+			h := hashFactory()()
+			io.Copy(h, os.Stdin)
+			fmt.Println(hex.EncodeToString(h.Sum(nil)), "(stdin)")
+			os.Exit(0)
+		}
+
+		if !*recursive {
+			// Non-recursive: expand wildcards and hash each file.
+			for _, wildcard := range flag.Args() {
+				var matches []string
+				if strings.ContainsAny(wildcard, "*?[") {
+					m, err := filepath.Glob(wildcard)
+					if err != nil {
+						log.Fatal(err)
+					}
+					matches = m
+				} else {
+					matches = []string{wildcard}
+				}
+				for _, match := range matches {
+					f, err := os.Open(match)
+					if err != nil {
+						log.Fatal(err)
+					}
+					info, err := f.Stat()
+					if err != nil {
+						f.Close()
+						log.Fatal(err)
+					}
+					if info.IsDir() {
+						f.Close()
+						continue
+					}
+					h := hashFactory()()
+					if _, err := io.Copy(h, f); err != nil {
+						f.Close()
+						log.Fatal(err)
+					}
+					f.Close()
+					fmt.Println(hex.EncodeToString(h.Sum(nil)), "*"+filepath.Base(match))
+				}
+			}
+			os.Exit(0)
+		}
+
+		// Recursive: for each wildcard, walk the parent directory and
+		// match the basename pattern. Deduplicate by full path.
+		seen := make(map[string]bool)
+		for _, wildcard := range flag.Args() {
+			base := filepath.Base(wildcard)
+			root := filepath.Dir(wildcard)
+			err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 				if err != nil {
 					return err
 				}
-				file, _ := os.Stat(path)
-				if file.IsDir() {
-				} else {
-					filename := filepath.Base(path)
-					pattern := filepath.Base(*target)
-					matched, err := filepath.Match(pattern, filename)
-					if err != nil {
-						fmt.Println(err)
-					}
-					if matched {
-						h := hashFactory()()
-						f, err := os.Open(path)
-						if err != nil {
-							log.Fatal(err)
-						}
-						if _, err := io.Copy(h, f); err != nil {
-							log.Fatal(err)
-						}
-						f.Close()
-						fmt.Println(hex.EncodeToString(h.Sum(nil)), "*"+f.Name())
-					}
+				if info.IsDir() {
+					return nil
 				}
+				matched, err := filepath.Match(base, info.Name())
+				if err != nil {
+					return err
+				}
+				if !matched || seen[path] {
+					return nil
+				}
+				seen[path] = true
+				h := hashFactory()()
+				f, err := os.Open(path)
+				if err != nil {
+					log.Fatal(err)
+				}
+				if _, err := io.Copy(h, f); err != nil {
+					f.Close()
+					log.Fatal(err)
+				}
+				f.Close()
+				fmt.Println(hex.EncodeToString(h.Sum(nil)), "*"+filepath.Base(path))
 				return nil
 			})
-		if err != nil {
-			log.Println(err)
+			if err != nil {
+				log.Println(err)
+			}
 		}
 		os.Exit(0)
 	}
@@ -1331,9 +1362,12 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		skid := sha1.Sum(spki.SubjectPublicKey.Bytes)
+		hasher := gost34112012256.New()
+		if _, err = hasher.Write(spki.SubjectPublicKey.Bytes); err != nil {
+			log.Fatal(err)
+		}
+		skid := hasher.Sum(nil)[:20]
 		fmt.Printf("\nSKID: %x \n", skid)
-		os.Exit(0)
 	}
 
 	// -----------------------------------------------------------------
