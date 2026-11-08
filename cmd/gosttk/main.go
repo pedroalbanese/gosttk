@@ -64,7 +64,10 @@ import (
 	"github.com/pedroalbanese/randomart"
 )
 
-const Version = "1.2.9"
+const (
+	Version     = "1.2.10"
+	VersionDate = "08 Nov 2026"
+)
 
 var (
 	bit       = flag.Bool("512", false, "Bit length: 256 or 512. (default 256)")
@@ -81,7 +84,7 @@ var (
 	old       = flag.Bool("old", false, "Use legacy GOST R 34.11-94 hash.")
 	paramset  = flag.String("paramset", "A", "Elliptic curve ParamSet: A, B, C, D. (for gost89: A, B, C, D, Z)")
 	pbkdf     = flag.Bool("pbkdf2", false, "Password-based key derivation function 2.")
-	pkey      = flag.String("pkey", "", "Generate keypair, Derive shared secret (vko), Sign and Verify.")
+	pkey      = flag.String("pkey", "", "Generate keypair, Derive shared secret (vko), Sign and Verify.\n[keygen|certgen|derive|vko|sign|verify|text|modulus|randomart]")
 	pub       = flag.String("pub", "", "Public key path (in for derive/vko, out for keygen).")
 	pwd       = flag.String("pass", "", "Password. (for Private key PEM encryption)")
 	random    = flag.Int("rand", 0, "Generate random cryptographic key with a given output bit length.")
@@ -369,13 +372,18 @@ func main() {
 	flag.Parse()
 
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "Usage of", os.Args[0]+":")
+		printBanner()
+		os.Exit(0)
+	}
+
+	if len(os.Args) == 2 && (os.Args[1] == "-h" || os.Args[1] == "--help") {
+		fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
 		flag.PrintDefaults()
-		os.Exit(1)
+		os.Exit(0)
 	}
 
 	if *version {
-		fmt.Printf("GOST Toolkit v%s 07 Nov 2026\n", Version)
+		fmt.Printf("GOST Toolkit v%s  %s\n", Version, VersionDate)
 		return
 	}
 
@@ -646,18 +654,14 @@ func main() {
 		if _, err = io.Copy(h, in); err != nil {
 			log.Fatal(err)
 		}
-		var verify bool
 		if *sig != "" {
 			mac := hex.EncodeToString(h.Sum(nil))
 			if mac != *sig {
-				verify = false
-				fmt.Println(verify)
+				fmt.Println("Verified: false")
 				os.Exit(1)
-			} else {
-				verify = true
-				fmt.Println(verify)
-				os.Exit(0)
 			}
+			fmt.Println("Verified: true")
+			os.Exit(0)
 		}
 		fmt.Println(hex.EncodeToString(h.Sum(nil)))
 		os.Exit(0)
@@ -699,18 +703,14 @@ func main() {
 		h, _ := cmac.NewWithTagSize(c, tagSize)
 		in := openInput()
 		io.Copy(h, in)
-		var verify bool
 		if *sig != "" {
 			mac := hex.EncodeToString(h.Sum(nil))
 			if mac != *sig {
-				verify = false
-				fmt.Println(verify)
+				fmt.Println("Verified: false")
 				os.Exit(1)
-			} else {
-				verify = true
-				fmt.Println(verify)
-				os.Exit(0)
 			}
+			fmt.Println("Verified: true")
+			os.Exit(0)
 		}
 		fmt.Println(hex.EncodeToString(h.Sum(nil)))
 		os.Exit(0)
@@ -763,18 +763,14 @@ func main() {
 		h, _ := c.NewMAC(8, iv[:])
 		in := openInput()
 		io.Copy(h, in)
-		var verify bool
 		if *sig != "" {
 			mac := hex.EncodeToString(h.Sum(nil))
 			if mac != *sig {
-				verify = false
-				fmt.Println(verify)
+				fmt.Println("Verified: false")
 				os.Exit(1)
-			} else {
-				verify = true
-				fmt.Println(verify)
-				os.Exit(0)
 			}
+			fmt.Println("Verified: true")
+			os.Exit(0)
 		}
 		fmt.Println(hex.EncodeToString(h.Sum(nil)))
 		os.Exit(0)
@@ -1132,7 +1128,19 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println("(stdin)=", hex.EncodeToString(signature))
+
+		sigName := "GOST2012_STREEBOG256"
+		if *old {
+			sigName = "GOST2012_GOST94"
+		} else if *bit {
+			sigName = "GOST2012_STREEBOG512"
+		}
+		src := "(stdin)"
+		if !stdinIsPipeOrFile() && flag.Arg(0) != "" {
+			src = flag.Arg(0)
+		}
+		fmt.Printf("%s(%s)= %s\n", sigName, src, hex.EncodeToString(signature))
+
 		os.Exit(0)
 	}
 
@@ -1164,17 +1172,20 @@ func main() {
 		publicKey := publicInterface.(*gost3410.PublicKey)
 		inputsig, err := hex.DecodeString(*sig)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println("Verified: false")
+			os.Exit(1)
 		}
 		isValid, err := publicKey.VerifyDigest(h.Sum(nil), inputsig)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println("Verified: false")
+			os.Exit(1)
 		}
-		if !isValid {
-			log.Fatal("signature is invalid")
+		if isValid {
+			fmt.Println("Verified: true")
+			os.Exit(0)
 		}
-		fmt.Println("Verify correct.")
-		os.Exit(0)
+		fmt.Println("Verified: false")
+		os.Exit(1)
 	}
 
 	var PEM string
@@ -2054,14 +2065,15 @@ func main() {
 		reverseBytes(hashData)
 		isValid, err := publicKey.(*gost3410.PublicKey).VerifyDigest(hashData, certa.Signature)
 		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println("Verified:", isValid)
-		if isValid {
-			os.Exit(0)
-		} else {
+			fmt.Println("Verified: false")
 			os.Exit(1)
 		}
+		if isValid {
+			fmt.Println("Verified: true")
+			os.Exit(0)
+		}
+		fmt.Println("Verified: false")
+		os.Exit(1)
 	}
 
 	if *pkey == "check" && *crl != "" {
@@ -2095,7 +2107,7 @@ func main() {
 		}
 		err = issuerCert.CheckCRLSignature(crlParsed)
 		if err != nil {
-			fmt.Println("Verified: false:", err)
+			fmt.Println("Verified: false")
 			os.Exit(1)
 		}
 		fmt.Println("Verified: true")
@@ -2489,6 +2501,83 @@ func main() {
 // ===========================================================================
 // Helpers
 // ===========================================================================
+
+// printBanner prints a short description of the toolkit (fits one screen).
+func printBanner() {
+	fmt.Printf(`GOST Toolkit v%s %s
+Unified GOST cryptography toolkit: hashes, MACs, ciphers, keys,
+X.509 CSR, CRL, and certificates, and TLS 1.3 with GOST ciphersuites.
+
+USAGE
+  %s [flags] [input-file]
+  cat file | %s [flags]
+
+HASHES
+  -digest FILE|-   hash a file, wildcard or STDIN ('-' = STDIN)
+  -recursive       walk directories recursively (with -digest)
+  -check FILE|-    verify a hashsum list
+  -old             use legacy GOST R 34.11-94
+  -512             use GOST R 34.11-2012 512-bit (default 256)
+
+MACs
+  -mac hmac|cmac|gost   compute HMAC, CMAC or GOST 28147-89 MAC
+  -key HEX              secret key (hex)
+  -signature HEX        expected MAC (verification)
+
+SYMMETRIC CIPHERS
+  -crypt enc|dec        encrypt/decrypt
+  -cipher gost89|magma|kuznyechik
+  -mode MGM|CTR|OFB|CFB8
+  -key HEX              key (hex)
+  -iv HEX               initialization vector
+  -info STRING          additional authenticated data (MGM)
+
+KEY DERIVATION
+  -pbkdf2 -key P -salt S -iter N
+  -hkdf BITS -key P -salt S -info A
+
+RANDOM / HEX
+  -rand 64|128|256|512  generate random key (hex)
+  -hex enc|dec|dump     hex encode/decode/dump
+
+KEYS AND CERTIFICATES  (see README for full examples)
+  -pkey keygen          generate keypair         (-key, -pub, -pass)
+  -pkey certgen         self-signed or CA-signed certificate
+  -pkey req             certificate signing request (CSR)
+  -pkey x509            sign a CSR with a CA
+  -pkey crl             generate a certificate revocation list
+  -pkey validate        check a certificate against a CRL
+  -pkey check           verify certificate/CRL signature
+  -pkey text|modulus    inspect key/cert/CSR/CRL
+  -pkey sign|verify     sign/verify stdin with GOST R 34.10-2012
+  -pkey derive          VKO shared secret
+  -pass PASS            PEM key password (Kuznyechik-CBC)
+  -paramset A|B|C|D     elliptic curve parameter set
+
+TLS 1.3
+  -tcp server|client    mutual-auth GOST TLS 1.3
+  -tcp ip               print this machine's external IP
+  -ipport ADDR          listen/connect address
+
+OPTIONS
+  -version              print version and exit
+  -h, --help            print all flags
+
+EXAMPLES
+  %s -digest file.txt
+  %s -crypt enc -key 00112233... < in.bin > out.bin
+  %s -pkey keygen -key CA.key -pub CA.pub -pass 123
+  %s -pkey certgen -key CA.key -cert CA.crt -isca -days 3650
+  %s -pkey req -key user.key -cert user.csr -subj "/CN=user/O=Org/C=BR"
+  %s -pkey x509 -root CA.crt -key CA.key -cert user.csr user.crt
+  %s -pkey crl -key CA.key -cert CA.crt -crl OLD.pem serials.txt CRL.pem
+  %s -pkey validate -cert user.crt -crl CRL.pem
+
+Use '-h' or '--help' for the full flag list.
+`, Version, VersionDate, os.Args[0], os.Args[0],
+		os.Args[0], os.Args[0], os.Args[0], os.Args[0],
+		os.Args[0], os.Args[0], os.Args[0], os.Args[0])
+}
 
 func Hkdf(master, salt, info []byte) ([128]byte, error) {
 	hkdf := hkdf.New(hashFactory(), master, salt, info)
