@@ -155,7 +155,7 @@ Multi-purpose cross-platform cryptography tool for symmetric encryption, cipher-
 #### Asymmetric GOST R 34.10-2012 256/512-bit keypair generation (PEM):
 ```bash
 ./gosttk -pkey keygen [-512] [-paramset A|B|C|D] [-pwd "pass"] \
-  [-private Private.pem] [-public Public.pem]
+  [-key Private.pem] [-pub Public.pem]
 ```
 RandomArt of the generated public key is printed to stdout.
 
