@@ -31,7 +31,7 @@ Multi-purpose cross-platform cryptography tool for symmetric encryption, cipher-
    - `kuznyechik` — GOST R 34.12-2015 Kuznyechik (128-bit, **default**)
 
 - Supported ParamSets (for `gost89`):
-   - GOST 28147-89 CryptoPro: A, B, C, D
+   - GOST 28147-89 CryptoPro: A, B, C, D and Z
 
 - Modes of Operation:
    - MGM: Multilinear Galois Mode (AEAD, default)
