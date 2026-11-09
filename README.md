@@ -267,8 +267,8 @@ echo $?
 
 #### HMAC — Streebog (default) or GOST R 34.11-94 (`-old`):
 ```bash
-./gosttk -mac hmac [-512]     -key $256bitkey < file.ext
-./gosttk -mac hmac -old       -key $256bitkey < file.ext
+./gosttk -mac hmac [-512]      -key $256bitkey < file.ext
+./gosttk -mac hmac -old        -key $256bitkey < file.ext
 ./gosttk -mac hmac [-512|-old] -key $256bitkey -signature $mac < file.ext
 ```
 
