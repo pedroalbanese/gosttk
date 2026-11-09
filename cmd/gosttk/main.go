@@ -1042,6 +1042,22 @@ func main() {
 			log.Fatal(err)
 		}
 		pubfile.Close()
+
+		absPrivPath, err := filepath.Abs(*key)
+		if err != nil {
+			log.Fatal("Failed to get absolute path for private key:", err)
+		}
+		absPubPath, err := filepath.Abs(*pub)
+		if err != nil {
+			log.Fatal("Failed to get absolute path for public key:", err)
+		}
+		println("Private key saved to:", absPrivPath)
+		println("Public key saved to:", absPubPath)
+		if *bit {
+			println("GOST2012 (512-bit)")
+		} else {
+			println("GOST2012 (256-bit)")
+		}
 		fmt.Println(randomart.FromString(strings.ReplaceAll(string(pubPEM), "\r\n", "\n")))
 		os.Exit(0)
 	}
