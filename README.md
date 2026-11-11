@@ -62,7 +62,7 @@ Multi-purpose cross-platform cryptography tool for symmetric encryption, cipher-
    - HMAC (Hash-based message authentication code)
    - HKDF (HMAC-based key derivation function)
    - PBKDF2 (Password-based key derivation function 2)
-   - **TLS 1.3** with GOST cipher suites (RFC 9367), via `tls.GOSTInstall()`
+   - **TLS 1.3** with GOST cipher suites (RFC 9367)
 
 - Non-Cryptographic Functions:
    - PEM key/certificate management (encrypted private keys via Kuznyechik-CBC)
@@ -253,8 +253,8 @@ echo $?
 #### Symmetric encryption — non-AEAD modes (CTR / OFB / CFB8):
 ```bash
 ./gosttk -crypt enc -mode CTR  -cipher kuznyechik -key $shared -iv $iv < plaintext.ext > ciphertext.ext
-./gosttk -crypt enc -mode OFB  -cipher magma       -key $shared -iv $iv < plaintext.ext > ciphertext.ext
-./gosttk -crypt enc -mode CFB8 -cipher gost89      -key $shared -iv $iv < plaintext.ext > ciphertext.ext
+./gosttk -crypt enc -mode OFB  -cipher magma      -key $shared -iv $iv < plaintext.ext > ciphertext.ext
+./gosttk -crypt enc -mode CFB8 -cipher gost89     -key $shared -iv $iv < plaintext.ext > ciphertext.ext
 ```
 
 #### CMAC (cipher-based message authentication code):
